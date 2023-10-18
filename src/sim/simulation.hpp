@@ -1,8 +1,13 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-namespace Simulation{
-    void print_name();
+#include "rocketInterface.hpp"
+
+namespace Sim{
+    class Sim{
+        private:
+            RocketInterface* _rocket;
+    };
 }
 
 #endif

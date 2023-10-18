@@ -4,7 +4,7 @@
 #include <string>
 #include <cmath>
 
-namespace Finish{
+namespace Rocket{
 
     struct Finish{
         // structs are the same as classes except things are public by default instead of private

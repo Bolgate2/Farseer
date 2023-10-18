@@ -2,7 +2,7 @@
 #include <string>
 #include <cmath>
 
-namespace Finish{
+namespace Rocket{
     // defining constructor
     Finish::Finish(std::string name, float roughness){
         this->name = name;
