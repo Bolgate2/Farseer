@@ -3,7 +3,7 @@
 
 namespace LaunchConditions{
     class LaunchConditions{
-
+        
     };
 }
 

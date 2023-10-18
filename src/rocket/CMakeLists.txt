@@ -1,9 +1,14 @@
-add_subdirectory(components)
 target_sources(rocket
     PRIVATE
-        rocket.cpp
-        rocket.hpp
         finish.cpp
         finish.hpp
+        launchConditions.cpp
+        launchConditions.hpp
+        rocket.cpp
+        rocket.hpp
+        stage.cpp
+        stage.hpp
+        component.cpp
+        component.hpp
 )
 # add_subdirectory(components)

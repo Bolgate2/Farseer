@@ -1,5 +1,5 @@
 #include <iostream>
-#include "components/component.hpp"
+#include "component.hpp"
 #include "rocket.hpp"
 #include "simulation.hpp"
 #include "finish.hpp"

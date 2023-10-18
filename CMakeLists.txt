@@ -7,7 +7,7 @@ enable_testing()
 # creating libraries
 add_library(rocket "")
 add_library(sim "")
-add_library(utils "")
+add_library(geometry "")
 # adding src folder
 add_subdirectory(src)
 add_subdirectory(lib)
@@ -20,17 +20,15 @@ add_compile_options(-mavx2)
 add_executable(Farseer main.cpp)
 # linking lib libraries to src
 target_link_libraries(rocket uuid_v4)
-target_link_libraries(utils fmt)
+target_link_libraries(geometry fmt)
 # linking src libraties to exe
 target_link_libraries(Farseer rocket)
-target_link_libraries(Farseer sim)
-target_link_libraries(Farseer utils)
 
 target_include_directories(Farseer PUBLIC
     "${PROJECT_BINARY_DIR}"
     "${PROJECT_SOURCE_DIR}/src/rocket"
     "${PROJECT_SOURCE_DIR}/src/sim"
-    "${PROJECT_SOURCE_DIR}/src/utils"
+    "${PROJECT_SOURCE_DIR}/src/geometry"
 )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
