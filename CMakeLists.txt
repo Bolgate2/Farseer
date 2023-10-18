@@ -8,19 +8,17 @@ enable_testing()
 add_library(rocket "")
 add_library(sim "")
 add_library(geometry "")
+
 # adding src folder
 add_subdirectory(src)
 add_subdirectory(lib)
-
-# https://stackoverflow.com/questions/39383193/compiling-legacy-gcc-code-with-avx-vector-warnings
-# required for uuid_v4, means compliation may not work on come older cpus
-add_compile_options(-mavx2)
 
 # defining exe
 add_executable(Farseer main.cpp)
 # linking lib libraries to src
 target_link_libraries(rocket uuid_v4)
 target_link_libraries(geometry fmt)
+target_link_libraries(rocket sim)
 # linking src libraties to exe
 target_link_libraries(Farseer rocket)
 

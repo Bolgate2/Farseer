@@ -6,9 +6,10 @@
 #include "uuid_v4.h"
 #include "stage.hpp"
 #include "launchConditions.hpp"
+#include "rocketInterface.hpp"
 
 namespace Rocket{
-    class Rocket{
+    class Rocket: public RocketInterface::RocketInterface{
         private:
             std::string _id;
             //hold pointers rather than the objects for speed (passing pointers around is faster than passing objects)

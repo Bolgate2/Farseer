@@ -39,6 +39,8 @@ int test_point(){
 }
 
 int main(int argc, char** argv){
+    UUIDv4::UUIDGenerator<std::mt19937_64> idgen;
+    auto id = idgen.getUUID();
     std::cout << "Hello, from Farseer!\n";
     Component::print_name();
     Simulation::print_name();
