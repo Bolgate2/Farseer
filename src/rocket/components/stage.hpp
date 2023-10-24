@@ -3,17 +3,15 @@
 
 #include <vector>
 #include "uuid_v4.h"
+#include "aeroComponent.hpp"
+#include "bodyComponent.hpp"
 
-namespace Stage{
-    class Stage{
+namespace Rocket{
+    class Stage : public AeroComponent{
         private:
-
+            std::vector<BodyComponent*> _components; // a stage may only have body components
         public:
-            // constructors
-            Stage();
-            Stage(UUIDv4::UUIDGenerator<std::mt19937_64>* uuidGenerator);
-            // destructor
-            ~Stage();
+
     };
 }
 

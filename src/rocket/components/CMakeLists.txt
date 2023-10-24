@@ -1,3 +1,5 @@
+add_subdirectory(bodyTube)
+
 target_sources(rocket
     PRIVATE
         rocket.cpp
@@ -6,7 +8,12 @@ target_sources(rocket
         stage.hpp
         component.cpp
         component.hpp
-        massComponent.cpp
-        massComponent.hpp
+        internalComponent.cpp
+        internalComponent.hpp
+        aeroComponent.cpp
+        aeroComponent.hpp
+        externalComponent.cpp
+        externalComponent.hpp
+        bodyComponent.cpp
+        bodyComponent.hpp
 )
-# add_subdirectory(components)

@@ -4,5 +4,8 @@ target_sources(rocket
         finish.hpp
         launchConditions.cpp
         launchConditions.hpp
+        material.hpp
+        material.cpp
+        withOverride.hpp
+        withOverride.cpp
 )
-# add_subdirectory(components)

@@ -3,16 +3,17 @@
 #include <fmt/core.h>
 #include <uuid_v4.h>
 #include <Eigen/Dense>
-#include "components/component.hpp"
-#include "components/rocket.hpp"
-#include "simulation.hpp"
+
+#include "shapes/cylinder.hpp"
+#include "shapes/bodyTube/bodyTube.hpp"
+#include "components/bodyTube/bodyTube.hpp"
 #include "misc/finish.hpp"
+#include "misc/material.hpp"
+
+
 #define SMALL 1e-10
 
-
-int main(int argc, char** argv){
-    UUIDv4::UUIDGenerator<std::mt19937_64> idgen;
-    auto id = idgen.getUUID();
+void testVectorFunctions(){
     Eigen::Vector3d v1(1,0,0);
     Eigen::Vector3d v2(0,1,0);
     Eigen::Matrix3d m1 {
@@ -44,5 +45,33 @@ int main(int argc, char** argv){
     std::cout << "Hello, from Farseer!\n";
     auto regular_paint = Rocket::regular_paint;
     std::cout << regular_paint.name << "\n";
+    Eigen::Matrix3d nullMat = Eigen::Matrix3d::Ones() * std::nan("0");
+    std::cout << nullMat << "\n";
+    std::cout << (nullMat.hasNaN() ? "true" : "false") << "\n";
+}
+
+
+int main(int argc, char** argv){
+    UUIDv4::UUIDGenerator<std::mt19937_64> idgen;
+    auto id = idgen.getUUID();
+    /*
+    auto cyl1 = Shapes::BodyTubeShape(1, 5);
+    auto cyl2 = Shapes::BodyTubeShape(1,5,0.1);
+    Shapes::Shape* abstractShape = &cyl1;
+
+    std::cout << "Abstract shape\n" << abstractShape->inertia() << "\n";
+    std::cout << "Cyl 1 inertia\n" << cyl1.inertia() << "\n";
+    std::cout << "Cyl 2 inertia\n" << cyl2.inertia() << "\n";
+    cyl1.setLength(10);
+    std::cout << "Cyl 1 inertia\n" << cyl1.inertia() << "\n";
+    */
+    auto mat = Rocket::Material("Cardboard", 680);
+    auto fin = Rocket::Finish("Regular Paint", 60/(std::pow(10,6)));
+    auto radius = 0.0632/2;
+    std::cout << "hi 1\n";
+    Rocket::BodyTube toob = Rocket::BodyTube( radius, 0.66, 0.0003, &mat, &fin);
+    std::cout << "hi 2\n";
+    std::cout << "toob mass " << toob.mass(0) << "\n";
+
     return 0;
 }
