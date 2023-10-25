@@ -2,9 +2,11 @@
 #define AERO_COMPONENT_H
 #include "component.hpp"
 #include "rocketInterface.hpp"
+#include <memory>
+#include <map>
 
 #include <Eigen/Dense>
-#include <map>
+
 
 #include "nanValues.hpp"
 #include "../shapes/aeroShape.hpp"
@@ -21,15 +23,20 @@ namespace Rocket{
     // create InternalComponent subclass that does this
     // composite pattern time
     class AeroComponent: public Component, public Sim::RocketInterface{
-        protected:
+        private:
             static std::string defaultName;
             AeroComponent* _parent = NULL;
-            Shapes::AeroShape* _shape;
-            Finish* _finish;
-            Material* _material;
+            std::unique_ptr<Shapes::AeroShape> _shape;
+            //Shapes::AeroShape* _shape;
+            std::unique_ptr<Finish> _finish;
+            //Finish* _finish;
+            std::unique_ptr<Material> _material;
+            //Material* _material;
+        protected:
             // inherited from component
             virtual void clearCaches();
-            //virtual double calculateMass(double time);
+            
+            virtual double calculateMass(double time);
             virtual Eigen::Matrix3d calculateInertia(double time);
             virtual Eigen::Vector3d calculateCm(double time);
 
@@ -78,9 +85,9 @@ namespace Rocket{
             virtual void clearC_m_dampCache();
         public:
             // constructors
-            AeroComponent(Material* material, Finish* finish,
+            AeroComponent(std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
                 AeroComponent* parent = NULL, std::string name = AeroComponent::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
-            AeroComponent(Shapes::AeroShape* shape, Material* material, Finish* finish,
+            AeroComponent(std::unique_ptr<Shapes::AeroShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
                 AeroComponent* parent = NULL, std::string name = AeroComponent::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
             // inherited from component
             AeroComponent* parent();
@@ -121,13 +128,14 @@ namespace Rocket{
 
             // getter and setter for shape
             virtual Shapes::AeroShape* shape();
-            virtual void setShape( Shapes::AeroShape* shape ); // CLEAR CACHES
+            virtual void setShape( std::unique_ptr<Shapes::AeroShape> shape );
+            //virtual void setShape( Shapes::AeroShape* shape ); // CLEAR CACHES
             // getter and setter for finish
             virtual Finish* finish();
-            virtual void setFinish( Finish* finish ); // CLEAR CACHES
+            virtual void setFinish( std::unique_ptr<Finish> finish ); // CLEAR CACHES
             // getter and setter for material
             virtual Material* material();
-            virtual void setMaterial( Material* material ); // CLEAR CACHES
+            virtual void setMaterial( std::unique_ptr<Material> material ); // CLEAR CACHES
     };
 
 }

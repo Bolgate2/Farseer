@@ -6,87 +6,21 @@
 namespace Rocket{
     // constructors
     std::string AeroComponent::defaultName = "Aero Component";
-    /*
-    AeroComponent::AeroComponent(Shapes::AeroShape* shape, Material* material, Finish* finish):
-    Component()
-    {
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
-    }
-
-    AeroComponent::AeroComponent(AeroComponent* parent, Shapes::AeroShape* shape, Material* material, Finish* finish):
-    Component(parent)
-    {
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
-    }
-
-    AeroComponent::AeroComponent(Shapes::AeroShape* shape, Material* material, Finish* finish, std::string name):
-    Component(name)
-    {
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
-    }
-
-    AeroComponent::AeroComponent(Shapes::AeroShape* shape, Material* material, Finish* finish, Eigen::Vector3d position):
-    Component(position)
-    {
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
-    }
-
-    AeroComponent::AeroComponent(AeroComponent* parent, Shapes::AeroShape* shape, Material* material, Finish* finish, std::string name):
-    Component(parent, name)
-    {
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
-    }
-
-    AeroComponent::AeroComponent(AeroComponent* parent, Shapes::AeroShape* shape, Material* material, Finish* finish, Eigen::Vector3d position):
-    Component(parent, position)
-    {
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
-    }
-
-    AeroComponent::AeroComponent(Shapes::AeroShape* shape, Material* material, Finish* finish, std::string name, Eigen::Vector3d position):
-    Component(name, position)
-    {
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
-    }
-
-    AeroComponent::AeroComponent(AeroComponent* parent, Shapes::AeroShape* shape, Material* material, Finish* finish, std::string name, Eigen::Vector3d position):
-    Component(parent, name, position)
-    {
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
-    }
-    */
     
-    AeroComponent::AeroComponent(Material *material, Finish *finish, AeroComponent *parent, std::string name, Eigen::Vector3d position):
+    AeroComponent::AeroComponent(std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, AeroComponent *parent, std::string name, Eigen::Vector3d position):
     Component(parent, name, position)
     {
-        std::cout << "hi from aerocomp constructor\n";
-        setMaterial(material);
-        setFinish(finish);
+        // must move unique pointer
+        setMaterial( std::move(material) );
+        setFinish(std::move(finish));
     }
 
-    AeroComponent::AeroComponent(Shapes::AeroShape *shape, Material *material, Finish *finish, AeroComponent *parent, std::string name, Eigen::Vector3d position):
+    AeroComponent::AeroComponent(std::unique_ptr<Shapes::AeroShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, AeroComponent *parent, std::string name, Eigen::Vector3d position):
     Component(parent, name, position)
     {
-        std::cout << "hi from aerocomp constructor\n";
-        setShape(shape);
-        setMaterial(material);
-        setFinish(finish);
+        setShape( std::move(shape) );
+        setMaterial( std::move(material) );
+        setFinish(std::move(finish));
     }
     // clearing caches
     void AeroComponent::clearCaches(){
@@ -365,6 +299,7 @@ namespace Rocket{
     }
 
     double AeroComponent::planformCenter(){
+        _shape->planformCenter();
         return shape()->planformCenter();
     }
 
@@ -375,29 +310,36 @@ namespace Rocket{
 
     // getter and setter for shape
     Shapes::AeroShape* AeroComponent::shape(){
-        return _shape;
+        return _shape.get();
     }
-    void AeroComponent::setShape( Shapes::AeroShape* shape ){
-        _shape = shape;
+
+    void AeroComponent::setShape( std::unique_ptr<Shapes::AeroShape> shape ){
+        _shape = std::move(shape);
         clearCaches();
     }
 
     // getter and setter for finish
     Finish* AeroComponent::finish(){
-        return _finish;
+        return _finish.get();
     }
-    void AeroComponent::setFinish( Finish* finish ){
-        _finish = finish;
+    
+    void AeroComponent::setFinish( std::unique_ptr<Finish> finish ){
+        _finish = std::move( finish );
         clearCaches(); // only need to clear drag
     }
     
     // getter and setter for material
     Material* AeroComponent::material(){
-        return _material;
+        return _material.get();
     }
-    void AeroComponent::setMaterial( Material* material ){
-        _material = material;
+
+    void AeroComponent::setMaterial( std::unique_ptr<Material> material ){
+        _material = std::move(material);
         clearCaches(); // only need to clear non-aero caches   
+    }
+
+    double AeroComponent::calculateMass(double time){
+        return shape()->volume() * material()->density;
     }
 
     Eigen::Matrix3d AeroComponent::calculateInertia(double time){
@@ -414,4 +356,5 @@ namespace Rocket{
         auto bodyCm = position() + thisCm;
         return bodyCm;
     }
+
 }

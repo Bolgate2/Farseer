@@ -6,8 +6,10 @@ target_sources(rocket
         axisymmetricShape.cpp
         aeroShapeInterface.hpp
         aeroShape.hpp
+        aeroShape.cpp
         hollowShape.hpp
         hollowShape.cpp
+        hollowAxisymmetricShape.hpp
         bodyComponentShape.hpp
         externalComponentShape.hpp
         internalComponentShape.hpp

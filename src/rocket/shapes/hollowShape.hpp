@@ -30,12 +30,12 @@ namespace Shapes{
             virtual bool filled();
             virtual void setFilled(bool filled);
             // derived methods
-            virtual double volume(); // returns volume in m^3
-            virtual Eigen::Matrix3d inertia(); // returns inertia tensor over density (assumes uniform density) about the origin
+            virtual double volume() override; // returns volume in m^3
+            virtual Eigen::Matrix3d inertia() override; // returns inertia tensor over density (assumes uniform density) about the origin
 
             // the reference coordinates for a shape are its "center of mass" and its origin
             // by default these will be the same unless otherwise mentioned
-            virtual Eigen::Vector3d cm();
+            virtual Eigen::Vector3d cm() override;
     };
 }
 

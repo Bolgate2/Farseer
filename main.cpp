@@ -3,6 +3,7 @@
 #include <fmt/core.h>
 #include <uuid_v4.h>
 #include <Eigen/Dense>
+#include <memory>
 
 #include "shapes/cylinder.hpp"
 #include "shapes/bodyTube/bodyTube.hpp"
@@ -54,24 +55,14 @@ void testVectorFunctions(){
 int main(int argc, char** argv){
     UUIDv4::UUIDGenerator<std::mt19937_64> idgen;
     auto id = idgen.getUUID();
-    /*
-    auto cyl1 = Shapes::BodyTubeShape(1, 5);
-    auto cyl2 = Shapes::BodyTubeShape(1,5,0.1);
-    Shapes::Shape* abstractShape = &cyl1;
-
-    std::cout << "Abstract shape\n" << abstractShape->inertia() << "\n";
-    std::cout << "Cyl 1 inertia\n" << cyl1.inertia() << "\n";
-    std::cout << "Cyl 2 inertia\n" << cyl2.inertia() << "\n";
-    cyl1.setLength(10);
-    std::cout << "Cyl 1 inertia\n" << cyl1.inertia() << "\n";
-    */
-    auto mat = Rocket::Material("Cardboard", 680);
-    auto fin = Rocket::Finish("Regular Paint", 60/(std::pow(10,6)));
+    auto mat = std::make_unique<Rocket::Material>("Cardboard", 680);
+    auto fin = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
     auto radius = 0.0632/2;
-    std::cout << "hi 1\n";
-    Rocket::BodyTube toob = Rocket::BodyTube( radius, 0.66, 0.0003, &mat, &fin);
-    std::cout << "hi 2\n";
-    std::cout << "toob mass " << toob.mass(0) << "\n";
-
+    auto toob = std::make_unique<Rocket::BodyTube>( radius, 0.66, 0.0016, std::move(mat), std::move(fin));
+    std::cout << toob->name << std::endl;
+    std::cout << "testing toob" << std::endl;
+    std::cout << "toob mass " << toob->mass(0) << "\n";
+    std::cout << "toob inertia\n" << toob->inertia(0) << std::endl;
+    std::cout << "toob cm\n" << toob->cm(0) << std::endl;
     return 0;
 }

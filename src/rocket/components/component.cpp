@@ -86,6 +86,7 @@ namespace Rocket{
     double Component::calculateMass(double time){
         return _mass;
     }
+    
     double Component::calculateMassWithComponents(double time){
         // handling override flags
         double thisMass = 0;
@@ -172,11 +173,11 @@ namespace Rocket{
     }
 
     Eigen::Matrix3d Component::calculateInertiaWithCache(double time){
-        if(!caching()) return calculateInertiaWithCache(time);
+        if(!caching()) return calculateInertiaWithComponents(time);
 
         auto cacheKey = _inertiaCache.find(time);
         if( cacheKey != _inertiaCache.end()) return _inertiaCache[time];
-        auto totalInertia = calculateInertiaWithCache(time);
+        auto totalInertia = calculateInertiaWithComponents(time);
         _inertiaCache[time] = totalInertia;
         return totalInertia;
     }
@@ -243,7 +244,7 @@ namespace Rocket{
     }
 
     Eigen::Vector3d Component::calculateCmWithCache(double time){
-        if(!caching()) return calculateCmWithCache(time);
+        if(!caching()) return calculateCmWithComponents(time);
         // searching cache first
         auto cacheKey = _cmCache.find(time);
         if(cacheKey != _cmCache.end()) return _cmCache[time];

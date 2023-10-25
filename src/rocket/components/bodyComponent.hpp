@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 #include "uuid_v4.h"
 #include <map>
+#include <memory>
 
 
 namespace Rocket{
@@ -18,13 +19,14 @@ namespace Rocket{
     // create InternalComponent subclass that does this
     // composite pattern time
     class BodyComponent: public AeroComponent{
-        protected:
+        private:
             static std::string defaultName;
-            virtual void clearCaches();
             std::vector<InternalComponent*> _internalComponents;
             std::vector<AeroComponent*> _externalComponents;
             BodyComponent* _parent = NULL;
-            Shapes::BodyComponentShape* _shape;
+            std::unique_ptr<Shapes::BodyComponentShape> _shape;
+        protected:
+            virtual void clearCaches();
 
             const float bodyLiftConst = 1.1;
             virtual double calculateBodyLift( double alpha );
@@ -40,9 +42,9 @@ namespace Rocket{
 
         public:
             // constructor
-            BodyComponent(Material* material, Finish* finish,
+            BodyComponent(std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
                 BodyComponent* parent = NULL, std::string name = BodyComponent::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
-            BodyComponent(Shapes::BodyComponentShape* shape, Material* material, Finish* finish,
+            BodyComponent(std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
                 BodyComponent* parent = NULL, std::string name = BodyComponent::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
 
             // implementing tree stuff
@@ -55,8 +57,9 @@ namespace Rocket{
             virtual double bodyRadius(double x);
             
             // redefining shape functions
-            virtual Shapes::BodyComponentShape* shape();
-            virtual void setShape( Shapes::AeroShape* shape );
+            virtual Shapes::BodyComponentShape* shape() override;
+            virtual void setShape( std::unique_ptr<Shapes::AeroShape> shape ) override;
+            virtual void setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ); // func for correct typing
 
             // getter and setter for shape length
             virtual double length();

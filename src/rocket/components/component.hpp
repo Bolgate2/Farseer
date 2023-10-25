@@ -2,6 +2,7 @@
 #define COMPONENT_H_
 #include <string>
 #include <unordered_map>
+#include <memory>
 #include <vector>
 #include <Eigen/Dense>
 #include "uuid_v4.h"

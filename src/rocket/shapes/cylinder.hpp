@@ -3,14 +3,15 @@
 
 #include "axisymmetricShape.hpp"
 #include "hollowShape.hpp"
+#include "hollowAxisymmetricShape.hpp"
 #include <Eigen/Dense>
 #include <cmath>
 
 namespace Shapes{
-    class Cylinder: virtual public HollowShape, virtual public AxisymmetricShape{
+    class Cylinder: public HollowAxisymmetricShape{
         private:
-            double _radius = 0;
-            double _length = 0;
+            double _radius;
+            double _length;
             double unfilledVolume();
             double filledVolume();
 
@@ -24,18 +25,18 @@ namespace Shapes{
             Cylinder(double radius, double length);
             //constructor for a hollow cylinder
             Cylinder(double radius, double length, double thickness);
-
+            
             // inheritance from axisymmetric shape
-            double radius(double x); // gets the radius of the shape at distance x from the origin along the axis of symmetry
-            double radius(); //gets the base radius of this shape, the base radius is used to construct this shape
-            void setRadius(double radius); // sets the base radius for the shape
+            double radius(double x) override; // gets the radius of the shape at distance x from the origin along the axis of symmetry
+            double radius() override; //gets the base radius of this shape, the base radius is used to construct this shape
+            void setRadius(double radius) override; // sets the base radius for the shape
+            void setLength(double length) override;
+            double length() override;
 
             // inheritance from hollow shape
-            // redeclaring for caching
-            void setThickness(double thickness);
-            // double thickness();
-            void setLength(double length);
-            // double length();
+            // redeclaring setters for caching
+            void setThickness(double thickness) override;
+            // getter is inherited
 
     };
 }

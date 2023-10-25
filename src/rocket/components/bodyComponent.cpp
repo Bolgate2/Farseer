@@ -7,15 +7,16 @@
 namespace Rocket{
     std::string BodyComponent::defaultName = "Body Component";
     // constructors
-    BodyComponent::BodyComponent(Material* material, Finish* finish, BodyComponent* parent, std::string name, Eigen::Vector3d position):
-    AeroComponent(material, finish, parent, name, position)
+    BodyComponent::BodyComponent(std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, BodyComponent* parent, std::string name, Eigen::Vector3d position):
+    AeroComponent(std::move(material), std::move(finish), parent, name, position)
     {
         std::cout << "hi from bc constructor\n";
     }
 
-    BodyComponent::BodyComponent(Shapes::BodyComponentShape* shape, Material* material, Finish* finish, BodyComponent* parent, std::string name, Eigen::Vector3d position):
-    AeroComponent(shape, material, finish, parent, name, position)
+    BodyComponent::BodyComponent(std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, BodyComponent* parent, std::string name, Eigen::Vector3d position):
+    AeroComponent(std::move(material), std::move(finish), parent, name, position)
     {
+        setShape(std::move(shape));
         std::cout << "hi from bc constructor\n";
     }
 
@@ -130,18 +131,26 @@ namespace Rocket{
     } // THIS MUST CLEAR CACHES
 
     // chape functions
-    Shapes::BodyComponentShape* BodyComponent::shape(){
-        return _shape;
+    Shapes::BodyComponentShape* BodyComponent::shape() {
+        return _shape.get();
     }
     
-    void BodyComponent::setShape( Shapes::AeroShape* shape ){
-        auto castedShape = dynamic_cast<Shapes::BodyComponentShape*>(shape);
-        if(castedShape != NULL){
-            _shape = castedShape;
-            return;
+    void BodyComponent::setShape( std::unique_ptr<Shapes::AeroShape> shape ){
+        // try to cast the underlying pointer to a pointer of the inherited class
+        auto castedShapePointer = dynamic_cast<Shapes::BodyComponentShape*>(shape.get());
+
+        if(castedShapePointer != NULL){
+            // if casting is successful the a unique pointer of the correct type is crated and the old one is released
+            auto newShapeUniquePtr = std::unique_ptr<Shapes::BodyComponentShape>(castedShapePointer);
+            shape.release();
+            return setShape( std::move(newShapeUniquePtr) );
         }
         // if the function has reached here it has failed
         std::cerr << "Invalid shape for body component\n"; // TODO: make this more descriptive
+    }
+
+    void BodyComponent::setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ){
+        _shape = std::move(shape);
     }
 
     double BodyComponent::bodyRadius(double x){
@@ -186,7 +195,7 @@ namespace Rocket{
     // component calcs
     // component calculations
     double BodyComponent::calculateMass(double time){
-        auto density = this->material()->density;
+        auto density = material()->density;
         auto vol = shape()->volume();
         return density * vol;
     }

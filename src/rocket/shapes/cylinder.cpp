@@ -87,6 +87,10 @@ namespace Shapes{
         _radius = radius;
     }
 
+    double Cylinder::length(){
+        return _length;
+    }
+
     void Cylinder::setLength(double length){
         _filledInertia = NAN_M3D;
         _unfilledInertia = NAN_M3D;
