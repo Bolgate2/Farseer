@@ -25,13 +25,12 @@ namespace Rocket{
     class AeroComponent: public Component, public Sim::RocketInterface{
         private:
             static std::string defaultName;
-            AeroComponent* _parent = NULL;
+            
+            std::weak_ptr<AeroComponent> _parent;
             std::unique_ptr<Shapes::AeroShape> _shape;
-            //Shapes::AeroShape* _shape;
+
             std::unique_ptr<Finish> _finish;
-            //Finish* _finish;
             std::unique_ptr<Material> _material;
-            //Material* _material;
         protected:
             // inherited from component
             virtual void clearCaches();
@@ -83,14 +82,13 @@ namespace Rocket{
             virtual void createC_m_dampMapping(double value, double time, double omega, double v);
             virtual bool c_m_dampExists(double time, double omega, double v);
             virtual void clearC_m_dampCache();
+            // constructor
+            AeroComponent(
+                std::unique_ptr<Shapes::AeroShape> shape, std::unique_ptr<Material> material,
+                std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position
+                );
         public:
-            // constructors
-            AeroComponent(std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
-                AeroComponent* parent = NULL, std::string name = AeroComponent::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
-            AeroComponent(std::unique_ptr<Shapes::AeroShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
-                AeroComponent* parent = NULL, std::string name = AeroComponent::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
-            // inherited from component
-            AeroComponent* parent();
+            // no create method as this class is abstract
 
             // inherited from rocketInterface
             // need to redefine these to clarify override of interface
@@ -121,7 +119,7 @@ namespace Rocket{
             //new
             virtual double c_n_a( double mach, double alpha, double gamma = 1.4 );
             virtual double c_m_a( double mach, double alpha, double gamma = 1.4);
-            virtual std::vector<AeroComponent*> aeroComponents() = 0; // VIRTUAL
+            virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() = 0; // VIRTUAL
 
             // returns the diameter of the body at a given distance from the nosecone
             virtual double bodyRadius(double x) = 0; // VIRTUAL

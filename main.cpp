@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <cmath>
 #include <fmt/core.h>
 #include <uuid_v4.h>
@@ -10,7 +11,7 @@
 #include "components/bodyTube/bodyTube.hpp"
 #include "misc/finish.hpp"
 #include "misc/material.hpp"
-
+#include "components/internalComponent.hpp"
 
 #define SMALL 1e-10
 
@@ -51,18 +52,36 @@ void testVectorFunctions(){
     std::cout << (nullMat.hasNaN() ? "true" : "false") << "\n";
 }
 
+static std::string toString(const Eigen::MatrixXd& mat){
+    std::stringstream ss;
+    ss << mat;
+    return ss.str();
+}
 
 int main(int argc, char** argv){
     UUIDv4::UUIDGenerator<std::mt19937_64> idgen;
     auto id = idgen.getUUID();
-    auto mat = std::make_unique<Rocket::Material>("Cardboard", 680);
-    auto fin = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
+    auto mat1 = std::make_unique<Rocket::Material>("Cardboard", 680);
+    auto fin1 = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
     auto radius = 0.0632/2;
-    auto toob = std::make_unique<Rocket::BodyTube>( radius, 0.66, 0.0016, std::move(mat), std::move(fin));
-    std::cout << toob->name << std::endl;
-    std::cout << "testing toob" << std::endl;
-    std::cout << "toob mass " << toob->mass(0) << "\n";
-    std::cout << "toob inertia\n" << toob->inertia(0) << std::endl;
-    std::cout << "toob cm\n" << toob->cm(0) << std::endl;
+    //auto toob = std::make_shared<Rocket::BodyTube>( radius, 0.66, 0.0016, std::move(mat1), std::move(fin1));
+    auto toob = Rocket::BodyTube::create(radius, 0.66, 0.0016, std::move(mat1), std::move(fin1));
+
+    fmt::print("{0:<20} {1:<20}\n", "Toob Name ",toob->name);
+    fmt::print("Toob mass {0}\n", toob->mass(0));
+    fmt::print("Toob inertia\n{0}\n", toString(toob->inertia(0)));
+    fmt::print("Toob cm\n{0}\n", toString(toob->cm(0)));
+    toob->printComponentTree();
+
+    auto int1 = Rocket::InternalComponent::create(toob.get(), "Steve");
+    auto int_1_1 = Rocket::InternalComponent::create(int1.get(), "Bob");
+    auto int2 = Rocket::InternalComponent::create(toob.get(), "Jim");
+
+    toob->printComponentTree();
+    
+    int1->setMass(0.002);
+    toob->printComponentTree();
+    fmt::print("Toob tree height {}\n", toob->height());
+
     return 0;
 }

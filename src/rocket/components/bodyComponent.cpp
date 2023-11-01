@@ -7,17 +7,11 @@
 namespace Rocket{
     std::string BodyComponent::defaultName = "Body Component";
     // constructors
-    BodyComponent::BodyComponent(std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, BodyComponent* parent, std::string name, Eigen::Vector3d position):
-    AeroComponent(std::move(material), std::move(finish), parent, name, position)
-    {
-        std::cout << "hi from bc constructor\n";
-    }
 
-    BodyComponent::BodyComponent(std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, BodyComponent* parent, std::string name, Eigen::Vector3d position):
-    AeroComponent(std::move(material), std::move(finish), parent, name, position)
+    BodyComponent::BodyComponent(std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
+    AeroComponent(nullptr, std::move(material), std::move(finish), name, position)
     {
         setShape(std::move(shape));
-        std::cout << "hi from bc constructor\n";
     }
 
     // cache stuff
@@ -56,27 +50,25 @@ namespace Rocket{
         return shape()->referenceLength();
     }
 
-    // tree stuff
-    BodyComponent* BodyComponent::parent(){
-        return _parent;
-    }
-
-    std::vector<AeroComponent*> BodyComponent::aeroComponents(){
+    std::vector<std::shared_ptr<AeroComponent>> BodyComponent::aeroComponents(){
         return _externalComponents;
     }
 
-    std::vector<Component*> BodyComponent::components(){
+    std::vector< std::shared_ptr<Component> > BodyComponent::components(){
         // casting components
-        std::vector<Component*> externalCompsAsComps(_externalComponents.begin(), _externalComponents.end());
-        std::vector<Component*> internalCompsAsComps(_internalComponents.begin(), _internalComponents.end());
-        // concatenating casted vectors
-        internalCompsAsComps.insert(internalCompsAsComps.end(), externalCompsAsComps.begin(), externalCompsAsComps.end());
-        return internalCompsAsComps;
+        std::vector<std::shared_ptr<Component>> compVec;
+        for(auto comp = _externalComponents.begin(); comp != _externalComponents.end(); ++comp){
+            compVec.push_back( std::dynamic_pointer_cast<Component>(*comp) );
+        }
+        for(auto comp = _internalComponents.begin(); comp != _internalComponents.end(); ++comp){
+            compVec.push_back( std::dynamic_pointer_cast<Component>(*comp) );
+        }
+        return compVec;
     }
 
-    Component* BodyComponent::findComponent(std::string id){
+    std::shared_ptr<Component> BodyComponent::findComponent(std::string id){
         for(auto comp = components().begin(); comp != components().end(); ++comp){
-            if( (*comp)->id() == id ) return *comp;
+            if( (*comp)->id() == id ) return (*comp)->shared_from_this();
         }
         return NULL;
     }
@@ -85,15 +77,32 @@ namespace Rocket{
         // first try to cast the component to an internal comp
         auto compInternalCast = dynamic_cast<InternalComponent*>(component);
         if(compInternalCast != NULL){
+            // removing from previous parent if applicable
+            if(compInternalCast->parent() != NULL){
+                compInternalCast->parent()->removeComponent(compInternalCast);
+            }
+            // setting new parent
             compInternalCast->setParent(this);
-            _internalComponents.push_back(compInternalCast);
+            // adding to component list
+            _internalComponents.push_back(
+                std::dynamic_pointer_cast<InternalComponent>(component->shared_from_this()) // this bugs out when there is no sharedptr
+                );
             clearCaches();
             return;
         }
+
         auto compExternalCast = dynamic_cast<ExternalComponent*>(component);
         if(compExternalCast != NULL){
-            compInternalCast->setParent(this);
-            _externalComponents.push_back(compExternalCast);
+            // removing from previous parent if applicable
+            if(compExternalCast->parent() != NULL){
+                compExternalCast->parent()->removeComponent(compExternalCast);
+            }
+            // setting new parent
+            compExternalCast->setParent(this);
+            // adding to component list
+            _externalComponents.push_back(
+                std::dynamic_pointer_cast<ExternalComponent>(component->shared_from_this())
+                );
             clearCaches();
             return;
         }
@@ -106,8 +115,10 @@ namespace Rocket{
         auto compInternalCast = dynamic_cast<InternalComponent*>(component);
         if( compInternalCast != NULL ){
             for(auto comp = _internalComponents.begin(); comp != _internalComponents.end(); ++comp){
-                if( component == (*comp) ){
+                if( compInternalCast == (*comp).get() ){
+                    // setting parent to null
                     (*comp)->setParent(NULL);
+                    // removing from component list
                     _internalComponents.erase(comp);
                     clearCaches();
                     return;
@@ -118,7 +129,7 @@ namespace Rocket{
         auto compExternalCast = dynamic_cast<ExternalComponent*>(component);
         if( compExternalCast != NULL){
             for(auto comp = _externalComponents.begin(); comp != _externalComponents.end(); ++comp){
-                if( component == (*comp) ){
+                if( component == (*comp).get() ){
                     (*comp)->setParent(NULL);
                     _externalComponents.erase(comp);
                     clearCaches();
@@ -151,6 +162,7 @@ namespace Rocket{
 
     void BodyComponent::setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ){
         _shape = std::move(shape);
+        clearCaches();
     }
 
     double BodyComponent::bodyRadius(double x){

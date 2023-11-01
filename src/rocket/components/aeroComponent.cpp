@@ -6,29 +6,22 @@
 namespace Rocket{
     // constructors
     std::string AeroComponent::defaultName = "Aero Component";
-    
-    AeroComponent::AeroComponent(std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, AeroComponent *parent, std::string name, Eigen::Vector3d position):
-    Component(parent, name, position)
-    {
-        // must move unique pointer
-        setMaterial( std::move(material) );
-        setFinish(std::move(finish));
-    }
 
-    AeroComponent::AeroComponent(std::unique_ptr<Shapes::AeroShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, AeroComponent *parent, std::string name, Eigen::Vector3d position):
-    Component(parent, name, position)
+    AeroComponent::AeroComponent(std::unique_ptr<Shapes::AeroShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
+    Component(name, position)
     {
         setShape( std::move(shape) );
         setMaterial( std::move(material) );
         setFinish(std::move(finish));
     }
+    
     // clearing caches
     void AeroComponent::clearCaches(){
-        Component::clearCaches();
         clearC_n_aCache();
         clearC_m_aCache();
         clearCpCache();
         clearC_m_dampCache();
+        Component::clearCaches();
     }
 
     void AeroComponent::clearC_n_aCache(){
@@ -301,11 +294,6 @@ namespace Rocket{
     double AeroComponent::planformCenter(){
         _shape->planformCenter();
         return shape()->planformCenter();
-    }
-
-    //tree stuff
-    AeroComponent* AeroComponent::parent(){
-        return _parent;
     }
 
     // getter and setter for shape

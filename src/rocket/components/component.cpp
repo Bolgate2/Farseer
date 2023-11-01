@@ -2,6 +2,7 @@
 #include "parallelAxis.hpp"
 #include <Eigen/Dense>
 #include <string>
+#include <fmt/core.h>
 
 namespace Rocket{
 
@@ -9,11 +10,9 @@ namespace Rocket{
     UUIDv4::UUIDGenerator<std::mt19937_64> Component::_uuidGenerator = UUIDv4::UUIDGenerator<std::mt19937_64>();
     // creating default component behaviour here
     // default constructor
-    Component::Component(Component* parent, std::string name, Eigen::Vector3d position){
-        std::cout << "hi from comp constructor\n";
+
+    Component::Component(std::string name, Eigen::Vector3d position){
         _id = _uuidGenerator.getUUID().str();
-        _parent = NULL;
-        setParent(parent);
         this->name = name;
         setPosition(position);
     }
@@ -31,26 +30,24 @@ namespace Rocket{
         _thrustCache.clear();
         _thrustPositionCache.clear();
         // clearing the cache of a child must clear the caches of their ancestors
-        auto myParent = this->parent();
-        if(myParent != NULL){
-            myParent->clearCaches();
+        if(parent() != NULL){
+            parent()->clearCaches();
         }
     }
 
     // parent
     Component* Component::parent(){
-        return _parent;
+        if(_parent.expired()) return NULL;
+        if(_parent.lock().get() == NULL) return NULL;
+        return _parent.lock().get();
     }
 
     void Component::setParent( Component* parent ) {
-        if(this->parent() != NULL){
-            this->parent()->removeComponent(this); // this should set parent to NULL
-        }
-
-        if(parent != NULL){
-            parent->addComponent(this);
+        // add and remove component calls this so this cant be called by them
+        if(parent == NULL){
+            _parent.reset();
         } else {
-            _parent = NULL;
+            _parent = parent->shared_from_this();
         }
     }
 
@@ -58,9 +55,17 @@ namespace Rocket{
     void Component::removeComponent(std::string id) {
         auto component = findComponent(id);
         if (component != NULL){
-            this->removeComponent(component); // using pointer to ensure calling of underlying virtual function
+            removeComponent(component.get()); // using pointer to ensure calling of underlying virtual function
         }
     };
+
+    std::shared_ptr<Component> Component::root(){
+        if(parent() == NULL){
+            return shared_from_this();
+        } else {
+            return parent()->root();
+        }
+    }
 
     // position
     Eigen::Vector3d Component::position(){
@@ -122,7 +127,6 @@ namespace Rocket{
         return calculatedMass;
     }
 
-    // override functions are not virtual as they are not overridden
     double Component::mass(double time){
         return calculateMassWithCache(time);
     }
@@ -261,13 +265,16 @@ namespace Rocket{
         _cmOverride = flags;
         clearCaches();
     }
+
     OverrideFlags Component::cmOverriden(){
         return _cmOverride;
     }
+
     void Component::setCm(Eigen::Vector3d cm){
         _cm = cm;
         clearCaches();
     }
+
     void Component::overrideCm(OverrideFlags flags, Eigen::Vector3d value){
         setCm(value);
         overrideCm(flags);
@@ -344,9 +351,11 @@ namespace Rocket{
     bool Component::caching(){
         return _caching;
     }
+
     void Component::setCaching( bool toCache ){
         _caching = toCache;
     }
+    
     void Component::setAllCaching( bool toCache ){
         setCaching(toCache);
         for(auto comp = components().begin(); comp != components().end(); ++comp){
@@ -354,11 +363,56 @@ namespace Rocket{
         }
     }
 
-    Component* Component::root(){
-        if(parent() == NULL){
-            return this;
-        } else {
-            return parent()->root();
+    int Component::height(){
+        int val = 0;
+        auto comps = components();
+        if(comps.empty()) return val;
+
+        for(auto comp = comps.begin(); comp != comps.end(); ++comp){
+            int compHeight = (*comp)->height();
+            if( compHeight > val) val = compHeight;
         }
+        val++;
+        return val;
     }
+
+    void Component::printComponentTree(bool header){
+        std::string repr = componentTreeRepr(header);
+        fmt::print(repr);
+        //std::cout << repr; // this stuffs up unicode characters
+    }
+
+    int Component::_indentLen = 4;
+    int Component::_maxNameLen = 15;
+    int Component::_massLen = 9;
+    int Component::_massPrecision = 4;
+
+    std::string Component::componentTreeRepr(bool header){
+        auto h = this->height();
+        const int maxPfxLen = _indentLen*h;
+
+        std::string repr = "";
+        std::string fmtStr = "|{:-^" + std::to_string(maxPfxLen+_maxNameLen) + "}|{:-^" + std::to_string(_massLen) +"}|\n";
+        if(header) repr += fmt::format(fmtStr, "Name", "Mass (kg)");
+        repr += componentTreeRepr("", "", this->height());
+        return repr;
+    }
+
+    std::string Component::componentTreeRepr( std::string prefix, std::string childPrefix, int treeHeight){
+        const int maxPfxLen = _indentLen*treeHeight;
+        std::string fmtStr = " {:<" + std::to_string(maxPfxLen+_maxNameLen) + "} {:< " + std::to_string(_massLen) + "." + std::to_string(_massPrecision) + "f} \n";
+        std::string repr = fmt::format(fmtStr, prefix + name, mass(0));
+        if(!components().empty()){
+            auto comps = components();
+            for(auto comp = comps.cbegin(); comp != comps.cend(); comp++){
+                if((*comp).get() != comps.back().get()){
+                    repr += (*comp)->componentTreeRepr( childPrefix + "├── ", childPrefix + "│   ", treeHeight);
+                } else {
+                    repr += (*comp)->componentTreeRepr( childPrefix + "└── ", childPrefix + "    ", treeHeight);
+                }
+            }
+        }
+        return repr;
+    }
+
 }

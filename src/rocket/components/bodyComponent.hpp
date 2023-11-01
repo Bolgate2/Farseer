@@ -21,11 +21,11 @@ namespace Rocket{
     class BodyComponent: public AeroComponent{
         private:
             static std::string defaultName;
-            std::vector<InternalComponent*> _internalComponents;
-            std::vector<AeroComponent*> _externalComponents;
-            BodyComponent* _parent = NULL;
             std::unique_ptr<Shapes::BodyComponentShape> _shape;
+            std::weak_ptr<BodyComponent> _parent = std::shared_ptr<BodyComponent>(nullptr);
         protected:
+            std::vector<std::shared_ptr<InternalComponent>> _internalComponents;
+            std::vector<std::shared_ptr<AeroComponent>> _externalComponents;
             virtual void clearCaches();
 
             const float bodyLiftConst = 1.1;
@@ -40,21 +40,19 @@ namespace Rocket{
             // component calcs
             double calculateMass(double time);
 
+            BodyComponent(
+                std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material,
+                std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position
+                );
         public:
-            // constructor
-            BodyComponent(std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
-                BodyComponent* parent = NULL, std::string name = BodyComponent::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
-            BodyComponent(std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
-                BodyComponent* parent = NULL, std::string name = BodyComponent::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
+            // no create method as this class is still abstract. RocketInterface methods have not been set
 
             // implementing tree stuff
-            virtual BodyComponent* parent();
-            virtual std::vector<AeroComponent*> aeroComponents();
-            virtual std::vector<Component*> components();
-            virtual Component* findComponent(std::string id);
-            virtual void addComponent(Component* component);
-            virtual void removeComponent(Component* component);
-            virtual double bodyRadius(double x);
+            virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() override;
+            virtual std::vector< std::shared_ptr<Component> > components() override;
+            virtual std::shared_ptr<Component> findComponent(std::string id) override;
+            virtual void addComponent(Component* component) override;
+            virtual void removeComponent(Component* component) override;
             
             // redefining shape functions
             virtual Shapes::BodyComponentShape* shape() override;
@@ -78,7 +76,7 @@ namespace Rocket{
             virtual double bodyLift( double alpha );
             // reference length
             virtual double referenceLength();
-
+            virtual double bodyRadius(double x);
     };
 
 }

@@ -6,11 +6,22 @@
 
 namespace Rocket{
     class InternalComponent: public Component{
+        // this class is fully defined
         private:
             // internal components can only have internal components as children
-            std::vector<InternalComponent*> _components;
+            static std::string defaultName;
+            std::vector<std::shared_ptr<InternalComponent>> _components;
+        protected:
+            InternalComponent(std::string name = Component::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
         public:
+            [[nodiscard]] static std::shared_ptr<InternalComponent> create(
+                Component* parent = nullptr, std::string name = Component::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
+                );
 
+            virtual std::vector< std::shared_ptr<Component> > components() override;
+            virtual std::shared_ptr<Component> findComponent(std::string id) override;
+            virtual void addComponent(Component* component) override;
+            virtual void removeComponent(Component* component) override;
     };
 }
 

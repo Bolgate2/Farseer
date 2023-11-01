@@ -1,5 +1,5 @@
 add_subdirectory(bodyTube)
-add_subdirectory(propertyCalculator)
+# add_subdirectory(propertyCalculator)
 
 target_sources(rocket
     PRIVATE
@@ -11,6 +11,8 @@ target_sources(rocket
         component.hpp
         internalComponent.cpp
         internalComponent.hpp
+        shapedInternalComponent.hpp
+        shapedInternalComponent.cpp
         aeroComponent.cpp
         aeroComponent.hpp
         externalComponent.cpp

@@ -7,6 +7,7 @@
 #include <Eigen/Dense>
 #include "uuid_v4.h"
 #include "overrideFlags.hpp"
+#include "propertyCalculator/propertyCalculator.hpp"
 
 namespace Rocket{
 
@@ -14,13 +15,13 @@ namespace Rocket{
 
     // this class template defines the bare minimum of what a component should do
     // the base class of allowed child and parent types can be defined here
-    class Component{
+    class Component : public std::enable_shared_from_this<Component>{
         protected:
             static std::string defaultName;
             // all components use the same UUID generator to ensure uniqueness
             static UUIDv4::UUIDGenerator<std::mt19937_64> _uuidGenerator;
             std::string _id;
-            Component* _parent = NULL;
+            std::weak_ptr<Component> _parent = std::shared_ptr<Component>(nullptr);
 
             // a component must have a physical location
             Eigen::Vector3d _position;
@@ -39,7 +40,13 @@ namespace Rocket{
             OverrideFlags _inertiaOverride = OverrideFlags::NONE; // flags
 
             bool _caching = false;
-
+            
+            virtual std::string componentTreeRepr( std::string prefix, std::string childPrefix, int treeHeight);
+            // string formatting variables
+            static int _indentLen;
+            static int _maxNameLen;
+            static int _massLen;
+            static int _massPrecision;
         protected:
             virtual void clearCaches();
             // mass
@@ -79,11 +86,26 @@ namespace Rocket{
             virtual Eigen::Vector3d calculateThrustPositionWithComponents(double time);
             virtual Eigen::Vector3d calculateThrustPositionWithCache(double time);
             std::unordered_map<double,Eigen::Vector3d> _thrustPositionCache = {};
+
+            // default constructor
+            // constructor is protected. It isn't private so that subclasses can access it. It isn't public as a factory is defined
+            Component(std::string name, Eigen::Vector3d position);
         public:
             // a component must have a name, this is publically accessible as it's not integral to any functions
             std::string name;
-            // default constructor
-            Component(Component* parent = NULL, std::string name = Component::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero());
+
+            /*
+            factory
+            "best" example in cpp docs
+            https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
+            setting the parent is handled here
+            this is really just here as an example. only need to implement this for non abstract classes
+
+            [[nodiscard]] static std::shared_ptr<Component> create(
+                Component* parent = nullptr, std::string name = Component::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
+                );
+            
+            */
 
             // id
             virtual std::string id();
@@ -91,17 +113,19 @@ namespace Rocket{
             // parent
             virtual Component* parent();
             void setParent( Component* parent );
+            // returns the root of this component tree
+            virtual std::shared_ptr<Component> root();
+            virtual int height();
 
             // components
             // these functions are pure virtual as the component vectors are not defined here
-            
-            virtual std::vector<Component*> components() = 0; // VIRTUAL
-            virtual Component* findComponent(std::string id) = 0; // VIRTUAL
+            virtual std::vector< std::shared_ptr<Component> > components() = 0; // VIRTUAL
+            virtual std::shared_ptr<Component> findComponent(std::string id) = 0; // VIRTUAL
             virtual void addComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
             virtual void removeComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
 
             // this function is not virtual as it is essentially a convenience wrapper
-            virtual void removeComponent(std::string id);
+            virtual void removeComponent( std::string id );
 
             // position
             virtual Eigen::Vector3d position();
@@ -143,8 +167,9 @@ namespace Rocket{
             virtual void setCaching( bool toCache );
             virtual void setAllCaching( bool toCache );
 
-            // returns the root of this component tree
-            virtual Component* root();
+            // show trees in console
+            virtual std::string componentTreeRepr(bool header=true);
+            virtual void printComponentTree(bool header=true);
     };
 }
 
