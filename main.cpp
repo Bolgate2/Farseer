@@ -12,6 +12,7 @@
 #include "misc/finish.hpp"
 #include "misc/material.hpp"
 #include "components/internalComponent.hpp"
+#include "shapes/nosecone/haackNoseconeShape.hpp"
 
 #define SMALL 1e-10
 
@@ -82,6 +83,14 @@ int main(int argc, char** argv){
     int1->setMass(0.002);
     toob->printComponentTree();
     fmt::print("Toob tree height {}\n", toob->height());
+
+    Shapes::HaackNoseconeShape daNose = Shapes::HaackNoseconeShape(radius, 0.13, 0.003, 0);
+
+    fmt::print("{:<25} {}\n", "Da nose volume", daNose.volume());
+    fmt::print("{:<25} {}\n", "Da nose filled volume", daNose.filledVolume());
+    fmt::print("{:<25} {}\n", "Da nose wet area", daNose.wettedArea());
+    fmt::print("{:<25} {}\n", "Da nose plan area", daNose.planformArea());
+    fmt::print("{:<25} [{}]\n", "Da nose CG", toString(daNose.cm().transpose()));
 
     return 0;
 }

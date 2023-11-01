@@ -1,6 +1,10 @@
 target_sources(rocket
     PRIVATE
-        nosecone.hpp
-        explicitNosecone.hpp
-        numericalNosecone.hpp
+        noseconeShape.hpp
+        noseconeShape.cpp
+        explicitNoseconeShape.hpp
+        numericalNoseconeShape.hpp
+        numericalNoseconeShape.cpp
+        haackNoseconeShape.hpp
+        haackNoseconeShape.cpp
 )
