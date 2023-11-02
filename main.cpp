@@ -12,6 +12,7 @@
 #include "misc/material.hpp"
 #include "components/internalComponent.hpp"
 #include "shapes/primitives/nosecone/noseconeShapeTypes.hpp"
+#include "shapes/primitives/trapezoidalPrism.hpp"
 
 #define SMALL 1e-10
 
@@ -60,6 +61,21 @@ static std::string toString(const Eigen::MatrixXd& mat){
     return ss.str();
 }
 
+void testNosecone(){
+    std::unique_ptr<Shapes::NoseconeShape> daNose = Shapes::NoseconeShapeFactory::create(Shapes::NoseconeShapeTypes::HAACK, 0.0632/2, 0.13, 0.003, 0);
+
+    fmt::print("{:<30} {}\n", "Da nose volume", daNose->volume());
+    fmt::print("{:<30} {}\n", "Da nose filled volume", daNose->filledVolume());
+    fmt::print("{:<30} {}\n", "Da nose wet area", daNose->wettedArea());
+    fmt::print("{:<30} {}\n", "Da nose plan area", daNose->planformArea());
+    fmt::print("{:<30} [{}]\n", "Da nose CG", toString(daNose->cm().transpose()));
+    fmt::print("{:<30}\n{}\n", "Da nose Inertia", toString(daNose->inertia()));
+    fmt::print("{:<30} {}\n", "Da nose avg rad", daNose->averageRadius());
+    auto noseBsRad = daNose->bisectedAverageRadius(daNose->length()/2);
+    fmt::print("{:<30} {} {} {}\n", "Da nose start mid end rads", daNose->radius(0), daNose->radius(daNose->length()/2), daNose->radius(daNose->length()));
+    fmt::print("{:<30} {} {}\n", "Da nose split rads", noseBsRad[0], noseBsRad[1]);
+}
+
 int main(int argc, char** argv){
     UUIDv4::UUIDGenerator<std::mt19937_64> idgen;
     auto id = idgen.getUUID();
@@ -84,19 +100,10 @@ int main(int argc, char** argv){
     toob->printComponentTree();
     fmt::print("Toob tree height {}\n", toob->height());
 
-    //Shapes::HaackNoseconeShape daNose = Shapes::HaackNoseconeShape(radius, 0.13, 0.003, 0);
-    std::unique_ptr<Shapes::NoseconeShape> daNose = Shapes::NoseconeShapeFactory::create(Shapes::NoseconeShapeTypes::HAACK,radius, 0.13, 0.003, 0);
-
-    fmt::print("{:<30} {}\n", "Da nose volume", daNose->volume());
-    fmt::print("{:<30} {}\n", "Da nose filled volume", daNose->filledVolume());
-    fmt::print("{:<30} {}\n", "Da nose wet area", daNose->wettedArea());
-    fmt::print("{:<30} {}\n", "Da nose plan area", daNose->planformArea());
-    fmt::print("{:<30} [{}]\n", "Da nose CG", toString(daNose->cm().transpose()));
-    fmt::print("{:<30}\n{}\n", "Da nose Inertia", toString(daNose->inertia()));
-    fmt::print("{:<30} {}\n", "Da nose avg rad", daNose->averageRadius());
-    auto noseBsRad = daNose->bisectedAverageRadius(daNose->length()/2);
-    fmt::print("{:<30} {} {} {}\n", "Da nose start mid end rads", daNose->radius(0), daNose->radius(daNose->length()/2), daNose->radius(daNose->length()));
-    fmt::print("{:<30} {} {}\n", "Da nose split rads", noseBsRad[0], noseBsRad[1]);
+    auto trap = Shapes::TrapezoidalPrism(0.1, 0.03, 0.06, 0.06, 0.003);
+    fmt::print("{:<30} {}\n", "Trapz volume", trap.volume());
+    fmt::print("{:<30} {}\n", "Trapz cm", toString(trap.cm().transpose()));
+    fmt::print("{:<30}\n{}\n", "Trapz inertia", toString(trap.inertia()));
 
     return 0;
 }

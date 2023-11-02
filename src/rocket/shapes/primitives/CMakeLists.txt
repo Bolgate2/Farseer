@@ -10,6 +10,8 @@ target_sources(rocket
         hollowAxisymmetricShape.hpp
         cylinder.hpp
         cylinder.cpp
+        trapezoidalPrism.cpp
+        trapezoidalPrism.hpp
 )
 
 add_subdirectory(nosecone)
