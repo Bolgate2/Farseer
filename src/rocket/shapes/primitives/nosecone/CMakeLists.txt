@@ -5,6 +5,6 @@ target_sources(rocket
         explicitNoseconeShape.hpp
         numericalNoseconeShape.hpp
         numericalNoseconeShape.cpp
-        haackNoseconeShape.hpp
-        haackNoseconeShape.cpp
+        noseconeShapeTypes.hpp
+        noseconeShapeTypes.cpp
 )

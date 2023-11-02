@@ -9,7 +9,7 @@
 
 
 #include "nanValues.hpp"
-#include "../shapes/aeroShape.hpp"
+#include "../shapes/components/aeroComponentShape.hpp"
 #include "../misc/material.hpp"
 #include "../misc/finish.hpp"
 
@@ -27,7 +27,7 @@ namespace Rocket{
             static std::string defaultName;
             
             std::weak_ptr<AeroComponent> _parent;
-            std::unique_ptr<Shapes::AeroShape> _shape;
+            std::unique_ptr<Shapes::AeroComponentShape> _shape;
 
             std::unique_ptr<Finish> _finish;
             std::unique_ptr<Material> _material;
@@ -84,7 +84,7 @@ namespace Rocket{
             virtual void clearC_m_dampCache();
             // constructor
             AeroComponent(
-                std::unique_ptr<Shapes::AeroShape> shape, std::unique_ptr<Material> material,
+                std::unique_ptr<Shapes::AeroComponentShape> shape, std::unique_ptr<Material> material,
                 std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position
                 );
         public:
@@ -125,9 +125,9 @@ namespace Rocket{
             virtual double bodyRadius(double x) = 0; // VIRTUAL
 
             // getter and setter for shape
-            virtual Shapes::AeroShape* shape();
-            virtual void setShape( std::unique_ptr<Shapes::AeroShape> shape );
-            //virtual void setShape( Shapes::AeroShape* shape ); // CLEAR CACHES
+            virtual Shapes::AeroComponentShape* shape();
+            virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape );
+            //virtual void setShape( Shapes::AeroComponentShape* shape ); // CLEAR CACHES
             // getter and setter for finish
             virtual Finish* finish();
             virtual void setFinish( std::unique_ptr<Finish> finish ); // CLEAR CACHES

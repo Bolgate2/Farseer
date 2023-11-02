@@ -10,10 +10,10 @@ namespace Rocket{
         // structs are the same as classes except things are public by default instead of private
         // variables
         std::string name;
-        float roughness;
+        double roughness;
 
         // contructors
-        Finish(std::string name, float roughness);
+        Finish(std::string name, double roughness);
         
         // default types
         Finish * default_paint;

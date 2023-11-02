@@ -146,7 +146,7 @@ namespace Rocket{
         return _shape.get();
     }
     
-    void BodyComponent::setShape( std::unique_ptr<Shapes::AeroShape> shape ){
+    void BodyComponent::setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ){
         // try to cast the underlying pointer to a pointer of the inherited class
         auto castedShapePointer = dynamic_cast<Shapes::BodyComponentShape*>(shape.get());
 

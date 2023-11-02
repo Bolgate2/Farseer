@@ -2,7 +2,7 @@
 # define BODY_TUBE_H_
 
 #include "../bodyComponent.hpp"
-#include "../../shapes/bodyTube/bodyTube.hpp"
+#include "../../shapes/components/bodyTube/bodyTube.hpp"
 
 namespace Rocket{
     class BodyTube: public BodyComponent{
@@ -51,7 +51,7 @@ namespace Rocket{
             
             // redefine shape getter bc shape has changed
             virtual Shapes::BodyTubeShape* shape();
-            virtual void setShape( std::unique_ptr<Shapes::AeroShape> shape ) override;
+            virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::BodyTubeShape> shape );
     };

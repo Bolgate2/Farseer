@@ -1,14 +1,14 @@
-#include "aeroShape.hpp"
+#include "aeroComponentShape.hpp"
 #include <Eigen/Dense>
 #include <iostream>
 
 namespace Shapes{
 
-    double AeroShape::volume(){
+    double AeroComponentShape::volume(){
         return shape()->volume();
     }
 
-    Eigen::Matrix3d AeroShape::inertia(){
+    Eigen::Matrix3d AeroComponentShape::inertia(){
         return shape()->inertia();
     }
 }

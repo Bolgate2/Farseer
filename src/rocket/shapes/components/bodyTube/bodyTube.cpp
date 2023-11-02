@@ -2,6 +2,7 @@
 # include <iostream>
 # include <memory>
 # include <cmath>
+# include <Eigen/Dense>
 
 namespace Shapes{
 

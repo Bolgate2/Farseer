@@ -1,0 +1,6 @@
+# ifndef EXTERNAL_COMPONENT_SHAPE_H_
+# define EXTERNAL_COMPONENT_SHAPE_H_
+/*
+
+*/
+#endif

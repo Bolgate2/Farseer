@@ -3,7 +3,7 @@
 
 namespace Shapes {
     // this class defines the methods required by a shape for it to be used for aerodynamics
-    class AeroShapeInterface{
+    class AeroShapeFunctions{
         public:
             virtual double wettedArea() = 0; // surface area of the shape exposed to the air
             virtual double referenceArea() = 0; // shapes reference area

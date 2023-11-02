@@ -2,12 +2,13 @@
 #define NOSECONE_SHAPE_H
 
 #include "../hollowAxisymmetricShape.hpp"
-#include "../aeroShapeInterface.hpp"
+#include "../aeroShapeFunctions.hpp"
+#include <Eigen/Dense>
 
 namespace Shapes{
     // this will remain abstract
     // THE NOSECONES ORIGIN IS AT ITS TIP, inertia is easier to calculate from here for numerical models and its cm is unpredictable
-    class NoseconeShape: public HollowAxisymmetricShape, virtual public AeroShapeInterface{
+    class NoseconeShape: public HollowAxisymmetricShape, virtual public AeroShapeFunctions{
         // redefining some functions as pure virtual so that they must be implemented down the line
         protected:
             double _shapeParam;
@@ -23,7 +24,7 @@ namespace Shapes{
             virtual double shapeParam();
             virtual void setShapeParam(double val);
 
-            // inherited from AeroShapeInterface
+            // inherited from AeroShapeFunctions
             virtual double referenceArea() override;
 
             // inherited from axisymmetric shape

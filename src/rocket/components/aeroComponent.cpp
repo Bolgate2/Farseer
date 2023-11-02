@@ -7,7 +7,7 @@ namespace Rocket{
     // constructors
     std::string AeroComponent::defaultName = "Aero Component";
 
-    AeroComponent::AeroComponent(std::unique_ptr<Shapes::AeroShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
+    AeroComponent::AeroComponent(std::unique_ptr<Shapes::AeroComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
     Component(name, position)
     {
         setShape( std::move(shape) );
@@ -297,11 +297,11 @@ namespace Rocket{
     }
 
     // getter and setter for shape
-    Shapes::AeroShape* AeroComponent::shape(){
+    Shapes::AeroComponentShape* AeroComponent::shape(){
         return _shape.get();
     }
 
-    void AeroComponent::setShape( std::unique_ptr<Shapes::AeroShape> shape ){
+    void AeroComponent::setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ){
         _shape = std::move(shape);
         clearCaches();
     }

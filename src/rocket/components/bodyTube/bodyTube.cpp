@@ -1,5 +1,5 @@
 #include "bodyTube.hpp"
-#include "../../shapes/bodyTube/bodyTube.hpp"
+#include "../../shapes/components/bodyTube/bodyTube.hpp"
 
 #include <cmath>
 
@@ -96,7 +96,7 @@ namespace Rocket{
         return _shape.get();
     }
 
-    void BodyTube::setShape( std::unique_ptr<Shapes::AeroShape> shape ){
+    void BodyTube::setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ){
         // try to cast the underlying pointer to a pointer of the inherited class
         auto castedShapePointer = dynamic_cast<Shapes::BodyTubeShape*>(shape.get());
 

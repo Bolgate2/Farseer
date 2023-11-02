@@ -1,14 +1,14 @@
 # ifndef BODY_COMPONENT_SHAPE_H_
 # define BODY_COMPONENT_SHAPE_H_
 
-#include "hollowAxisymmetricShape.hpp"
-#include "aeroShape.hpp"
+#include "../primitives/hollowAxisymmetricShape.hpp"
+#include "aeroComponentShape.hpp"
 #include <memory>
 
 namespace Shapes{
 
     // this exists for the shape in BodyComponent
-    class BodyComponentShape: public AeroShape{
+    class BodyComponentShape: public AeroComponentShape{
         public:
             // getter and setter for shape
             virtual HollowAxisymmetricShape* shape() = 0;

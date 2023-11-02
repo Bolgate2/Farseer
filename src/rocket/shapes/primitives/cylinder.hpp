@@ -1,8 +1,6 @@
 # ifndef CYLINDER_H_
 # define CYLINDER_H_
 
-#include "axisymmetricShape.hpp"
-#include "hollowShape.hpp"
 #include "hollowAxisymmetricShape.hpp"
 #include <Eigen/Dense>
 #include <cmath>

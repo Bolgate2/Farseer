@@ -12,7 +12,7 @@
 #include "misc/finish.hpp"
 #include "misc/material.hpp"
 #include "components/internalComponent.hpp"
-#include "shapes/nosecone/haackNoseconeShape.hpp"
+#include "shapes/nosecone/noseconeShapeTypes.hpp"
 
 #define SMALL 1e-10
 
@@ -65,7 +65,6 @@ int main(int argc, char** argv){
     auto mat1 = std::make_unique<Rocket::Material>("Cardboard", 680);
     auto fin1 = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
     auto radius = 0.0632/2;
-    //auto toob = std::make_shared<Rocket::BodyTube>( radius, 0.66, 0.0016, std::move(mat1), std::move(fin1));
     auto toob = Rocket::BodyTube::create(radius, 0.66, 0.0016, std::move(mat1), std::move(fin1));
 
     fmt::print("{0:<20} {1:<20}\n", "Toob Name ",toob->name);
@@ -84,13 +83,14 @@ int main(int argc, char** argv){
     toob->printComponentTree();
     fmt::print("Toob tree height {}\n", toob->height());
 
-    Shapes::HaackNoseconeShape daNose = Shapes::HaackNoseconeShape(radius, 0.13, 0.003, 0);
+    //Shapes::HaackNoseconeShape daNose = Shapes::HaackNoseconeShape(radius, 0.13, 0.003, 0);
+    std::unique_ptr<Shapes::NoseconeShape> daNose = Shapes::NoseconeShapeFactory::create("haack",radius, 0.13, 0.003, 0);
 
-    fmt::print("{:<25} {}\n", "Da nose volume", daNose.volume());
-    fmt::print("{:<25} {}\n", "Da nose filled volume", daNose.filledVolume());
-    fmt::print("{:<25} {}\n", "Da nose wet area", daNose.wettedArea());
-    fmt::print("{:<25} {}\n", "Da nose plan area", daNose.planformArea());
-    fmt::print("{:<25} [{}]\n", "Da nose CG", toString(daNose.cm().transpose()));
-
+    fmt::print("{:<25} {}\n", "Da nose volume", daNose->volume());
+    fmt::print("{:<25} {}\n", "Da nose filled volume", daNose->filledVolume());
+    fmt::print("{:<25} {}\n", "Da nose wet area", daNose->wettedArea());
+    fmt::print("{:<25} {}\n", "Da nose plan area", daNose->planformArea());
+    fmt::print("{:<25} [{}]\n", "Da nose CG", toString(daNose->cm().transpose()));
+    fmt::print("{:<25}\n{}\n", "Da nose Inertia", toString(daNose->inertia()));
     return 0;
 }

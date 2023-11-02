@@ -1,10 +1,10 @@
 # ifndef BODY_TUBE_SHAPE_H_
 # define BODY_TUBE_SHAPE_H_
 
-#include "../cylinder.hpp"
-#include "../aeroShapeInterface.hpp"
+#include "../../primitives/cylinder.hpp"
 #include "../bodyComponentShape.hpp"
 #include <memory>
+#include <Eigen/Dense>
 
 namespace Shapes{
     // includes must be virtual so that only one copy of shared parent classes is used

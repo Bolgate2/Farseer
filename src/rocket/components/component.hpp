@@ -7,7 +7,6 @@
 #include <Eigen/Dense>
 #include "uuid_v4.h"
 #include "overrideFlags.hpp"
-#include "propertyCalculator/propertyCalculator.hpp"
 
 namespace Rocket{
 

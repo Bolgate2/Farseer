@@ -5,8 +5,7 @@
 #include "axisymmetricShape.hpp"
 
 namespace Shapes{
-    class HollowAxisymmetricShape: public HollowShape, public AxisymmetricShape{
-    };
+    class HollowAxisymmetricShape: public HollowShape, public AxisymmetricShape{};
 }
 
 # endif

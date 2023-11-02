@@ -4,7 +4,7 @@
 #include "aeroComponent.hpp"
 #include "internalComponent.hpp"
 #include "externalComponent.hpp"
-#include "../shapes/bodyComponentShape.hpp"
+#include "../shapes/components/bodyComponentShape.hpp"
 
 #include <string>
 #include <vector>
@@ -56,7 +56,7 @@ namespace Rocket{
             
             // redefining shape functions
             virtual Shapes::BodyComponentShape* shape() override;
-            virtual void setShape( std::unique_ptr<Shapes::AeroShape> shape ) override;
+            virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ); // func for correct typing
 
             // getter and setter for shape length

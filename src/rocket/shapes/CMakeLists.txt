@@ -1,20 +1,2 @@
-target_sources(rocket
-    PRIVATE
-        shape.hpp
-        shape.cpp
-        axisymmetricShape.hpp
-        axisymmetricShape.cpp
-        aeroShapeInterface.hpp
-        aeroShape.hpp
-        aeroShape.cpp
-        hollowShape.hpp
-        hollowShape.cpp
-        hollowAxisymmetricShape.hpp
-        bodyComponentShape.hpp
-        externalComponentShape.hpp
-        internalComponentShape.hpp
-        cylinder.hpp
-        cylinder.cpp
-)
-add_subdirectory(bodyTube)
-add_subdirectory(nosecone)
+add_subdirectory(primitives)
+add_subdirectory(components)

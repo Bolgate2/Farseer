@@ -3,6 +3,7 @@
 
 #include "component.hpp"
 #include <vector>
+#include <memory>
 
 namespace Rocket{
     class InternalComponent: public Component{

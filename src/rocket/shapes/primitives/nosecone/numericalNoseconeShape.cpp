@@ -113,6 +113,7 @@ namespace Shapes{
         _planformArea = ( ( r1+r2 )/2*stepArr ).sum()*2; //trapezoidal integration (then *2)
         _planformCenter = ( (r1+r2)*stepArr.pow(2) ).sum()/_planformArea;
         _filledVolume = ((( r1+r2 )/2).pow(2)*stepArr ).sum()*M_PI; // solid of revolution
+        _filledCm = Eigen::Vector3d{_planformCenter, 0, 0}; // same as the planform center as density is uniform
         
         Eigen::ArrayXd dFullV = M_PI/3 * stepArr * (r1.pow(2) + r1*r2 + r2.pow(2));
         Eigen::ArrayXd dV = M_PI * stepArr * height * (r1+r2-height);
@@ -120,12 +121,37 @@ namespace Shapes{
         dV = ( r1 < height || r2 < height ).select(dFullV, dV);
         _unfilledVolume = dV.sum();
 
-        // refactor to do filled as well
+        // unfilled Cm
         Eigen::ArrayXd xAvg = x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<num_divs-1>)) + step/2; // subtraction only implemented for arrays
-        double cgX = (xAvg * dV).sum()/volume();
+        double cgX = (xAvg * dV).sum()/unfilledVolume();
         _unfilledCm = Eigen::Vector3d{cgX, 0, 0};
 
-        // do inertia later
+        // unfilled inertia
+        Eigen::ArrayXd outer = (r1+r2)/2;
+        Eigen::ArrayXd inner = (outer-height).cwiseMax(0);
+        inner = ( r1 < height || r2 < height ).select(0, inner);
+        
+        double rotationalInertia = ( dV*(outer.pow(2)+inner.pow(2))/2 ).sum();
+        double longitudinalInertia = ( dV*((3*(outer.pow(2)+inner.pow(2)) + stepArr.pow(2))/12 + xAvg.pow(2) ) ).sum();
+        double i_xx = rotationalInertia;
+        double i_yy = longitudinalInertia;
+        double i_zz = longitudinalInertia;
+        _unfilledInertia = Eigen::Matrix3d{
+            {i_xx,  0,      0},
+            {0,     i_yy,   0},
+            {0,     0,      i_zz}
+        };
+        // filled inertia, just remove inner as it's 0 in the filled case
+        rotationalInertia = ( dV*outer.pow(2)/2 ).sum();
+        longitudinalInertia = ( dV*((3*outer.pow(2) + stepArr.pow(2))/12 + xAvg.pow(2) ) ).sum();
+        i_xx = rotationalInertia;
+        i_yy = longitudinalInertia;
+        i_zz = longitudinalInertia;
+        _filledInertia = Eigen::Matrix3d{
+            {i_xx,  0,      0},
+            {0,     i_yy,   0},
+            {0,     0,      i_zz}
+        };
     }
 
 }
