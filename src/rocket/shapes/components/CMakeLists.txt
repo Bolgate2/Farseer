@@ -8,5 +8,5 @@ target_sources(rocket
 )
 
 add_subdirectory(bodyTube)
-# add_subdirectory(nosecone)
+add_subdirectory(nosecone)
 # add_subdirectory(fins)

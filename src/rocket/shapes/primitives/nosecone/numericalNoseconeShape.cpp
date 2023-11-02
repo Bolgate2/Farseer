@@ -54,6 +54,11 @@ namespace Shapes{
         return _planformCenter;
     }
 
+    double NumericalNoseconeShape::averageRadius(){
+        if(std::isnan(_averageRadius)) calculateProperties();
+        return _averageRadius;
+    }
+
     void NumericalNoseconeShape::clearProperties(){
         _unfilledInertia = NAN_M3D;
         _filledInertia = NAN_M3D;
@@ -64,6 +69,7 @@ namespace Shapes{
         _wettedArea = NAN_D;
         _planformArea = NAN_D;
         _planformCenter = NAN_D;
+        _averageRadius = NAN_D;
     }
 
     void NumericalNoseconeShape::setThickness(double thickness){
@@ -93,18 +99,56 @@ namespace Shapes{
         return rad;
     }
 
+    double NumericalNoseconeShape::radius(){
+        return NoseconeShape::radius();
+    }
+
+    std::array<double,2> NumericalNoseconeShape::bisectedAverageRadius(double x){
+        if(x <= 0) return { 0, averageRadius() };
+        if(x >= length()) return {averageRadius(), 0};
+        const int xFromTipElems = std::clamp( (int)std::round(x/length()*numDivs), 2, numDivs-2); // must be at least 2 elems
+        const int xToBaseElems = numDivs-xFromTipElems;
+        const double stepFromTip = x/xFromTipElems;
+        const double stepToBase = (length()-x)/xToBaseElems;
+
+        Eigen::ArrayXd xFromTip;
+        xFromTip.setEqualSpaced(xFromTipElems, 0, stepFromTip);
+        Eigen::ArrayXd xToBase;
+        xToBase.setEqualSpaced(xToBaseElems, x, stepToBase);
+
+        std::cout << xFromTip.transpose().size() << std::endl;
+
+        std::cout << xToBase.transpose().size() << std::endl;
+
+        Eigen::ArrayXd yFromTip = radius(xFromTip);
+        Eigen::ArrayXd r1FromTip = yFromTip(Eigen::seqN( 1, xFromTipElems-1));
+        Eigen::ArrayXd r2FromTip = yFromTip(Eigen::seqN( 0, xFromTipElems-1));
+        double avgRadFromTip = ( (r1FromTip + r2FromTip)/2 ).mean();
+
+        Eigen::ArrayXd yToBase = radius(xToBase);
+        Eigen::ArrayXd r1ToBase = yToBase(Eigen::seqN( 1, xToBaseElems-1));
+        Eigen::ArrayXd r2ToBase = yToBase(Eigen::seqN( 0, xToBaseElems-1));
+        double avgRadToBase = ( (r1ToBase + r2ToBase)/2 ).mean();
+
+        return { avgRadFromTip, avgRadToBase };
+    }
+
     void NumericalNoseconeShape::calculateProperties(){
         clearProperties();
-        const int num_divs = 100;
-        const double step = length()/(num_divs-1);
-        Eigen::Array<double,1, num_divs> x;
+        const double step = length()/(numDivs-1);
+        Eigen::Array<double,1, numDivs> x;
         x.setEqualSpaced(0,step);
 
-        Eigen::Array<double,1, num_divs> y = radius(x);
+        Eigen::Array<double, 1, numDivs> y = radius(x);
+
+        Eigen::Array<double, 2, numDivs> radiiArray;
+
+        _averageRadius = y.mean();
+
         // seqN creates a slice. fix sets the index at compile time which improves performance
-        Eigen::ArrayXd r1 = y(Eigen::seqN( Eigen::fix<1>, Eigen::fix<num_divs-1>));
-        Eigen::ArrayXd r2 = y(Eigen::seqN( Eigen::fix<0>, Eigen::fix<num_divs-1>));
-        Eigen::ArrayXd stepArr = x(Eigen::seqN( Eigen::fix<1>, Eigen::fix<num_divs-1>)) - x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<num_divs-1>));
+        Eigen::ArrayXd r1 = y(Eigen::seqN( Eigen::fix<1>, Eigen::fix<numDivs-1>));
+        Eigen::ArrayXd r2 = y(Eigen::seqN( Eigen::fix<0>, Eigen::fix<numDivs-1>));
+        Eigen::ArrayXd stepArr = x(Eigen::seqN( Eigen::fix<1>, Eigen::fix<numDivs-1>)) - x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<numDivs-1>));
         Eigen::ArrayXd hyp = ( (r1-r2).pow(2) + stepArr.pow(2) ).sqrt();
         Eigen::ArrayXd height = thickness()*hyp/step;
 
@@ -122,7 +166,7 @@ namespace Shapes{
         _unfilledVolume = dV.sum();
 
         // unfilled Cm
-        Eigen::ArrayXd xAvg = x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<num_divs-1>)) + step/2; // subtraction only implemented for arrays
+        Eigen::ArrayXd xAvg = x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<numDivs-1>)) + step/2; // subtraction only implemented for arrays
         double cgX = (xAvg * dV).sum()/unfilledVolume();
         _unfilledCm = Eigen::Vector3d{cgX, 0, 0};
 

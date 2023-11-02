@@ -4,6 +4,7 @@
 #include "../primitives/hollowAxisymmetricShape.hpp"
 #include "aeroComponentShape.hpp"
 #include <memory>
+#include <array>
 
 namespace Shapes{
 
@@ -15,6 +16,8 @@ namespace Shapes{
             virtual void setShape( std::unique_ptr<Shape> shape ) = 0;
             // new function
             virtual double referenceLength() = 0;
+            virtual double averageRadius() = 0; // required for damping
+            virtual std::array<double,2> bisectedAverageRadius(double x) = 0; //returns [from top, to bottom]
             
             // getters and setters for HollowAxisymmetricShape
             virtual double radius(double x) { return shape()->radius(x); }

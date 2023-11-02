@@ -8,7 +8,7 @@ namespace Rocket{
     class BodyTube: public BodyComponent{
         private:
             static std::string defaultName;
-            std::unique_ptr<Shapes::BodyTubeShape> _shape;
+            std::unique_ptr<Shapes::BodyTubeComponentShape> _shape;
             double calculateC_n_a( double mach, double alpha, double gamma = 1.4 );
             double calculateC_m_a( double mach, double alpha, double gamma = 1.4 );
             Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 );
@@ -26,7 +26,7 @@ namespace Rocket{
                 );
             // constructor with existing shape
             BodyTube(
-                std::unique_ptr<Shapes::BodyTubeShape> shape, std::unique_ptr<Material> material,
+                std::unique_ptr<Shapes::BodyTubeComponentShape> shape, std::unique_ptr<Material> material,
                 std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position
                 );
         public:
@@ -45,15 +45,15 @@ namespace Rocket{
             // create with existing shape
             [[nodiscard]]
             static std::shared_ptr<BodyTube> create(
-                std::unique_ptr<Shapes::BodyTubeShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
+                std::unique_ptr<Shapes::BodyTubeComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
                 BodyComponent* parent = nullptr, std::string name = BodyTube::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
                 );
             
             // redefine shape getter bc shape has changed
-            virtual Shapes::BodyTubeShape* shape();
+            virtual Shapes::BodyTubeComponentShape* shape();
             virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ) override;
-            virtual void setShape( std::unique_ptr<Shapes::BodyTubeShape> shape );
+            virtual void setShape( std::unique_ptr<Shapes::BodyTubeComponentShape> shape );
     };
 }
 

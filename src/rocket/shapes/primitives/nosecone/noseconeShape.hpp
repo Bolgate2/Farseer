@@ -33,6 +33,9 @@ namespace Shapes{
             virtual void setRadius(double radius) override;
             virtual double radius(double x) override = 0;
             virtual double radius() override;
+
+            virtual double averageRadius() = 0; // required for damping
+            virtual std::array<double,2> bisectedAverageRadius(double x) = 0;
             
     };
 }

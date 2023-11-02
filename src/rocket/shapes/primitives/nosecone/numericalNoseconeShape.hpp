@@ -12,6 +12,7 @@ namespace Shapes{
     // this will remain abstract
     class NumericalNoseconeShape : public NoseconeShape{
         protected:
+            static const int numDivs = 100; // number of rings the nosecone is divided into to calculate properties
             // CACHED VALUES FOR CALCULATED PROPERTIES
             virtual void clearProperties();
             // inherited from hollowShape
@@ -39,11 +40,13 @@ namespace Shapes{
             double _planformArea = NAN_D;
             double _planformCenter = NAN_D;
 
-
+            double _averageRadius = NAN_D;
+            
         public:
             NumericalNoseconeShape(double radius, double length, double thickness, double shapeParam);
             virtual Eigen::ArrayXd radius(Eigen::ArrayXd exes) = 0; // Each nosecone must implement this, vectorized radius calc
             virtual double radius(double x) override;
+            virtual double radius() override;
             void calculateProperties();
 
             // inherited from HollowShape
@@ -59,6 +62,9 @@ namespace Shapes{
             virtual void setLength(double length) override; //sets the length of the shape
             virtual void setRadius(double radius) override;
             virtual void setShapeParam(double val) override;
+
+            virtual double averageRadius() override; // required for damping
+            virtual std::array<double,2> bisectedAverageRadius(double x) override; // returns [from tip, to base]
     };
 }
 

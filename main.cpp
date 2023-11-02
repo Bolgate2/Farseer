@@ -6,13 +6,12 @@
 #include <Eigen/Dense>
 #include <memory>
 
-#include "shapes/cylinder.hpp"
-#include "shapes/bodyTube/bodyTube.hpp"
+
 #include "components/bodyTube/bodyTube.hpp"
 #include "misc/finish.hpp"
 #include "misc/material.hpp"
 #include "components/internalComponent.hpp"
-#include "shapes/nosecone/noseconeShapeTypes.hpp"
+#include "shapes/primitives/nosecone/noseconeShapeTypes.hpp"
 
 #define SMALL 1e-10
 
@@ -53,6 +52,8 @@ void testVectorFunctions(){
     std::cout << (nullMat.hasNaN() ? "true" : "false") << "\n";
 }
 
+
+
 static std::string toString(const Eigen::MatrixXd& mat){
     std::stringstream ss;
     ss << mat;
@@ -84,13 +85,18 @@ int main(int argc, char** argv){
     fmt::print("Toob tree height {}\n", toob->height());
 
     //Shapes::HaackNoseconeShape daNose = Shapes::HaackNoseconeShape(radius, 0.13, 0.003, 0);
-    std::unique_ptr<Shapes::NoseconeShape> daNose = Shapes::NoseconeShapeFactory::create("haack",radius, 0.13, 0.003, 0);
+    std::unique_ptr<Shapes::NoseconeShape> daNose = Shapes::NoseconeShapeFactory::create(Shapes::NoseconeShapeTypes::HAACK,radius, 0.13, 0.003, 0);
 
-    fmt::print("{:<25} {}\n", "Da nose volume", daNose->volume());
-    fmt::print("{:<25} {}\n", "Da nose filled volume", daNose->filledVolume());
-    fmt::print("{:<25} {}\n", "Da nose wet area", daNose->wettedArea());
-    fmt::print("{:<25} {}\n", "Da nose plan area", daNose->planformArea());
-    fmt::print("{:<25} [{}]\n", "Da nose CG", toString(daNose->cm().transpose()));
-    fmt::print("{:<25}\n{}\n", "Da nose Inertia", toString(daNose->inertia()));
+    fmt::print("{:<30} {}\n", "Da nose volume", daNose->volume());
+    fmt::print("{:<30} {}\n", "Da nose filled volume", daNose->filledVolume());
+    fmt::print("{:<30} {}\n", "Da nose wet area", daNose->wettedArea());
+    fmt::print("{:<30} {}\n", "Da nose plan area", daNose->planformArea());
+    fmt::print("{:<30} [{}]\n", "Da nose CG", toString(daNose->cm().transpose()));
+    fmt::print("{:<30}\n{}\n", "Da nose Inertia", toString(daNose->inertia()));
+    fmt::print("{:<30} {}\n", "Da nose avg rad", daNose->averageRadius());
+    auto noseBsRad = daNose->bisectedAverageRadius(daNose->length()/2);
+    fmt::print("{:<30} {} {} {}\n", "Da nose start mid end rads", daNose->radius(0), daNose->radius(daNose->length()/2), daNose->radius(daNose->length()));
+    fmt::print("{:<30} {} {}\n", "Da nose split rads", noseBsRad[0], noseBsRad[1]);
+
     return 0;
 }

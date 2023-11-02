@@ -4,17 +4,15 @@
 #include <iostream>
 
 namespace Shapes{
-    std::unique_ptr<NoseconeShape> NoseconeShapeFactory::create(std::string type, double radius, double length, double thickness, double shapeParam){
-        std::string upper_type = "";
-        for(auto ch = type.begin(); ch != type.end(); ch++){
-            upper_type += std::toupper(*ch);
-        }
+    std::unique_ptr<NoseconeShape> NoseconeShapeFactory::create(NoseconeShapeTypes type, double radius, double length, double thickness, double shapeParam){
+
         std::unique_ptr<NoseconeShape> ptr;
-        if(upper_type == "HAACK"){
-            std::cout << "hi" << std::endl;
-            ptr = std::make_unique<HaackNoseconeShape>(radius, length, thickness, shapeParam);
-        } else {
-            ptr = std::make_unique<HaackNoseconeShape>(radius, length, thickness, shapeParam); // default nosecone
+        switch(type){
+            case NoseconeShapeTypes::HAACK:
+                ptr = std::make_unique<HaackNoseconeShape>(radius, length, thickness, shapeParam);
+                break;
+            default:
+                ptr = std::make_unique<HaackNoseconeShape>(radius, length, thickness, shapeParam);
         }
         return ptr;
     }
@@ -23,9 +21,11 @@ namespace Shapes{
     HaackNoseconeShape::HaackNoseconeShape(double radius, double length, double thickness, double shapeParam):
     NumericalNoseconeShape(radius, length, thickness, shapeParam) {}
 
+    
     double HaackNoseconeShape::radius(){
-        return _radius;
+        return NumericalNoseconeShape::radius();
     }
+    
 
     Eigen::ArrayXd HaackNoseconeShape::radius(Eigen::ArrayXd exes){
         Eigen::ArrayXd theta = (1-2*exes/length()).acos();

@@ -10,18 +10,18 @@ namespace Rocket{
     BodyTube::BodyTube(double radius, double length, double thickness, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
     BodyComponent(nullptr, std::move(material), std::move(finish), name, position )
     {
-        auto shp = std::make_unique<Shapes::BodyTubeShape>(radius, length, thickness);
+        auto shp = std::make_unique<Shapes::BodyTubeComponentShape>(radius, length, thickness);
         setShape(std::move(shp));
     }
     // constructor without thickness (for a filled tube)
     BodyTube::BodyTube(double radius, double length, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
     BodyComponent(nullptr, std::move(material), std::move(finish), name, position)
     {
-        auto shp = std::make_unique<Shapes::BodyTubeShape>(radius, length);
+        auto shp = std::make_unique<Shapes::BodyTubeComponentShape>(radius, length);
         setShape(std::move(shp));
     }
     // constructor with a preconstructed shape
-    BodyTube::BodyTube(std::unique_ptr<Shapes::BodyTubeShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
+    BodyTube::BodyTube(std::unique_ptr<Shapes::BodyTubeComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
     BodyComponent(nullptr, std::move(material), std::move(finish), name, position)
     {
         setShape(std::move(shape));
@@ -50,7 +50,7 @@ namespace Rocket{
         return obj;
     }
     // creator with existing shape
-    std::shared_ptr<BodyTube> BodyTube::create(std::unique_ptr<Shapes::BodyTubeShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,Rocket::BodyComponent *parent, std::string name, Eigen::Vector3d position)
+    std::shared_ptr<BodyTube> BodyTube::create(std::unique_ptr<Shapes::BodyTubeComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,Rocket::BodyComponent *parent, std::string name, Eigen::Vector3d position)
     {
         auto obj = std::shared_ptr<BodyTube>(
             new BodyTube(std::move(shape), std::move(material), std::move(finish), name, position)
@@ -92,17 +92,17 @@ namespace Rocket{
         return topCoeff + bottomCoeff;
     }
     
-    Shapes::BodyTubeShape* BodyTube::shape() {
+    Shapes::BodyTubeComponentShape* BodyTube::shape() {
         return _shape.get();
     }
 
     void BodyTube::setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ){
         // try to cast the underlying pointer to a pointer of the inherited class
-        auto castedShapePointer = dynamic_cast<Shapes::BodyTubeShape*>(shape.get());
+        auto castedShapePointer = dynamic_cast<Shapes::BodyTubeComponentShape*>(shape.get());
 
         if(castedShapePointer != nullptr){
             // if casting is successful the a unique pointer of the correct type is crated and the old one is released
-            auto newShapeUniquePtr = std::unique_ptr<Shapes::BodyTubeShape>(castedShapePointer);
+            auto newShapeUniquePtr = std::unique_ptr<Shapes::BodyTubeComponentShape>(castedShapePointer);
             shape.release();
             setShape(std::move(newShapeUniquePtr));
         }
@@ -113,10 +113,10 @@ namespace Rocket{
     
     void BodyTube::setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ){
         // try to cast the underlying pointer to a pointer of the inherited class
-        auto castedShapePointer = dynamic_cast<Shapes::BodyTubeShape*>(shape.get());
+        auto castedShapePointer = dynamic_cast<Shapes::BodyTubeComponentShape*>(shape.get());
         if(castedShapePointer != nullptr){
             // if casting is successful the a unique pointer of the correct type is crated and the old one is released
-            auto newShapeUniquePtr = std::unique_ptr<Shapes::BodyTubeShape>(castedShapePointer);
+            auto newShapeUniquePtr = std::unique_ptr<Shapes::BodyTubeComponentShape>(castedShapePointer);
             shape.release();
             setShape(std::move(newShapeUniquePtr));
         }
@@ -124,7 +124,7 @@ namespace Rocket{
         std::cerr << "Invalid shape for body tube\n"; // TODO: make this more descriptive
     }
 
-    void BodyTube::setShape(std::unique_ptr<Shapes::BodyTubeShape> shape){
+    void BodyTube::setShape(std::unique_ptr<Shapes::BodyTubeComponentShape> shape){
         // try to cast the underlying pointer to a pointer of the inherited class
         _shape = std::move(shape);
     }
