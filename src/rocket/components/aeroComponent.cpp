@@ -78,8 +78,8 @@ namespace Rocket{
     void AeroComponent::createCpMapping( Eigen::Vector3d value, double mach, double alpha, double gamma){
         _cpCache[mach][alpha][gamma] = value;
     }
-    void AeroComponent::createC_m_dampMapping(double value, double time, double omega, double v){
-        _c_m_dampCache[time][omega][v] = value;
+    void AeroComponent::createC_m_dampMapping(double value, double x, double omega, double v){
+        _c_m_dampCache[x][omega][v] = value;
     }
 
     // checking that args exist in cache
@@ -131,10 +131,10 @@ namespace Rocket{
         return false;
     }
 
-    bool AeroComponent::c_m_dampExists(double time, double omega, double v){
-        auto omegaCacheKey = _c_m_dampCache.find(time);
+    bool AeroComponent::c_m_dampExists(double x, double omega, double v){
+        auto omegaCacheKey = _c_m_dampCache.find(x);
         if(omegaCacheKey != _c_m_dampCache.end()){
-            auto omegaCache = _c_m_dampCache[time];
+            auto omegaCache = _c_m_dampCache[x];
             auto vCacheKey = omegaCache.find(omega);
             if(vCacheKey != omegaCache.end()){
                 auto vCache = omegaCache[omega];
@@ -254,10 +254,10 @@ namespace Rocket{
     }
 
     //C_m_damp
-    double AeroComponent::calculateC_m_dampWithComponents(double time, double omega, double v){
-        auto thisC_m_damp = calculateC_m_damp(time, omega, v);
+    double AeroComponent::calculateC_m_dampWithComponents(double x, double omega, double v){
+        auto thisC_m_damp = calculateC_m_damp(x, omega, v);
         for(auto aeroComp = aeroComponents().begin(); aeroComp != aeroComponents().end(); ++aeroComp){
-            auto compC_m_damp = (*aeroComp)->c_m_damp(time, omega, v);
+            auto compC_m_damp = (*aeroComp)->c_m_damp(x, omega, v);
             auto compAref = (*aeroComp)->referenceArea();
             auto compDref = (*aeroComp)->referenceLength();
             auto compAdjC_m_damp = compC_m_damp* (compAref*compDref) / (referenceArea()*referenceLength());
@@ -266,16 +266,16 @@ namespace Rocket{
         return thisC_m_damp;
     }
 
-    double AeroComponent::calculateC_m_dampWithCache(double time, double omega, double v){
-        if(!caching()) return calculateC_m_dampWithComponents(time, omega, v);
-        if(c_m_dampExists(time, omega, v)) return _c_m_dampCache[time][omega][v];
-        auto thisC_m_damp = calculateC_m_dampWithComponents(time, omega, v);
-        createC_m_dampMapping(thisC_m_damp, time, omega, v);
+    double AeroComponent::calculateC_m_dampWithCache(double x, double omega, double v){
+        if(!caching()) return calculateC_m_dampWithComponents(x, omega, v);
+        if(c_m_dampExists(x, omega, v)) return _c_m_dampCache[x][omega][v];
+        auto thisC_m_damp = calculateC_m_dampWithComponents(x, omega, v);
+        createC_m_dampMapping(thisC_m_damp, x, omega, v);
         return thisC_m_damp;
     }
 
-    double AeroComponent::c_m_damp(double time, double omega, double v){
-        return calculateC_m_damp(omega, v, time);
+    double AeroComponent::c_m_damp(double x, double omega, double v){
+        return calculateC_m_dampWithCache(x, omega, v);
     }
 
     // shape stuff
@@ -292,7 +292,6 @@ namespace Rocket{
     }
 
     double AeroComponent::planformCenter(){
-        _shape->planformCenter();
         return shape()->planformCenter();
     }
 

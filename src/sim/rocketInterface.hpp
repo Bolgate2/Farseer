@@ -99,14 +99,14 @@ namespace Sim{
             /**
              * @brief The rockets pitching moment damping coefficient, these moments are applied to the total pitch moment in the opposite direction
              * 
+             * @param x x location of the rockets CM from the nosecone tip
              * @param omega angular pitching velocity in body coordinates in radians/second
              * @param v freestream velocity in meters/second
              * @return double 
              * 
              * @todo REFACTOR THIS TO TAKE IN CM INSTEAD OF TIME FOR CACHING REASONS
              */
-            virtual double c_m_damp(double time, double omega, double v) = 0;
-            //virtual double c_d() = 0;
+            virtual double c_m_damp(double x, double omega, double v) = 0;
     };
 }
 

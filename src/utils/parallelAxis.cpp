@@ -1,7 +1,6 @@
 #include "parallelAxis.hpp"
 #include <Eigen/Dense>
 #include <cmath>
-#include <iostream>
 
 namespace Utils{
     Eigen::Matrix3d parallel_axis_transform(Eigen::Matrix3d inertia, Eigen::Vector3d translation, double volume){

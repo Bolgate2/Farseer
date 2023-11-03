@@ -29,6 +29,7 @@ namespace Shapes{
             virtual double thickness(){ return shape()->thickness(); }
             virtual void setLength(double length){ shape()->setThickness( length ); }
             virtual double length(){ return shape()->length(); }
+            virtual double filledVolume(){ return shape()->filledVolume(); }
     };
 }
 

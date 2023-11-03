@@ -13,6 +13,7 @@ namespace Rocket{
         auto shp = std::make_unique<Shapes::BodyTubeComponentShape>(radius, length, thickness);
         setShape(std::move(shp));
     }
+
     // constructor without thickness (for a filled tube)
     BodyTube::BodyTube(double radius, double length, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
     BodyComponent(nullptr, std::move(material), std::move(finish), name, position)
@@ -20,6 +21,7 @@ namespace Rocket{
         auto shp = std::make_unique<Shapes::BodyTubeComponentShape>(radius, length);
         setShape(std::move(shp));
     }
+
     // constructor with a preconstructed shape
     BodyTube::BodyTube(std::unique_ptr<Shapes::BodyTubeComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
     BodyComponent(nullptr, std::move(material), std::move(finish), name, position)
@@ -61,41 +63,6 @@ namespace Rocket{
         return obj;
     }
 
-    // aero stuff
-    double BodyTube::calculateC_n_a( double mach, double alpha, double gamma){
-        // the body tubes only normal force contribution is from normal force
-        auto bodyLiftCorrection = bodyLift( alpha );
-        return bodyLiftCorrection;
-    }
-
-    double BodyTube::calculateC_m_a( double mach, double alpha, double gamma){
-        return 0;
-    }
-
-    Eigen::Vector3d BodyTube::calculateCp( double mach, double alpha, double gamma){
-        return bodyLiftCp();
-    }
-
-    double BodyTube::calculateC_m_damp( double time, double omega, double v ){
-        auto totalCm = root()->cm(time);
-        auto cmX = totalCm.x();
-        auto compTop = position().x(); // smaller, closer to top
-        auto compBottom = compTop + length(); // bigger, further from top
-        // calculated seperately for top and bottom
-        if( compBottom <= cmX | compTop >= cmX ){
-            return c_m_damp_Func(length(), radius(), omega, v);
-        }
-        auto topLen = cmX - compTop;
-        auto bottomLen = length() - topLen;
-        auto topCoeff = c_m_damp_Func(topLen, radius(), omega, v);
-        auto bottomCoeff = c_m_damp_Func(bottomLen, radius(), omega, v);
-        return topCoeff + bottomCoeff;
-    }
-    
-    Shapes::BodyTubeComponentShape* BodyTube::shape() {
-        return _shape.get();
-    }
-
     void BodyTube::setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ){
         // try to cast the underlying pointer to a pointer of the inherited class
         auto castedShapePointer = dynamic_cast<Shapes::BodyTubeComponentShape*>(shape.get());
@@ -127,6 +94,11 @@ namespace Rocket{
     void BodyTube::setShape(std::unique_ptr<Shapes::BodyTubeComponentShape> shape){
         // try to cast the underlying pointer to a pointer of the inherited class
         _shape = std::move(shape);
+        clearCaches();
+    }
+
+    Shapes::BodyTubeComponentShape* BodyTube::shape(){
+        return _shape.get();
     }
     
 }

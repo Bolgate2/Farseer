@@ -1,5 +1,5 @@
 add_subdirectory(bodyTube)
-# add_subdirectory(propertyCalculator)
+add_subdirectory(nosecone)
 
 target_sources(rocket
     PRIVATE

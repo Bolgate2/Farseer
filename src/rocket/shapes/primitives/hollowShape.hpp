@@ -17,10 +17,10 @@ namespace Shapes{
             // cms if the shape is and isn't filled
             virtual Eigen::Vector3d unfilledCm();
             virtual Eigen::Vector3d filledCm();
+        public:
             // volumes if the shape is and isn't hollow
             virtual double unfilledVolume() = 0;
             virtual double filledVolume() = 0;
-        public:
             // getter and setter for wall thickness
             virtual double thickness();
             virtual void setThickness(double thickness);

@@ -22,31 +22,35 @@ namespace Rocket{
         private:
             static std::string defaultName;
             std::unique_ptr<Shapes::BodyComponentShape> _shape;
-            std::weak_ptr<BodyComponent> _parent = std::shared_ptr<BodyComponent>(nullptr);
+            std::weak_ptr<BodyComponent> _parent = std::shared_ptr<BodyComponent>(nullptr); // TODO: change this to stage
         protected:
             std::vector<std::shared_ptr<InternalComponent>> _internalComponents;
             std::vector<std::shared_ptr<AeroComponent>> _externalComponents;
             virtual void clearCaches();
 
             const float bodyLiftConst = 1.1;
+            // tbh body lift doesn't really need caching
             virtual double calculateBodyLift( double alpha );
             virtual double calculateBodyLiftWithCache( double alpha );
             std::map<double, double> _bodyLiftCache = {};
 
+            virtual double filledVolume();
             virtual Eigen::Vector3d bodyLiftCp();
+            virtual double c_n_aWithoutBodyLift( double mach, double alpha, double gamma = 1.4 );
+            virtual Eigen::Vector3d cpWithoutBodyLift();
+
+            double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) override;
+            double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) override;
+            Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) override;
 
             virtual double c_m_damp_Func(double length, double avgRadius, double omega, double v );
-
-            // component calcs
-            double calculateMass(double time);
+            virtual double calculateC_m_damp(double x, double omega, double v) override; // same formula for body comps
 
             BodyComponent(
                 std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material,
                 std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position
                 );
         public:
-            // no create method as this class is still abstract. RocketInterface methods have not been set
-
             // implementing tree stuff
             virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() override;
             virtual std::vector< std::shared_ptr<Component> > components() override;
@@ -77,6 +81,8 @@ namespace Rocket{
             // reference length
             virtual double referenceLength();
             virtual double bodyRadius(double x);
+            virtual std::array<double,2> bisectedAverageRadius(double x); //returns [from top, to bottom]
+            virtual double averageRadius(); // required for damping
     };
 
 }

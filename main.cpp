@@ -7,12 +7,15 @@
 #include <memory>
 
 
-#include "components/bodyTube/bodyTube.hpp"
-#include "misc/finish.hpp"
-#include "misc/material.hpp"
 #include "components/internalComponent.hpp"
 #include "shapes/primitives/nosecone/noseconeShapeTypes.hpp"
+#include "shapes/components/nosecone/nosecone.hpp"
 #include "shapes/primitives/trapezoidalPrism.hpp"
+#include "components/bodyTube/bodyTube.hpp"
+
+#include "components/nosecone/nosecone.hpp"
+#include "misc/finish.hpp"
+#include "misc/material.hpp"
 
 #define SMALL 1e-10
 
@@ -61,7 +64,7 @@ static std::string toString(const Eigen::MatrixXd& mat){
     return ss.str();
 }
 
-void testNosecone(){
+void testNoseconeShapes(){
     std::unique_ptr<Shapes::NoseconeShape> daNose = Shapes::NoseconeShapeFactory::create(Shapes::NoseconeShapeTypes::HAACK, 0.0632/2, 0.13, 0.003, 0);
 
     fmt::print("{:<30} {}\n", "Da nose volume", daNose->volume());
@@ -74,6 +77,11 @@ void testNosecone(){
     auto noseBsRad = daNose->bisectedAverageRadius(daNose->length()/2);
     fmt::print("{:<30} {} {} {}\n", "Da nose start mid end rads", daNose->radius(0), daNose->radius(daNose->length()/2), daNose->radius(daNose->length()));
     fmt::print("{:<30} {} {}\n", "Da nose split rads", noseBsRad[0], noseBsRad[1]);
+
+}
+
+double deg2rad(double deg) {
+    return deg * M_PI / 180.0;
 }
 
 int main(int argc, char** argv){
@@ -82,12 +90,15 @@ int main(int argc, char** argv){
     auto mat1 = std::make_unique<Rocket::Material>("Cardboard", 680);
     auto fin1 = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
     auto radius = 0.0632/2;
-    auto toob = Rocket::BodyTube::create(radius, 0.66, 0.0016, std::move(mat1), std::move(fin1));
+    auto toob = Rocket::BodyTube::create(radius, 0.66, 0.0016, std::move(mat1), std::move(fin1), nullptr, "toob", Eigen::Vector3d{0.13,0,0});
 
     fmt::print("{0:<20} {1:<20}\n", "Toob Name ",toob->name);
     fmt::print("Toob mass {0}\n", toob->mass(0));
     fmt::print("Toob inertia\n{0}\n", toString(toob->inertia(0)));
     fmt::print("Toob cm\n{0}\n", toString(toob->cm(0)));
+    auto alpha = deg2rad(5);
+    fmt::print("toob cp {}\n", toString(toob->cp(0.3,alpha))); // correct
+    fmt::print("toob cna {}\n", toob->c_n_a(0.3,alpha)); // correct
     toob->printComponentTree();
 
     auto int1 = Rocket::InternalComponent::create(toob.get(), "Steve");
@@ -104,6 +115,19 @@ int main(int argc, char** argv){
     fmt::print("{:<30} {}\n", "Trapz volume", trap.volume());
     fmt::print("{:<30} {}\n", "Trapz cm", toString(trap.cm().transpose()));
     fmt::print("{:<30}\n{}\n", "Trapz inertia", toString(trap.inertia()));
+
+    auto mat2 = std::make_unique<Rocket::Material>("Cardboard", 680);
+    auto fin2 = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
+
+    auto nose = Rocket::Nosecone::create(Shapes::NoseconeShapeTypes::HAACK, 0.0632/2, 0.13, 0.003, 0.0, std::move(mat2), std::move(fin2));
+
+    fmt::print("{0:<20} {1:<20}\n", "Toob Name ",nose->name);
+    fmt::print("Nose mass {0}\n", nose->mass(0));
+    fmt::print("Nose inertia\n{0}\n", toString(nose->inertia(0)));
+    fmt::print("Nose planform area {0}\n", nose->planformArea());
+    fmt::print("Nose cm\n{0}\n", toString(nose->cm(0)));
+    fmt::print("Nose cp {}\n", toString(nose->cp(0.3,alpha))); // correct
+    fmt::print("Nose cna {}\n", nose->c_n_a(0.3,alpha)); // correct
 
     return 0;
 }

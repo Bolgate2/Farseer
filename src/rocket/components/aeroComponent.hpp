@@ -58,7 +58,7 @@ namespace Rocket{
             virtual double calculateC_m_aAtOrigin( double mach, double alpha, double gamma = 1.4 );
             virtual double calculateC_m_aWithComponents( double mach, double alpha, double gamma = 1.4 );
             virtual double calculateC_m_aWithCache( double mach, double alpha, double gamma = 1.4 );
-            // nested caches for C_n, access is in
+            // nested caches for C_n
             std::map<double, std::map<double, std::map<double, double>>> _c_m_aCache = {};
             virtual void createC_m_aMapping( double value, double mach, double alpha, double gamma = 1.4 );
             virtual bool c_m_aExists(double mach, double alpha, double gamma = 1.4 );
@@ -67,20 +67,20 @@ namespace Rocket{
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) = 0; // VIRTUAL
             virtual Eigen::Vector3d calculateCpWithComponents( double mach, double alpha, double gamma = 1.4 );
             virtual Eigen::Vector3d calculateCpWithCache( double mach, double alpha, double gamma = 1.4 );
-            // nested caches for C_n, access is in 
+            // nested caches for C_n
             std::map<double, std::map<double, std::map<double, Eigen::Vector3d>>> _cpCache = {};
             virtual void createCpMapping( Eigen::Vector3d value, double mach, double alpha, double gamma = 1.4 );
             virtual bool cpExists(double mach, double alpha, double gamma = 1.4 );
             virtual void clearCpCache();
 
             // because omega is given about CM, this gives the moment about CM
-            virtual double calculateC_m_damp(double time, double omega, double v) = 0; // VIRTUAL
-            virtual double calculateC_m_dampWithComponents(double time, double omega, double v);
-            virtual double calculateC_m_dampWithCache(double time, double omega, double v);
-            // nested caches for C_n, access is in 
+            virtual double calculateC_m_damp(double x, double omega, double v) = 0; // VIRTUAL
+            virtual double calculateC_m_dampWithComponents(double x, double omega, double v);
+            virtual double calculateC_m_dampWithCache(double x, double omega, double v);
+            // nested caches for C_n
             std::map<double, std::map<double, std::map<double, double>>> _c_m_dampCache = {};
-            virtual void createC_m_dampMapping(double value, double time, double omega, double v);
-            virtual bool c_m_dampExists(double time, double omega, double v);
+            virtual void createC_m_dampMapping(double value, double x, double omega, double v);
+            virtual bool c_m_dampExists(double x, double omega, double v);
             virtual void clearC_m_dampCache();
             // constructor
             AeroComponent(
@@ -103,7 +103,7 @@ namespace Rocket{
             virtual double c_n( double mach, double alpha, double gamma = 1.4 );
             // calculates c_m about (0,0,0)
             virtual double c_m( double mach, double alpha, double gamma = 1.4);
-            virtual Eigen::Vector3d cp( double mach, double alpha, double gamma);
+            virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4);
             virtual double c_m_damp(double time, double omega, double v);
             //virtual double c_d() = 0;
 

@@ -56,9 +56,13 @@ namespace Shapes{
         _inertia = NAN_M3D;
     }
 
+    double TrapezoidalPrism::trapezoidArea(){
+        return ( rootChord()+tipChord() )/2*height();
+    }
+
     // inherited from shape
     double TrapezoidalPrism::volume(){
-        return ( rootChord()+tipChord() )/2*height()*thickness();
+        return trapezoidArea()*thickness();
     }
 
     Eigen::Matrix3d TrapezoidalPrism::inertia(){

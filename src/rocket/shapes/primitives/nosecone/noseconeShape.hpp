@@ -19,7 +19,6 @@ namespace Shapes{
             virtual Eigen::Vector3d filledCm() override = 0;
         public:
             NoseconeShape(double radius, double length, double thickness, double shapeparam);
-            virtual double filledVolume() override = 0; // changing scope of filled volume but keeping the function as pure virtual. This function is required for pitching moment
 
             virtual double shapeParam();
             virtual void setShapeParam(double val);

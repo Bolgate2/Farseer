@@ -33,6 +33,7 @@ namespace Shapes{
             virtual double thickness();
             virtual void setThickness(double thickness);
 
+            virtual double trapezoidArea();
             // inherited from shape
             virtual double volume() override;
             virtual Eigen::Matrix3d inertia() override;
