@@ -22,7 +22,9 @@ namespace Rocket{
 
     // aero stuff
     double BodyComponent::calculateBodyLift( double alpha ){
-        return bodyLiftConst * planformArea()/referenceArea() * std::pow( std::sin(alpha), 2 );
+        //ORK eq 3.26, divided by alpha
+        if(alpha == 0) return 0; // prevent divide by 0 error
+        return bodyLiftConst * planformArea()/referenceArea() * std::pow( std::sin(alpha), 2 )/alpha;
     }
 
     double BodyComponent::calculateBodyLiftWithCache( double alpha ){
