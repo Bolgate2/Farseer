@@ -8,11 +8,11 @@ namespace Rocket{
         setShape( std::move(shape) );
     }
 
-    std::vector< std::shared_ptr<AeroComponent> > ExternalComponent::aeroComponents(){
+    std::vector< std::shared_ptr<AeroComponent> > ExternalComponent::aeroComponents() const {
         return _components;
     }
 
-    std::vector<std::shared_ptr<Component>> ExternalComponent::components(){
+    std::vector<std::shared_ptr<Component>> ExternalComponent::components() const {
         std::vector<std::shared_ptr<Component>> compVec;
         for(auto comp = _components.begin(); comp != _components.end(); ++comp){
             compVec.push_back( std::dynamic_pointer_cast<Component>(*comp) );
@@ -20,7 +20,7 @@ namespace Rocket{
         return compVec;
     }
 
-    std::shared_ptr<Component> ExternalComponent::findComponent(std::string id){
+    std::shared_ptr<Component> ExternalComponent::findComponent(std::string id) const {
         for(auto comp = components().begin(); comp != components().end(); ++comp){
             if( (*comp)->id() == id ) return (*comp)->shared_from_this();
         }
@@ -61,15 +61,14 @@ namespace Rocket{
         std::cerr << "Unable to find component \"" << component->name  << "\" to remove from component \"" << name << std::endl;
     }
 
-    double ExternalComponent::bodyRadius(double x){
+    double ExternalComponent::bodyRadius(double x) const {
         if(parent() != NULL){
-            auto castedParent = std::dynamic_pointer_cast<AeroComponent>(parent()->shared_from_this());
-            if( castedParent != NULL ) return castedParent->bodyRadius(x);
+            return parent()->bodyRadius(x);
         }
         return 0;
     }
 
-    Shapes::ExternalComponentShape* ExternalComponent::shape(){
+    Shapes::ExternalComponentShape* ExternalComponent::shape() const {
         return _shape.get();
     }
     
@@ -86,8 +85,30 @@ namespace Rocket{
         std::cerr << "Invalid shape for external component\n"; // TODO: make this more descriptive
 
     }
+    
     void ExternalComponent::setShape( std::unique_ptr<Shapes::ExternalComponentShape> shape ){
         _shape = std::move(shape);
         clearCaches();
+    }
+
+    AeroComponent* ExternalComponent::parent() const {
+        if(_parent.expired()) return NULL;
+        if(_parent.lock().get() == NULL) return NULL;
+        return _parent.lock().get();
+    }
+
+    // need to override this so its operating on the correct parent
+    void ExternalComponent::setParent( Component* parent ) {
+        // add and remove component calls this so this cant be called by them
+        auto castedPtr = dynamic_cast<AeroComponent*>(parent);
+        if(castedPtr != NULL){
+            if(parent == NULL){
+                _parent.reset();
+            } else {
+                _parent = std::dynamic_pointer_cast<AeroComponent>(parent->shared_from_this());
+            }
+        } else {
+            std::cerr << "invalid parent type for aero component";
+        }
     }
 }

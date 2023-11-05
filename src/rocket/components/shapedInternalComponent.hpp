@@ -10,9 +10,9 @@ namespace Rocket{
         private:
             std::unique_ptr<Shapes::InternalComponentShape> _shape;
         public:
-            virtual double calculateMass(double time) override;
-            virtual Eigen::Matrix3d calculateInertia(double time) override;
-            virtual Eigen::Vector3d calculateCm(double time) override;
+            virtual double calculateMass(double time) const override;
+            virtual Eigen::Matrix3d calculateInertia(double time) const override;
+            virtual Eigen::Vector3d calculateCm(double time) const override;
     };
 }
 

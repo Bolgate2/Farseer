@@ -18,7 +18,7 @@ namespace Rocket{
     }
 
     // id
-    std::string Component::id(){
+    std::string Component::id() const {
         return _id;
     }
 
@@ -36,7 +36,7 @@ namespace Rocket{
     }
 
     // parent
-    Component* Component::parent(){
+    Component* Component::parent() const {
         if(_parent.expired()) return NULL;
         if(_parent.lock().get() == NULL) return NULL;
         return _parent.lock().get();
@@ -48,7 +48,6 @@ namespace Rocket{
             _parent.reset();
         } else {
             _parent = parent->shared_from_this();
-            std::cout << "set parent of " << name << " to " << _parent.lock()->name << std::endl;
         }
     }
 
@@ -60,7 +59,7 @@ namespace Rocket{
         }
     };
 
-    std::shared_ptr<Component> Component::root(){
+    std::shared_ptr<Component> Component::root() {
         if(parent() == NULL){
             return shared_from_this();
         } else {
@@ -69,7 +68,7 @@ namespace Rocket{
     }
 
     // position
-    Eigen::Vector3d Component::position(){
+    Eigen::Vector3d Component::position() const {
         return _position;
     }
     // this is not pure virtual as it has a default implementation
@@ -89,11 +88,11 @@ namespace Rocket{
 
     
     // mass
-    double Component::calculateMass(double time){
+    double Component::calculateMass(double time) const {
         return _mass;
     }
     
-    double Component::calculateMassWithComponents(double time){
+    double Component::calculateMassWithComponents(double time) const {
         // handling override flags
         double thisMass = 0;
         if(_massOverride & OverrideFlags::OVERRIDEALL){
@@ -117,19 +116,13 @@ namespace Rocket{
         return totalMass;
     }
 
-    double Component::calculateMassWithCache(double time){
-
+    double Component::mass(double time) const {
         if(!caching()) return calculateMassWithComponents(time);
-
+        // checking cache
         auto cacheKey = _massCache.find(time);
-        if(cacheKey != _massCache.end()) return _massCache[time];
-        auto calculatedMass = calculateMassWithComponents(time);
-        _massCache[time] = calculatedMass;
-        return calculatedMass;
-    }
-
-    double Component::mass(double time){
-        return calculateMassWithCache(time);
+        if(cacheKey != _massCache.end()) return cacheKey->second;
+        // returning if not found in cache
+        return calculateMassWithComponents(time);
     }
 
     void Component::overrideMass(OverrideFlags flags){
@@ -150,11 +143,11 @@ namespace Rocket{
     
     // inertia
     // calculates inertia about (0,0,0)
-    Eigen::Matrix3d Component::calculateInertia(double time){
+    Eigen::Matrix3d Component::calculateInertia(double time) const {
         return _inertia;
     }
 
-    Eigen::Matrix3d Component::calculateInertiaWithComponents(double time){
+    Eigen::Matrix3d Component::calculateInertiaWithComponents(double time) const {
         // comparing with flags
         Eigen::Matrix3d thisInertia = Eigen::Matrix3d::Zero();
         if(_inertiaOverride & OverrideFlags::OVERRIDEALL){
@@ -177,18 +170,13 @@ namespace Rocket{
         return totalInertia;
     }
 
-    Eigen::Matrix3d Component::calculateInertiaWithCache(double time){
+    Eigen::Matrix3d Component::inertia(double time) const {
         if(!caching()) return calculateInertiaWithComponents(time);
-
+        // checking cache
         auto cacheKey = _inertiaCache.find(time);
-        if( cacheKey != _inertiaCache.end()) return _inertiaCache[time];
-        auto totalInertia = calculateInertiaWithComponents(time);
-        _inertiaCache[time] = totalInertia;
-        return totalInertia;
-    }
-
-    Eigen::Matrix3d Component::inertia(double time){
-        return calculateInertiaWithCache(time);
+        if( cacheKey != _inertiaCache.end()) return cacheKey->second;
+        // returning if not found
+        return calculateInertiaWithComponents(time);
     }
 
     void Component::overrideInertia(OverrideFlags flags){
@@ -211,11 +199,11 @@ namespace Rocket{
 
     // cm, center of mass
     // by default cm is position
-    Eigen::Vector3d Component::calculateCm(double time){
+    Eigen::Vector3d Component::calculateCm(double time) const {
         return position();
     }
 
-    Eigen::Vector3d Component::calculateCmWithComponents(double time){
+    Eigen::Vector3d Component::calculateCmWithComponents(double time) const {
         //comparing with flags
         Eigen::Vector3d thisCm = Eigen::Vector3d::Zero();
         if(_cmOverride & OverrideFlags::OVERRIDEALL){
@@ -248,18 +236,13 @@ namespace Rocket{
         return calculatedCm;
     }
 
-    Eigen::Vector3d Component::calculateCmWithCache(double time){
+    Eigen::Vector3d Component::cm(double time) const {
         if(!caching()) return calculateCmWithComponents(time);
-        // searching cache first
+        // checking cache
         auto cacheKey = _cmCache.find(time);
-        if(cacheKey != _cmCache.end()) return _cmCache[time];
-        auto calculatedCm = calculateCmWithComponents(time);
-        _cmCache[time] = calculatedCm;
-        return calculatedCm;
-    }
-
-    Eigen::Vector3d Component::cm(double time){
-        return calculateCmWithCache(time);
+        if(cacheKey != _cmCache.end()) return cacheKey->second;
+        // calculating if not found
+        return calculateCmWithComponents(time);
     }
 
     void Component::overrideCm(OverrideFlags flags){
@@ -282,11 +265,11 @@ namespace Rocket{
     }
 
     // thrust
-    Eigen::Vector3d Component::calculateThrust(double time){
+    Eigen::Vector3d Component::calculateThrust(double time) const {
         return Eigen::Vector3d::Zero();
     }
 
-    Eigen::Vector3d Component::calculateThrustWithComponents(double time){
+    Eigen::Vector3d Component::calculateThrustWithComponents(double time) const {
         Eigen::Vector3d compThrust = Eigen::Vector3d::Zero();
         auto comps = this->components();
         for(auto comp = comps.cbegin(); comp != comps.cend(); ++comp){
@@ -295,35 +278,30 @@ namespace Rocket{
         auto totalThrust = compThrust + this->calculateThrust(time);
         return totalThrust;
     }
-
-    Eigen::Vector3d Component::calculateThrustWithCache(double time){
+    
+    Eigen::Vector3d Component::thrust(double time) const {
         if(!caching()) return calculateThrustWithComponents(time);
         auto cacheKey = _thrustCache.find(time);
-        auto totalThrust = calculateThrustWithComponents(time);
-        _thrustCache[time] = totalThrust;
-        return totalThrust;
-    }
-    
-    Eigen::Vector3d Component::thrust(double time){
-        return calculateThrustWithCache(time);
+        if(cacheKey != _thrustCache.end()) return cacheKey->second;
+        return calculateThrustWithComponents(time);
     }
 
     //thrust position
-    Eigen::Vector3d Component::calculateThrustPosition(double time){
-        return this->cm(time);
+    Eigen::Vector3d Component::calculateThrustPosition(double time) const {
+        return cm(time);
     }
 
-    Eigen::Vector3d Component::calculateThrustPositionWithComponents(double time){
+    Eigen::Vector3d Component::calculateThrustPositionWithComponents(double time) const {
         //initializing vectors
         Eigen::Vector3d weightedThrustPos = Eigen::Vector3d::Zero();
         double thrustMagnitude = 0;
-        auto comps = this->components();
+        auto comps = components();
         for(auto comp = comps.cbegin(); comp != comps.cend(); ++comp){
             auto tMag = (*comp)->thrust(time).norm();
             weightedThrustPos += tMag * (*comp)->thrustPosition(time);
             thrustMagnitude += tMag;
         }
-        auto tMag = this->thrust(time).norm();
+        auto tMag = thrust(time).norm();
         thrustMagnitude += tMag;
         // thrust position is zero by default
         Eigen::Vector3d thrustPos = Eigen::Vector3d::Zero();
@@ -335,21 +313,14 @@ namespace Rocket{
         return thrustPos;
     }
 
-    Eigen::Vector3d Component::calculateThrustPositionWithCache(double time){
+    Eigen::Vector3d Component::thrustPosition(double time) const {
         if(!caching()) return calculateThrustPositionWithComponents(time);
-        //searching cache first
         auto cacheKey = _thrustPositionCache.find(time);
-        if( cacheKey != _thrustPositionCache.end() ) return _thrustPositionCache[time];
-        auto thrustPos = calculateThrustPositionWithComponents(time);
-        _thrustPositionCache[time] = thrustPos;
-        return thrustPos;
+        if( cacheKey != _thrustPositionCache.end() ) return cacheKey->second;
+        return calculateThrustPositionWithComponents(time);
     }
 
-    Eigen::Vector3d Component::thrustPosition(double time){
-        return calculateThrustPositionWithCache(time);
-    }
-
-    bool Component::caching(){
+    bool Component::caching() const {
         return _caching;
     }
 
@@ -364,7 +335,7 @@ namespace Rocket{
         }
     }
 
-    int Component::height(){
+    int Component::height() const {
         int val = 0;
         auto comps = components();
         if(comps.empty()) return val;
@@ -377,7 +348,7 @@ namespace Rocket{
         return val;
     }
 
-    void Component::printComponentTree(bool header){
+    void Component::printComponentTree(bool header) const {
         std::string repr = componentTreeRepr(header);
         fmt::print(repr);
         //std::cout << repr; // this stuffs up unicode characters
@@ -388,18 +359,19 @@ namespace Rocket{
     int Component::_massLen = 9;
     int Component::_massPrecision = 4;
 
-    std::string Component::componentTreeRepr(bool header){
+    std::string Component::componentTreeRepr(bool header)const {
         auto h = this->height();
         const int maxPfxLen = _indentLen*h;
 
         std::string repr = "";
         std::string fmtStr = "|{:-^" + std::to_string(maxPfxLen+_maxNameLen) + "}|{:-^" + std::to_string(_massLen) +"}|\n";
         if(header) repr += fmt::format(fmtStr, "Name", "Mass (kg)");
+        
         repr += componentTreeRepr("", "", this->height());
         return repr;
     }
 
-    std::string Component::componentTreeRepr( std::string prefix, std::string childPrefix, int treeHeight){
+    std::string Component::componentTreeRepr( std::string prefix, std::string childPrefix, int treeHeight) const {
         const int maxPfxLen = _indentLen*treeHeight;
         std::string fmtStr = " {:<" + std::to_string(maxPfxLen+_maxNameLen) + "} {:< " + std::to_string(_massLen) + "." + std::to_string(_massPrecision) + "f} \n";
         std::string repr = fmt::format(fmtStr, prefix + name, mass(0));

@@ -5,10 +5,10 @@
 #include <string>
 #include "uuid_v4.h"
 #include "aeroComponent.hpp"
-#include "stage.hpp"
 #include "../misc/launchConditions.hpp"
 
 namespace Rocket{
+    class Stage; // forward declaring so stage can use this as parent
     class Rocket: public AeroComponent{
         private:
             //hold pointers rather than the objects for speed (passing pointers around is faster than passing objects)

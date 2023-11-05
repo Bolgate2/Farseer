@@ -96,7 +96,7 @@ namespace Rocket{
         clearCaches();
     }
 
-    Shapes::BodyTubeComponentShape* BodyTube::shape(){
+    Shapes::BodyTubeComponentShape* BodyTube::shape() const {
         return _shape.get();
     }
     

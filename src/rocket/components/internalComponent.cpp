@@ -21,7 +21,7 @@ namespace Rocket{
     }
 
     // tree functions
-    std::vector< std::shared_ptr<Component> > InternalComponent::components(){
+    std::vector< std::shared_ptr<Component> > InternalComponent::components() const {
         std::vector<std::shared_ptr<Component>> compVec;
         std::transform(
             _components.cbegin(), _components.cend(),
@@ -31,7 +31,7 @@ namespace Rocket{
         return compVec;
     }
 
-    std::shared_ptr<Component> InternalComponent::findComponent(std::string id){
+    std::shared_ptr<Component> InternalComponent::findComponent(std::string id) const {
         for(auto comp = _components.begin(); comp != _components.end(); ++comp){
             if( (*comp)->id() == id ) return (*comp)->shared_from_this();
         }

@@ -17,7 +17,7 @@ namespace Rocket{
         _cpInterpPolyCoeffs = Eigen::Array<double, 6, 1>::Ones()*NAN_D;
     }
 
-    FinSet* Fin::finSet(){
+    FinSet* Fin::finSet() const {
         if(_finSet.expired()) return nullptr;
         if(_finSet.lock().get() == nullptr) return nullptr;
         return _finSet.lock().get();
@@ -27,24 +27,25 @@ namespace Rocket{
         _finSet = std::dynamic_pointer_cast<FinSet>(finSet->shared_from_this());
     }
 
-    Eigen::Array<double, 6, 1> Fin::cpInterpPolyCoeffs(){
+    Eigen::Array<double, 6, 1> Fin::cpInterpPolyCoeffs() const {
         // adapted this to calculate these
         // https://github.com/openrocket/openrocket/blob/unstable/core/src/net/sf/openrocket/aerodynamics/barrowman/FinSetCalc.java#L581
         // index is the power of x it's the coeff for
         if(!_cpInterpPolyCoeffs.hasNaN()) return _cpInterpPolyCoeffs;
+        Eigen::Array<double, 6, 1> coeffs;
         const auto ar = 2*yMax()/planformArea();
         const double denom = std::pow(1 - 3.4641 * ar, 2); // common denominator
-		_cpInterpPolyCoeffs[5] = (-1.58025 * (-0.728769 + ar) * (-0.192105 + ar)) / denom;
-		_cpInterpPolyCoeffs[4] = (12.8395 * (-0.725688 + ar) * (-0.19292 + ar)) / denom;
-		_cpInterpPolyCoeffs[3] = (-39.5062 * (-0.72074 + ar) * (-0.194245 + ar)) / denom;
-		_cpInterpPolyCoeffs[2] = (55.3086 * (-0.711482 + ar) * (-0.196772 + ar)) / denom;
-		_cpInterpPolyCoeffs[1] = (-31.6049 * (-0.705375 + ar) * (-0.198476 + ar)) / denom;
-		_cpInterpPolyCoeffs[0] = (9.16049 * (-0.588838 + ar) * (-0.20624 + ar)) / denom;
-        return _cpInterpPolyCoeffs;
+		coeffs[5] = (-1.58025 * (-0.728769 + ar) * (-0.192105 + ar)) / denom;
+		coeffs[4] = (12.8395 * (-0.725688 + ar) * (-0.19292 + ar)) / denom;
+		coeffs[3] = (-39.5062 * (-0.72074 + ar) * (-0.194245 + ar)) / denom;
+		coeffs[2] = (55.3086 * (-0.711482 + ar) * (-0.196772 + ar)) / denom;
+		coeffs[1] = (-31.6049 * (-0.705375 + ar) * (-0.198476 + ar)) / denom;
+		coeffs[0] = (9.16049 * (-0.588838 + ar) * (-0.20624 + ar)) / denom;
+        return coeffs;
     }
 
 
-    double Fin::subsonicCNa( double mach, double alpha ){
+    double Fin::subsonicCNa( double mach, double alpha ) const {
         const auto h2 = std::pow(yMax(), 2);
         const auto num = 2*M_PI*h2/referenceArea();
         auto chordSweep = midChordSweep();
@@ -53,7 +54,7 @@ namespace Rocket{
         return CNa1;
     }
 
-    double Fin::supersonicCNa( double mach, double alpha, double gamma){
+    double Fin::supersonicCNa( double mach, double alpha, double gamma) const {
         // TODO: precompute a whole bunch of K values
         const auto b = Utils::beta(mach);
         const auto K1 = 2/b;
@@ -64,12 +65,12 @@ namespace Rocket{
     }
 
     // cna for below 0.5
-    double Fin::calculateC_n_a( double mach, double alpha, double gamma) {
+    double Fin::calculateC_n_a( double mach, double alpha, double gamma) const {
         if(mach <= 1) return subsonicCNa(mach, alpha);
         return supersonicCNa(mach, alpha, gamma);
     }
 
-    Eigen::Vector3d Fin::calculateCp( double mach, double alpha, double gamma) {
+    Eigen::Vector3d Fin::calculateCp( double mach, double alpha, double gamma) const {
         double CPx;
         const double AR =  2*yMax()/planformArea();
         const double b = Utils::beta(mach);
@@ -88,7 +89,7 @@ namespace Rocket{
     }
 
     // shape stuff
-    Shapes::FinComponentShape* Fin::shape(){
+    Shapes::FinComponentShape* Fin::shape() const {
         return _shape.get();
     }
 
@@ -123,21 +124,22 @@ namespace Rocket{
     void Fin::setShape( std::unique_ptr<Shapes::FinComponentShape> shape ){
         _shape = std::move(shape);
         clearCaches();
+        _cpInterpPolyCoeffs = cpInterpPolyCoeffs();
     }
 
-    Eigen::Vector3d Fin::calculateCm(double time){
+    Eigen::Vector3d Fin::calculateCm(double time) const {
         return shape()->planformCenter();
     }
     
-    Eigen::Vector3d Fin::position(){
+    Eigen::Vector3d Fin::position() const {
         return finSet()->position();
     }
 
-    double Fin::referenceArea(){
+    double Fin::referenceArea() const {
         return finSet()->referenceArea();
     } // using reference area of the parent
 
-    double Fin::referenceLength(){
+    double Fin::referenceLength() const {
         return finSet()->referenceLength();
     } // using reference area of the parent
 }

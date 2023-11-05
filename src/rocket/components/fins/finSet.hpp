@@ -13,7 +13,7 @@ namespace Rocket{
             std::unique_ptr<Fin> _fin;
             int _numFins;
             std::vector<Eigen::Matrix3d> _finRotations = {};
-            std::vector<Eigen::Matrix3d> finRotations();
+            std::vector<Eigen::Matrix3d> finRotations() const;
             // TODO: fin cross section
             // TODO: fin cant
             // TODO: fin root fillets
@@ -22,15 +22,15 @@ namespace Rocket{
             // cache clearing
             virtual void clearCaches() override;
             // component functions
-            virtual double calculateMass(double time) override;
-            virtual Eigen::Matrix3d calculateInertia(double time) override;
-            virtual Eigen::Vector3d calculateCm(double time) override;
+            virtual double calculateMass(double time) const override;
+            virtual Eigen::Matrix3d calculateInertia(double time) const override;
+            virtual Eigen::Vector3d calculateCm(double time) const override;
 
             // aero functions
-            virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) override;
-            virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) override;
-            virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) override;
-            virtual double calculateC_m_damp(double x, double omega, double v) override;
+            virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const override;
+            virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override;
+            virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;
+            virtual double calculateC_m_damp(double x, double omega, double v) const override;
             // constructor
             FinSet(int numFins, std::string name = FinSet::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero() );
         public:
@@ -41,21 +41,21 @@ namespace Rocket{
                 );
 
             // component stuff
-            virtual Finish* finish() override;
+            virtual Finish* finish() const override;
             virtual void setFinish( std::unique_ptr<Finish> finish ) override; // CLEAR CACHES
             // getter and setter for material
-            virtual Material* material() override;
+            virtual Material* material() const override;
             virtual void setMaterial( std::unique_ptr<Material> material ) override; // CLEAR CACHES
 
             // aero functions
-            virtual double referenceArea() override { return parent()->referenceArea(); };
-            virtual double referenceLength() override { return parent()->referenceLength(); };
-            virtual double wettedArea() override; // surface area of the shape exposed to the air
+            virtual double referenceArea() const override { return parent()->referenceArea(); };
+            virtual double referenceLength() const override { return parent()->referenceLength(); };
+            virtual double wettedArea() const override; // surface area of the shape exposed to the air
             
             // new functions
-            virtual Fin* fin();
+            virtual Fin* fin() const;
             virtual void setFin( std::unique_ptr<Fin> fin );
-            virtual int numFins();
+            virtual int numFins() const;
             virtual void setNumFins( int num );
 
     };

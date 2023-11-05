@@ -19,8 +19,8 @@ namespace Rocket{
                 Component* parent = nullptr, std::string name = Component::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
                 );
 
-            virtual std::vector< std::shared_ptr<Component> > components() override;
-            virtual std::shared_ptr<Component> findComponent(std::string id) override;
+            virtual std::vector< std::shared_ptr<Component> > components() const override;
+            virtual std::shared_ptr<Component> findComponent(std::string id) const override;
             virtual void addComponent(Component* component) override;
             virtual void removeComponent(Component* component) override;
     };

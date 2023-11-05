@@ -22,7 +22,7 @@ namespace Rocket{
     }
     
     // tree stuff
-    std::vector<std::shared_ptr<AeroComponent>> BodyComponent::aeroComponents(){
+    std::vector<std::shared_ptr<AeroComponent>> BodyComponent::aeroComponents() const {
         std::vector<std::shared_ptr<AeroComponent>> compVec;
         for(auto comp = _externalComponents.begin(); comp != _externalComponents.end(); ++comp){
             compVec.push_back( std::dynamic_pointer_cast<AeroComponent>((*comp)->shared_from_this()) );
@@ -30,7 +30,7 @@ namespace Rocket{
         return compVec;
     }
 
-    std::vector< std::shared_ptr<Component> > BodyComponent::components(){
+    std::vector< std::shared_ptr<Component> > BodyComponent::components() const {
         // casting components
         std::vector<std::shared_ptr<Component>> compVec;
         for(auto comp = _externalComponents.begin(); comp != _externalComponents.end(); ++comp){
@@ -42,8 +42,9 @@ namespace Rocket{
         return compVec;
     }
 
-    std::shared_ptr<Component> BodyComponent::findComponent(std::string id){
-        for(auto comp = components().begin(); comp != components().end(); ++comp){
+    std::shared_ptr<Component> BodyComponent::findComponent(std::string id) const {
+        auto comps = components();
+        for(auto comp = comps.begin(); comp != comps.end(); ++comp){
             if( (*comp)->id() == id ) return (*comp)->shared_from_this();
         }
         return NULL;
@@ -118,7 +119,7 @@ namespace Rocket{
     } // THIS MUST CLEAR CACHES
 
     // chape functions
-    Shapes::BodyComponentShape* BodyComponent::shape() {
+    Shapes::BodyComponentShape* BodyComponent::shape() const {
         return _shape.get();
     }
     
@@ -141,12 +142,12 @@ namespace Rocket{
         clearCaches();
     }
 
-    double BodyComponent::bodyRadius(double x){
+    double BodyComponent::bodyRadius(double x) const {
         return radius(x);
     }
     
     // getter and setter for shape length
-    double BodyComponent::length(){
+    double BodyComponent::length() const {
         return shape()->length();
     }
 
@@ -156,11 +157,11 @@ namespace Rocket{
     } // CLEAR CACHES
 
     // getter and setter for shape radius
-    double BodyComponent::radius(){
+    double BodyComponent::radius() const {
         return shape()->radius();
     }
 
-    double BodyComponent::radius( double x ){
+    double BodyComponent::radius( double x ) const {
         return shape()->radius( x-position().x() ); // converting from global coords to the shapes coords
     }
 
@@ -169,7 +170,7 @@ namespace Rocket{
         clearCaches();
     }
     // getter and setter for shape thickness
-    double BodyComponent::thickness(){
+    double BodyComponent::thickness() const {
         return shape()->thickness();
     }
     void BodyComponent::setThickness( double thickness ){
@@ -177,55 +178,52 @@ namespace Rocket{
         clearCaches();
     }
     // area
-    double BodyComponent::area(double x){
+    double BodyComponent::area(double x) const {
         return shape()->area( x - position().x() ); // converting from global coords to the shapes coords
     }
 
-    double BodyComponent::averageRadius(){
+    double BodyComponent::averageRadius() const {
         return shape()->averageRadius(); // converting from global coords to the shapes coords
     }
 
     //returns [from top, to bottom]
-    std::array<double,2> BodyComponent::bisectedAverageRadius(double x){
+    std::array<double,2> BodyComponent::bisectedAverageRadius(double x) const {
         return shape()->bisectedAverageRadius( x - position().x() ); // converting from global coords to the shapes coords
     }
 
     // AERO STUFF
-    double BodyComponent::referenceLength(){
+    double BodyComponent::referenceLength() const {
         return shape()->referenceLength();
     }
 
-    double BodyComponent::filledVolume(){
+    double BodyComponent::filledVolume() const {
         return shape()->filledVolume();
     }
 
     // BODY LIFT
-    double BodyComponent::calculateBodyLift( double alpha ){
+    double BodyComponent::calculateBodyLift( double alpha ) const {
         //ORK eq 3.26, divided by alpha
         if(alpha == 0) return 0; // prevent divide by 0 error
         return bodyLiftConst * planformArea()/referenceArea() * std::pow( std::sin(alpha), 2 )/alpha;
     }
 
-    double BodyComponent::calculateBodyLiftWithCache( double alpha ){
+    double BodyComponent::bodyLift( double alpha ) const {
         if(!caching()) return calculateBodyLift( alpha );
         // check cache
-        auto thisBodyLift = calculateBodyLift( alpha );
-        _bodyLiftCache[alpha] = thisBodyLift;
-        return thisBodyLift;
+        auto cacheKey = _bodyLiftCache.find(alpha);
+        if(cacheKey != _bodyLiftCache.end()) return cacheKey->second;
+        // calculate if not found
+        return calculateBodyLift(alpha);
     }
 
-    double BodyComponent::bodyLift( double alpha ){
-        return calculateBodyLiftWithCache(alpha);
-    }
-
-    Eigen::Vector3d BodyComponent::bodyLiftCp(){
+    Eigen::Vector3d BodyComponent::bodyLiftCp() const {
         auto pos = position();
         pos += planformCenter();
         return pos;
     }
 
     // CNA
-    double BodyComponent::c_n_aWithoutBodyLift(double mach, double alpha, double gamma){
+    double BodyComponent::c_n_aWithoutBodyLift(double mach, double alpha, double gamma) const {
         // ORK eq 3.19
         const auto pos = position();
         const auto Al = area(length()+pos.x());
@@ -235,7 +233,7 @@ namespace Rocket{
         return c_n_a;
     }  
 
-    Eigen::Vector3d BodyComponent::cpWithoutBodyLift(){
+    Eigen::Vector3d BodyComponent::cpWithoutBodyLift() const {
         // ORK eq 3.28
         const auto pos = position();
         const auto Al = area(length()+pos.x());
@@ -245,14 +243,14 @@ namespace Rocket{
         return Eigen::Vector3d{x_b,0,0} + pos;
     }
 
-    double BodyComponent::calculateC_n_a( double mach, double alpha, double gamma){
+    double BodyComponent::calculateC_n_a( double mach, double alpha, double gamma) const {
         // the body tubes only normal force contribution is from normal force
         return c_n_aWithoutBodyLift(mach, alpha, gamma) + bodyLift(alpha);
     }
 
 
     // calculates cma about the origin
-    double BodyComponent::calculateC_m_a( double mach, double alpha, double gamma){
+    double BodyComponent::calculateC_m_a( double mach, double alpha, double gamma) const {
         // first calculate about the tip
         const auto pos = position();
         auto cma = 2/(referenceArea()*referenceLength()) * ( length() * area(length()+pos.x()) - filledVolume() );
@@ -262,7 +260,7 @@ namespace Rocket{
     }
 
     // CP
-    Eigen::Vector3d BodyComponent::calculateCp( double mach, double alpha, double gamma){
+    Eigen::Vector3d BodyComponent::calculateCp( double mach, double alpha, double gamma) const {
         // weighted average of body lift and cna
         const auto cpFromCna = cpWithoutBodyLift();
         const auto thisCna = c_n_aWithoutBodyLift(mach, alpha, gamma);
@@ -272,11 +270,11 @@ namespace Rocket{
         return weightedAvg;
     }
     
-    double BodyComponent::c_m_damp_Func(double length, double avgRadius, double omega, double v ){
+    double BodyComponent::c_m_damp_Func(double length, double avgRadius, double omega, double v ) const {
         return 0.55 * (std::pow( length, 4 ) * avgRadius) / ( referenceArea() * referenceLength() ) * ( std::pow(omega, 2) / std::pow(v, 2) );
     }
 
-    double BodyComponent::calculateC_m_damp( double x, double omega, double v ){
+    double BodyComponent::calculateC_m_damp( double x, double omega, double v ) const {
         auto cmX = x;
         auto compTop = position().x(); // smaller, closer to top
         auto compBottom = compTop + length(); // bigger, further from top
@@ -290,6 +288,27 @@ namespace Rocket{
         auto topCoeff = c_m_damp_Func(topLen, radii[0], omega, v);
         auto bottomCoeff = c_m_damp_Func(bottomLen, radii[1], omega, v);
         return topCoeff + bottomCoeff;
+    }
+
+    Stage* BodyComponent::parent() const {
+        if(_parent.expired()) return nullptr;
+        if(_parent.lock().get() == NULL) return nullptr;
+        return _parent.lock().get();
+    }
+
+    // need to override this so its operating on the correct parent
+    void BodyComponent::setParent( Component* parent ) {
+        // add and remove component calls this so this cant be called by them
+        auto castedPtr = dynamic_cast<Stage*>(parent);
+        if(castedPtr != NULL){
+            if(parent == NULL){
+                _parent.reset();
+            } else {
+                _parent = std::dynamic_pointer_cast<Stage>(parent->shared_from_this());
+            }
+        } else {
+            std::cerr << "invalid parent type for aero component";
+        }
     }
     
 }

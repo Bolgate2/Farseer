@@ -50,7 +50,7 @@ namespace Rocket{
                 );
             
             // redefine shape getter bc shape has changed
-            virtual Shapes::BodyTubeComponentShape* shape() override;
+            virtual Shapes::BodyTubeComponentShape* shape() const override;
             virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::BodyTubeComponentShape> shape );

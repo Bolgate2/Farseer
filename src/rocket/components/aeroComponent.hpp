@@ -19,9 +19,8 @@
 #define GAMMA_RESOLUTION 1
 
 namespace Rocket{
-    // set up component like its an external component, then set getters for all aero and other relevant properties to 0
-    // create InternalComponent subclass that does this
-    // composite pattern time
+
+    // component with aerodynamic abilities
     class AeroComponent: public Component, public Sim::RocketInterface{
         private:
             static std::string defaultName;
@@ -35,52 +34,48 @@ namespace Rocket{
             // inherited from component
             virtual void clearCaches() override;
             
-            virtual double calculateMass(double time) override;
-            virtual Eigen::Matrix3d calculateInertia(double time) override;
-            virtual Eigen::Vector3d calculateCm(double time) override;
+            virtual double calculateMass(double time) const override;
+            virtual Eigen::Matrix3d calculateInertia(double time) const override;
+            virtual Eigen::Vector3d calculateCm(double time) const override;
 
             //aero functions
             //C_n_a
-            virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) = 0; // VIRTUAL
+            virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const = 0; // VIRTUAL
 
-            virtual double calculateC_n_aWithComponents( double mach, double alpha, double gamma = 1.4 );
-            virtual double calculateC_n_aWithCache( double mach, double alpha, double gamma = 1.4 );
+            virtual double calculateC_n_aWithComponents( double mach, double alpha, double gamma = 1.4 ) const;
             // nested caches for C_n, access is in 
             std::map<double, std::map<double, std::map<double, double>>> _c_n_aCache = {};
             virtual void createC_n_aMapping( double value, double mach, double alpha, double gamma = 1.4 );
-            virtual bool c_n_aExists(double mach, double alpha, double gamma = 1.4 );
+            virtual bool c_n_aExists(double mach, double alpha, double gamma = 1.4 ) const;
             virtual void clearC_n_aCache();
 
             //C_m_a
             // calculates cma about the components tip
-            virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) = 0; // VIRTUAL
+            virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const = 0; // VIRTUAL
             // calculates this components C_m_a about (0,0,0)
-            virtual double calculateC_m_aAtOrigin( double mach, double alpha, double gamma = 1.4 );
-            virtual double calculateC_m_aWithComponents( double mach, double alpha, double gamma = 1.4 );
-            virtual double calculateC_m_aWithCache( double mach, double alpha, double gamma = 1.4 );
+            virtual double calculateC_m_aAtOrigin( double mach, double alpha, double gamma = 1.4 ) const;
+            virtual double calculateC_m_aWithComponents( double mach, double alpha, double gamma = 1.4 ) const;
             // nested caches for C_n
             std::map<double, std::map<double, std::map<double, double>>> _c_m_aCache = {};
             virtual void createC_m_aMapping( double value, double mach, double alpha, double gamma = 1.4 );
-            virtual bool c_m_aExists(double mach, double alpha, double gamma = 1.4 );
+            virtual bool c_m_aExists(double mach, double alpha, double gamma = 1.4 ) const;
             virtual void clearC_m_aCache();
 
-            virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) = 0; // VIRTUAL
-            virtual Eigen::Vector3d calculateCpWithComponents( double mach, double alpha, double gamma = 1.4 );
-            virtual Eigen::Vector3d calculateCpWithCache( double mach, double alpha, double gamma = 1.4 );
+            virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const = 0; // VIRTUAL
+            virtual Eigen::Vector3d calculateCpWithComponents( double mach, double alpha, double gamma = 1.4 ) const;
             // nested caches for C_n
             std::map<double, std::map<double, std::map<double, Eigen::Vector3d>>> _cpCache = {};
             virtual void createCpMapping( Eigen::Vector3d value, double mach, double alpha, double gamma = 1.4 );
-            virtual bool cpExists(double mach, double alpha, double gamma = 1.4 );
+            virtual bool cpExists(double mach, double alpha, double gamma = 1.4 ) const;
             virtual void clearCpCache();
 
             // because omega is given about CM, this gives the moment about CM
-            virtual double calculateC_m_damp(double x, double omega, double v) = 0; // VIRTUAL
-            virtual double calculateC_m_dampWithComponents(double x, double omega, double v);
-            virtual double calculateC_m_dampWithCache(double x, double omega, double v);
+            virtual double calculateC_m_damp(double x, double omega, double v) const = 0; // VIRTUAL
+            virtual double calculateC_m_dampWithComponents(double x, double omega, double v) const;
             // nested caches for C_n
             std::map<double, std::map<double, std::map<double, double>>> _c_m_dampCache = {};
             virtual void createC_m_dampMapping(double value, double x, double omega, double v);
-            virtual bool c_m_dampExists(double x, double omega, double v);
+            virtual bool c_m_dampExists(double x, double omega, double v) const;
             virtual void clearC_m_dampCache();
             // constructor
             AeroComponent(
@@ -94,46 +89,42 @@ namespace Rocket{
             // need to redefine these to clarify override of interface
             // because the implementation of these functions is defined above, it needs to be specified here again so that
             // the interface knows wtf they're on about
-            virtual Eigen::Vector3d cm(double time) override { return Component::cm(time); }
-            virtual Eigen::Matrix3d inertia(double time) override { return Component::inertia(time); }
-            virtual double mass(double time) override { return Component::mass(time); }
-            virtual Eigen::Vector3d thrust(double time) override { return Component::thrust(time); }
-            virtual Eigen::Vector3d thrustPosition(double time) override { return Component::thrustPosition(time); }
-            virtual double c_n( double mach, double alpha, double gamma = 1.4 ) override;
+            virtual Eigen::Vector3d cm(double time) const override { return Component::cm(time); }
+            virtual Eigen::Matrix3d inertia(double time) const override { return Component::inertia(time); }
+            virtual double mass(double time) const override { return Component::mass(time); }
+            virtual Eigen::Vector3d thrust(double time) const override { return Component::thrust(time); }
+            virtual Eigen::Vector3d thrustPosition(double time) const override { return Component::thrustPosition(time); }
+            virtual double c_n( double mach, double alpha, double gamma = 1.4 ) const override;
             // calculates c_m about (0,0,0)
-            virtual double c_m( double mach, double alpha, double gamma = 1.4) override;
-            virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4) override;
-            virtual double c_m_damp(double time, double omega, double v) override;
+            virtual double c_m( double mach, double alpha, double gamma = 1.4) const override;
+            virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4) const override;
+            virtual double c_m_damp(double time, double omega, double v) const override;
             //virtual double c_d() = 0;
 
             // shape stuff
-            virtual double referenceArea();
-            virtual double wettedArea(); // surface area of the shape exposed to the air
-            virtual double planformArea();
-            virtual Eigen::Vector3d planformCenter(); // geometric center of the shapes planform
+            virtual double referenceArea() const;
+            virtual double wettedArea() const; // surface area of the shape exposed to the air
+            virtual double planformArea() const;
+            virtual Eigen::Vector3d planformCenter() const; // geometric center of the shapes planform
             // reference length is undefined in this context and remains virtual
 
-            // component stuff
-            AeroComponent* parent() override;
-            void setParent( Component* parent ) override;
-
             //new
-            virtual double c_n_a( double mach, double alpha, double gamma = 1.4 );
-            virtual double c_m_a( double mach, double alpha, double gamma = 1.4);
-            virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() = 0; // VIRTUAL
+            virtual double c_n_a( double mach, double alpha, double gamma = 1.4 ) const;
+            virtual double c_m_a( double mach, double alpha, double gamma = 1.4) const;
+            virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() const = 0; // VIRTUAL
 
             // returns the diameter of the body at a given distance from the nosecone
-            virtual double bodyRadius(double x) = 0; // VIRTUAL
+            virtual double bodyRadius(double x) const = 0; // VIRTUAL
 
             // getter and setter for shape
-            virtual Shapes::AeroComponentShape* shape();
+            virtual Shapes::AeroComponentShape* shape() const;
             virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape );
             //virtual void setShape( Shapes::AeroComponentShape* shape ); // CLEAR CACHES
             // getter and setter for finish
-            virtual Finish* finish();
+            virtual Finish* finish() const;
             virtual void setFinish( std::unique_ptr<Finish> finish ); // CLEAR CACHES
             // getter and setter for material
-            virtual Material* material();
+            virtual Material* material() const;
             virtual void setMaterial( std::unique_ptr<Material> material ); // CLEAR CACHES
     };
 

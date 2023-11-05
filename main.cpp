@@ -1,16 +1,14 @@
 #include <iostream>
 #include <string>
-#include <cmath>
-#include <fmt/core.h>
-#include <uuid_v4.h>
-#include <Eigen/Dense>
 #include <memory>
+#include <fmt/core.h>
+#include <Eigen/Dense>
 
+#include "components/stage.hpp"
 
 #include "components/internalComponent.hpp"
 #include "shapes/primitives/nosecone/noseconeShapeTypes.hpp"
 #include "shapes/components/nosecone/nosecone.hpp"
-#include "shapes/primitives/trapezoidalPrism.hpp"
 #include "components/bodyTube/bodyTube.hpp"
 
 #include "components/nosecone/nosecone.hpp"
@@ -58,8 +56,6 @@ void testVectorFunctions(){
     std::cout << nullMat << "\n";
     std::cout << (nullMat.hasNaN() ? "true" : "false") << "\n";
 }
-
-
 
 static std::string toString(const Eigen::MatrixXd& mat){
     std::stringstream ss;
@@ -185,8 +181,6 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
 }
 
 int main(int argc, char** argv){
-    UUIDv4::UUIDGenerator<std::mt19937_64> idgen;
-    auto id = idgen.getUUID();
     createTestRocket();
 
     return 0;

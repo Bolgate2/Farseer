@@ -30,7 +30,7 @@ namespace Rocket{
         _finRotations = {};
     }
 
-    Finish* FinSet::finish(){
+    Finish* FinSet::finish() const {
         return fin()->finish();
     }
 
@@ -38,7 +38,7 @@ namespace Rocket{
         return fin()->setFinish(std::move(finish));
     }
 
-    Material* FinSet::material(){
+    Material* FinSet::material() const {
         return fin()->material();
     }
 
@@ -46,13 +46,13 @@ namespace Rocket{
         return fin()->setMaterial(std::move(material));
     }
 
-    double FinSet::calculateMass(double time){
+    double FinSet::calculateMass(double time) const {
         auto finMass = fin()->mass(time);
         auto m = finMass*numFins();
         return fin()->mass(time)*numFins();
     }
 
-    std::vector<Eigen::Matrix3d> FinSet::finRotations(){
+    std::vector<Eigen::Matrix3d> FinSet::finRotations() const {
         if(!_finRotations.empty()) return _finRotations;
         std::vector<Eigen::Matrix3d> rotations = {};
         auto spacing = (2*M_PI)/numFins();
@@ -60,11 +60,10 @@ namespace Rocket{
             Eigen::Matrix3d quat = Eigen::AngleAxis<double>(i*spacing, Eigen::Vector3d(0,0,1)).toRotationMatrix();
             rotations.push_back(quat);
         }
-        _finRotations = rotations;
         return rotations;
     }
 
-    Eigen::Matrix3d FinSet::calculateInertia(double time){
+    Eigen::Matrix3d FinSet::calculateInertia(double time) const {
         auto finLocalInertia = fin()->inertia(time);
         auto finLocalCm = fin()->cm(time);
         auto finMass = fin()->mass(time);
@@ -86,14 +85,14 @@ namespace Rocket{
         return totalInertia;
     }
 
-    Eigen::Vector3d FinSet::calculateCm(double time){
+    Eigen::Vector3d FinSet::calculateCm(double time) const {
         // assuming that the fin sets CM rests on the centerline
         Eigen::Vector3d pos = position();
         auto finLocalCm = fin()->cm(time);
         return pos + Eigen::Vector3d{finLocalCm.x(), 0, 0};
     }
 
-    double FinSet::calculateC_n_a( double mach, double alpha, double gamma){
+    double FinSet::calculateC_n_a( double mach, double alpha, double gamma) const {
         auto N = numFins();
         auto finCna = fin()->c_n_a(mach, alpha, gamma);
         // multiple fin effects
@@ -131,23 +130,23 @@ namespace Rocket{
         return finCna;
     }
 
-    double FinSet::calculateC_m_a( double mach, double alpha, double gamma){
+    double FinSet::calculateC_m_a( double mach, double alpha, double gamma) const {
         return 0;
     }
 
-    Eigen::Vector3d FinSet::calculateCp( double mach, double alpha, double gamma){
+    Eigen::Vector3d FinSet::calculateCp( double mach, double alpha, double gamma) const {
         auto finCP = fin()->cp(mach, alpha, gamma);
         return position() + Eigen::Vector3d{ finCP.x(), 0, 0 }; //assuming that the fins cp is on the central axis
     }
 
-    double FinSet::calculateC_m_damp(double x, double omega, double v){
+    double FinSet::calculateC_m_damp(double x, double omega, double v) const {
         auto finArea = fin()->planformArea();
         auto finDist = bodyRadius(position().x()) + fin()->yMac(); // assuming that this force is acting at the MAC
         auto numExposedFins = std::min(numFins(), 4); // ORK says max fins exposed is 4
         return 0.6*(numExposedFins*finArea*finDist)/(referenceArea()*referenceLength())*( std::pow(omega,2)/std::pow(v,2) );
     }
 
-    Fin* FinSet::fin(){
+    Fin* FinSet::fin() const {
         return _fin.get();
     }
     void FinSet::setFin( std::unique_ptr<Fin> fin ){
@@ -155,15 +154,16 @@ namespace Rocket{
         _fin = std::move(fin);
         clearCaches();
     }
-    int FinSet::numFins(){
+    int FinSet::numFins() const {
         return _numFins;
     }
     void FinSet::setNumFins( int num ){
         _numFins = num;
         clearCaches();
+        _finRotations = finRotations();
     }
 
-    double FinSet::wettedArea(){
+    double FinSet::wettedArea() const {
         return fin()->wettedArea()*numFins();
     }
 }

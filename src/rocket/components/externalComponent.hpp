@@ -9,6 +9,7 @@ namespace Rocket{
 
     class ExternalComponent : public AeroComponent{
         private:
+            std::weak_ptr<AeroComponent> _parent = std::shared_ptr<AeroComponent>(nullptr);
             std::vector< std::shared_ptr<AeroComponent> > _components;
             std::unique_ptr< Shapes::ExternalComponentShape > _shape;
         protected:
@@ -19,15 +20,18 @@ namespace Rocket{
                 );
         public:
             // no create as this has not implemented RocketInterface
+            virtual AeroComponent* parent() const override;
+            virtual void setParent( Component* parent ) override;
             // inherited methods
-            virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() override;
-            virtual std::vector<std::shared_ptr<Component>> components() override;
-            virtual std::shared_ptr<Component> findComponent(std::string id) override;
+            
+            virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() const override;
+            virtual std::vector<std::shared_ptr<Component>> components() const override;
+            virtual std::shared_ptr<Component> findComponent(std::string id) const override;
             virtual void addComponent(Component* component) override;
             virtual void removeComponent(Component* component) override;
-            virtual double bodyRadius(double x) override;
+            virtual double bodyRadius(double x) const override;
 
-            virtual Shapes::ExternalComponentShape* shape() override;
+            virtual Shapes::ExternalComponentShape* shape() const override;
             virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::ExternalComponentShape> shape );
 

@@ -40,7 +40,7 @@ namespace Rocket{
 
             bool _caching = false;
             
-            virtual std::string componentTreeRepr( std::string prefix, std::string childPrefix, int treeHeight);
+            virtual std::string componentTreeRepr( std::string prefix, std::string childPrefix, int treeHeight) const;
             // string formatting variables
             static int _indentLen;
             static int _maxNameLen;
@@ -49,9 +49,8 @@ namespace Rocket{
         protected:
             virtual void clearCaches();
             // mass
-            virtual double calculateMass(double time);
-            virtual double calculateMassWithComponents(double time);
-            virtual double calculateMassWithCache(double time);
+            virtual double calculateMass(double time) const;
+            virtual double calculateMassWithComponents(double time) const;
             std::unordered_map<double,double> _massCache = {};
 
             /**
@@ -60,9 +59,8 @@ namespace Rocket{
              * @param time Flight time in seconds
              * @return Eigen::Matrix3d The inertia tensor in SI units
              */
-            virtual Eigen::Matrix3d calculateInertia(double time);
-            virtual Eigen::Matrix3d calculateInertiaWithComponents(double time);
-            virtual Eigen::Matrix3d calculateInertiaWithCache(double time);
+            virtual Eigen::Matrix3d calculateInertia(double time) const;
+            virtual Eigen::Matrix3d calculateInertiaWithComponents(double time) const;
             std::unordered_map<double,Eigen::Matrix3d> _inertiaCache = {};
 
             /**
@@ -71,19 +69,16 @@ namespace Rocket{
              * @param time 
              * @return Eigen::Vector3d 
              */
-            virtual Eigen::Vector3d calculateCm(double time);
-            virtual Eigen::Vector3d calculateCmWithComponents(double time);
-            virtual Eigen::Vector3d calculateCmWithCache(double time);
+            virtual Eigen::Vector3d calculateCm(double time) const;
+            virtual Eigen::Vector3d calculateCmWithComponents(double time) const;
             std::unordered_map<double,Eigen::Vector3d> _cmCache = {};
 
-            virtual Eigen::Vector3d calculateThrust(double time);
-            virtual Eigen::Vector3d calculateThrustWithComponents(double time);
-            virtual Eigen::Vector3d calculateThrustWithCache(double time);
+            virtual Eigen::Vector3d calculateThrust(double time) const;
+            virtual Eigen::Vector3d calculateThrustWithComponents(double time) const;
             std::unordered_map<double,Eigen::Vector3d> _thrustCache = {};
 
-            virtual Eigen::Vector3d calculateThrustPosition(double time);
-            virtual Eigen::Vector3d calculateThrustPositionWithComponents(double time);
-            virtual Eigen::Vector3d calculateThrustPositionWithCache(double time);
+            virtual Eigen::Vector3d calculateThrustPosition(double time) const;
+            virtual Eigen::Vector3d calculateThrustPositionWithComponents(double time) const;
             std::unordered_map<double,Eigen::Vector3d> _thrustPositionCache = {};
 
             // default constructor
@@ -107,19 +102,19 @@ namespace Rocket{
             */
 
             // id
-            virtual std::string id();
+            virtual std::string id() const;
 
             // parent
-            virtual Component* parent();
+            virtual Component* parent() const;
             virtual void setParent( Component* parent );
             // returns the root of this component tree
             virtual std::shared_ptr<Component> root();
-            virtual int height();
+            virtual int height() const;
 
             // components
             // these functions are pure virtual as the component vectors are not defined here
-            virtual std::vector< std::shared_ptr<Component> > components() = 0; // VIRTUAL
-            virtual std::shared_ptr<Component> findComponent(std::string id) = 0; // VIRTUAL
+            virtual std::vector< std::shared_ptr<Component> > components() const = 0; // VIRTUAL
+            virtual std::shared_ptr<Component> findComponent(std::string id) const = 0; // VIRTUAL
             virtual void addComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
             virtual void removeComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
 
@@ -127,7 +122,7 @@ namespace Rocket{
             virtual void removeComponent( std::string id );
 
             // position
-            virtual Eigen::Vector3d position();
+            virtual Eigen::Vector3d position() const;
             // this is not pure virtual as it has a default implementation that can be changed
             virtual void setPosition(Eigen::Vector3d pos); // THIS MUST CLEAR CACHES
             // these are not virtual as they are essentially convenience wrappers
@@ -135,7 +130,7 @@ namespace Rocket{
             virtual void setPosition(double x, double y, double z);
 
             // override functions are not virtual as they are not overridden
-            virtual double mass(double time); // wrapper for calculateMass that first handles overrides
+            virtual double mass(double time) const; // wrapper for calculateMass that first handles overrides
             virtual void overrideMass(OverrideFlags flags); // THIS MUST CLEAR CACHES
             virtual void overrideMass(OverrideFlags flags, double value); // THIS MUST CLEAR CACHES
             virtual OverrideFlags massOverriden();
@@ -143,32 +138,32 @@ namespace Rocket{
             
             // inertia
             // returns inertia about 0/0
-            virtual Eigen::Matrix3d inertia(double time);
+            virtual Eigen::Matrix3d inertia(double time) const;
             virtual void overrideInertia(OverrideFlags flags); // THIS MUST CLEAR CACHES
             virtual void overrideInertia(OverrideFlags flags, Eigen::Matrix3d value); // THIS MUST CLEAR CACHES
             virtual OverrideFlags inertiaOverriden();
             virtual void setInertia(Eigen::Matrix3d inertia); // THIS MUST CLEAR CACHES
 
             // cm, center of mass
-            virtual Eigen::Vector3d cm(double time);
+            virtual Eigen::Vector3d cm(double time) const;
             virtual void overrideCm(OverrideFlags flags); // THIS MUST CLEAR CACHES
             virtual void overrideCm(OverrideFlags flags, Eigen::Vector3d value); // THIS MUST CLEAR CACHES
             virtual OverrideFlags cmOverriden();
             virtual void setCm(Eigen::Vector3d cm); // THIS MUST CLEAR CACHES
 
             // thrust position
-            virtual Eigen::Vector3d thrustPosition(double time);
+            virtual Eigen::Vector3d thrustPosition(double time) const;
             // thrust
-            virtual Eigen::Vector3d thrust(double time);
+            virtual Eigen::Vector3d thrust(double time) const;
 
             //getter and setter for caching
-            virtual bool caching();
+            virtual bool caching() const;
             virtual void setCaching( bool toCache );
             virtual void setAllCaching( bool toCache );
 
             // show trees in console
-            virtual std::string componentTreeRepr(bool header=true);
-            virtual void printComponentTree(bool header=true);
+            virtual std::string componentTreeRepr(bool header=true) const;
+            virtual void printComponentTree(bool header=true) const;
     };
 }
 
