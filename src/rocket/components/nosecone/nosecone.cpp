@@ -1,5 +1,6 @@
 #include "nosecone.hpp"
 #include "../../shapes/components/nosecone/nosecone.hpp"
+#include "maths.hpp"
 #include <iostream>
 #include <memory>
 #include <cmath>
@@ -88,5 +89,15 @@ namespace Rocket{
     void Nosecone::setShapeParam(double val){
         clearCaches();
         shape()->setShapeParam(val);
+    }
+
+    Eigen::Matrix3d Nosecone::calculateInertia(double time){
+        // inertia about cm
+        auto thisInertia = shape()->inertia(); // inertia/density of the shape about cm
+        auto disp = -position(); // THIS LINE HAS CHANGED, the nosecones inertia is calculated about its tip
+        auto thisVolume = shape()->volume();
+        auto zeroInertia = Utils::parallel_axis_transform(thisInertia, disp, thisVolume);
+        zeroInertia *= material()->density; // multiplying by density so it's the actual inertia
+        return zeroInertia;
     }
 }

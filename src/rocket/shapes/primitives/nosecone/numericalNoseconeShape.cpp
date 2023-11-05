@@ -49,8 +49,8 @@ namespace Shapes{
         return _planformArea;
     }
 
-    double NumericalNoseconeShape::planformCenter(){
-        if(std::isnan(_planformCenter)) calculateProperties();
+    Eigen::Vector3d NumericalNoseconeShape::planformCenter(){
+        if(_planformCenter.hasNaN()) calculateProperties();
         return _planformCenter;
     }
 
@@ -68,7 +68,7 @@ namespace Shapes{
         _filledVolume = NAN_D;
         _wettedArea = NAN_D;
         _planformArea = NAN_D;
-        _planformCenter = NAN_D;
+        _planformCenter = NAN_V3D;
         _averageRadius = NAN_D;
     }
 
@@ -155,9 +155,9 @@ namespace Shapes{
         // trapz(y,x) == ((r1+r2)/2*stepArr).sum()
         _wettedArea = ((hyp*(r1+r2))*M_PI).sum();
         _planformArea = ( ( r1+r2 )/2*stepArr ).sum()*2; //trapezoidal integration (then *2)
-        _planformCenter = ( (r1+r2)*stepArr.pow(2) ).sum()/_planformArea;
+        _planformCenter = Eigen::Vector3d{( (r1+r2)*stepArr.pow(2) ).sum()/_planformArea, 0, 0};
         _filledVolume = ((( r1+r2 )/2).pow(2)*stepArr ).sum()*M_PI; // solid of revolution
-        _filledCm = Eigen::Vector3d{_planformCenter, 0, 0}; // same as the planform center as density is uniform
+        _filledCm = Eigen::Vector3d{_planformCenter.x(), 0, 0}; // same as the planform center as density is uniform
         
         Eigen::ArrayXd dFullV = M_PI/3 * stepArr * (r1.pow(2) + r1*r2 + r2.pow(2));
         Eigen::ArrayXd dV = M_PI * stepArr * height * (r1+r2-height);

@@ -1,7 +1,7 @@
 target_sources(utils
     PRIVATE
-        parallelAxis.cpp
-        parallelAxis.hpp
+        maths.cpp
+        maths.hpp
         overrideFlags.hpp
         nanValues.hpp
 )

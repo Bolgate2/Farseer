@@ -38,7 +38,7 @@ namespace Shapes{
             double _wettedArea = NAN_D;
             
             double _planformArea = NAN_D;
-            double _planformCenter = NAN_D;
+            Eigen::Vector3d _planformCenter = NAN_V3D;
 
             double _averageRadius = NAN_D;
             
@@ -56,7 +56,7 @@ namespace Shapes{
             // inherited from aeroShapeInterface
             virtual double wettedArea() override; // surface area of the shape exposed to the air
             virtual double planformArea() override;
-            virtual double planformCenter() override; // geometric center of the shapes planform
+            virtual Eigen::Vector3d planformCenter() override; // geometric center of the shapes planform
 
             // inherited from noseconeShape
             virtual void setLength(double length) override; //sets the length of the shape

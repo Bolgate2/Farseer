@@ -3,6 +3,7 @@
 #include "internalComponent.hpp"
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 namespace Rocket{
     std::string BodyComponent::defaultName = "Body Component";
@@ -22,7 +23,11 @@ namespace Rocket{
     
     // tree stuff
     std::vector<std::shared_ptr<AeroComponent>> BodyComponent::aeroComponents(){
-        return _externalComponents;
+        std::vector<std::shared_ptr<AeroComponent>> compVec;
+        for(auto comp = _externalComponents.begin(); comp != _externalComponents.end(); ++comp){
+            compVec.push_back( std::dynamic_pointer_cast<AeroComponent>((*comp)->shared_from_this()) );
+        }
+        return compVec;
     }
 
     std::vector< std::shared_ptr<Component> > BodyComponent::components(){
@@ -49,11 +54,11 @@ namespace Rocket{
         auto compInternalCast = dynamic_cast<InternalComponent*>(component);
         if(compInternalCast != NULL){
             // removing from previous parent if applicable
-            if(compInternalCast->parent() != NULL){
-                compInternalCast->parent()->removeComponent(compInternalCast);
+            if(component->parent() != NULL){
+                component->parent()->removeComponent(component);
             }
             // setting new parent
-            compInternalCast->setParent(this);
+            component->setParent(this);
             // adding to component list
             _internalComponents.push_back(
                 std::dynamic_pointer_cast<InternalComponent>(component->shared_from_this()) // this bugs out when there is no sharedptr
@@ -65,11 +70,11 @@ namespace Rocket{
         auto compExternalCast = dynamic_cast<ExternalComponent*>(component);
         if(compExternalCast != NULL){
             // removing from previous parent if applicable
-            if(compExternalCast->parent() != NULL){
-                compExternalCast->parent()->removeComponent(compExternalCast);
+            if(component->parent() != NULL){
+                component->parent()->removeComponent(component);
             }
             // setting new parent
-            compExternalCast->setParent(this);
+            component->setParent(this);
             // adding to component list
             _externalComponents.push_back(
                 std::dynamic_pointer_cast<ExternalComponent>(component->shared_from_this())
@@ -215,7 +220,7 @@ namespace Rocket{
 
     Eigen::Vector3d BodyComponent::bodyLiftCp(){
         auto pos = position();
-        pos += Eigen::Vector3d{ planformCenter(),0,0 };
+        pos += planformCenter();
         return pos;
     }
 
@@ -263,7 +268,6 @@ namespace Rocket{
         const auto thisCna = c_n_aWithoutBodyLift(mach, alpha, gamma);
         const auto cpFromBl = bodyLiftCp();
         const auto bl = bodyLift(alpha);
-        std::cout << name << " body lift " << bl << std::endl;
         auto weightedAvg = (cpFromCna*thisCna + cpFromBl*bl)/(thisCna+bl);
         return weightedAvg;
     }

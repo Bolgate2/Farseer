@@ -8,7 +8,7 @@ namespace Shapes {
             virtual double wettedArea() = 0; // surface area of the shape exposed to the air
             virtual double referenceArea() = 0; // shapes reference area
             virtual double planformArea() = 0;
-            virtual double planformCenter() = 0; // geometric center of the shapes planform
+            virtual Eigen::Vector3d planformCenter() = 0; // geometric center of the shapes planform
     };
 }
 

@@ -1,5 +1,5 @@
 #include "trapezoidalPrism.hpp"
-#include "parallelAxis.hpp"
+#include "maths.hpp"
 #include <Eigen/Dense>
 
 namespace Shapes{

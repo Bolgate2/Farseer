@@ -103,8 +103,6 @@ namespace Sim{
              * @param omega angular pitching velocity in body coordinates in radians/second
              * @param v freestream velocity in meters/second
              * @return double 
-             * 
-             * @todo REFACTOR THIS TO TAKE IN CM INSTEAD OF TIME FOR CACHING REASONS
              */
             virtual double c_m_damp(double x, double omega, double v) = 0;
     };

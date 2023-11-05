@@ -1,4 +1,4 @@
-#include "parallelAxis.hpp"
+#include "maths.hpp"
 #include <Eigen/Dense>
 #include <cmath>
 
@@ -22,4 +22,10 @@ namespace Utils{
         auto translatedInertia = inertia + translationInertia;
         return translatedInertia;
     }
+
+    double beta(double mach){
+        return std::sqrt(std::abs(1-std::pow(mach,2)));
+    }
+
+
 }

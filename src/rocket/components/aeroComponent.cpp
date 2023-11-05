@@ -1,6 +1,6 @@
 #include "aeroComponent.hpp"
 #include "nanValues.hpp"
-#include "parallelAxis.hpp"
+#include "maths.hpp"
 #include <cmath>
 
 namespace Rocket{
@@ -151,7 +151,8 @@ namespace Rocket{
     //C_n
     double AeroComponent::calculateC_n_aWithComponents( double mach, double alpha, double gamma){
         auto thisC_n_a = this->calculateC_n_a(mach, alpha, gamma);
-        for(auto aeroComp = aeroComponents().begin(); aeroComp != aeroComponents().end(); ++aeroComp){
+        auto aeroComps = aeroComponents();
+        for(auto aeroComp = aeroComps.begin(); aeroComp != aeroComps.end(); ++aeroComp){
             auto compC_n_a = (*aeroComp)->c_n_a(mach, alpha, gamma);
             auto compAref = (*aeroComp)->referenceArea();
             auto compAdjC_n_a = compC_n_a*compAref/referenceArea();
@@ -192,7 +193,8 @@ namespace Rocket{
 
     double AeroComponent::calculateC_m_aWithComponents( double mach, double alpha, double gamma){
         auto thisC_m_a = calculateC_m_aAtOrigin(mach, alpha, gamma);
-        for(auto aeroComp = aeroComponents().begin(); aeroComp != aeroComponents().end(); ++aeroComp){
+        auto aeroComps = aeroComponents();
+        for(auto aeroComp = aeroComps.begin(); aeroComp != aeroComps.end(); ++aeroComp){
             auto compC_m_a = (*aeroComp)->c_m_a(mach, alpha, gamma);
             auto compAref = (*aeroComp)->referenceArea();
             auto compDref = (*aeroComp)->referenceLength();
@@ -225,7 +227,10 @@ namespace Rocket{
         // because this only considers C_n_a it will only affect the x position of cp, can be improved in future
         Eigen::Vector3d weightedCpSum = Eigen::Vector3d::Zero();
         double c_n_aSum = 0;
-        for(auto aeroComp = aeroComponents().begin(); aeroComp != aeroComponents().end(); ++aeroComp){
+        auto aeroComps = aeroComponents();
+        for(auto aeroComp = aeroComps.begin(); aeroComp != aeroComps.end(); ++aeroComp){
+            std::cout << "hi" << std::endl;
+            //std::cout << "comp name " << (*aeroComp)->name << std::endl;
             auto compC_n_a = (*aeroComp)->c_n_a(mach, alpha, gamma);
             auto compCP = (*aeroComp)->cp(mach, alpha, gamma);
             weightedCpSum += compC_n_a * compCP;
@@ -256,7 +261,8 @@ namespace Rocket{
     //C_m_damp
     double AeroComponent::calculateC_m_dampWithComponents(double x, double omega, double v){
         auto thisC_m_damp = calculateC_m_damp(x, omega, v);
-        for(auto aeroComp = aeroComponents().begin(); aeroComp != aeroComponents().end(); ++aeroComp){
+        auto aeroComps = aeroComponents();
+        for(auto aeroComp = aeroComps.begin(); aeroComp != aeroComps.end(); ++aeroComp){
             auto compC_m_damp = (*aeroComp)->c_m_damp(x, omega, v);
             auto compAref = (*aeroComp)->referenceArea();
             auto compDref = (*aeroComp)->referenceLength();
@@ -291,7 +297,7 @@ namespace Rocket{
         return shape()->planformArea();
     }
 
-    double AeroComponent::planformCenter(){
+    Eigen::Vector3d AeroComponent::planformCenter(){
         return shape()->planformCenter();
     }
 
@@ -335,6 +341,7 @@ namespace Rocket{
         auto disp = -calculateCm(time); // moving the moment of inertia back towards the origin
         auto thisVolume = shape()->volume();
         auto zeroInertia = Utils::parallel_axis_transform(thisInertia, disp, thisVolume);
+        zeroInertia *= material()->density; // multiplying by density so it's the actual inertia
         return zeroInertia;
     }
 
@@ -344,4 +351,24 @@ namespace Rocket{
         return bodyCm;
     }
 
+    AeroComponent* AeroComponent::parent(){
+        if(_parent.expired()) return NULL;
+        if(_parent.lock().get() == NULL) return NULL;
+        return _parent.lock().get();
+    }
+
+    // need to override this so its operating on the correct parent
+    void AeroComponent::setParent( Component* parent ) {
+        // add and remove component calls this so this cant be called by them
+        auto castedPtr = dynamic_cast<AeroComponent*>(parent);
+        if(castedPtr != NULL){
+            if(parent == NULL){
+                _parent.reset();
+            } else {
+                _parent = std::dynamic_pointer_cast<AeroComponent>(parent->shared_from_this());
+            }
+        } else {
+            std::cerr << "invalid parent type for aero component";
+        }
+    }
 }

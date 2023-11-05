@@ -10,6 +10,8 @@ namespace Rocket{
             static std::string defaultName;
             std::unique_ptr<Shapes::NoseconeComponentShape> _shape;
         protected:
+            // overriding inertia
+            Eigen::Matrix3d calculateInertia(double time) override;
             // constructors
             Nosecone(Shapes::NoseconeShapeTypes type, double radius, double length, double thickness, double shapeParam, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position);
             Nosecone(Shapes::NoseconeShapeTypes type, double radius, double length, double shapeParam, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position);

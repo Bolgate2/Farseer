@@ -33,11 +33,11 @@ namespace Rocket{
             std::unique_ptr<Material> _material;
         protected:
             // inherited from component
-            virtual void clearCaches();
+            virtual void clearCaches() override;
             
-            virtual double calculateMass(double time);
-            virtual Eigen::Matrix3d calculateInertia(double time);
-            virtual Eigen::Vector3d calculateCm(double time);
+            virtual double calculateMass(double time) override;
+            virtual Eigen::Matrix3d calculateInertia(double time) override;
+            virtual Eigen::Vector3d calculateCm(double time) override;
 
             //aero functions
             //C_n_a
@@ -94,27 +94,28 @@ namespace Rocket{
             // need to redefine these to clarify override of interface
             // because the implementation of these functions is defined above, it needs to be specified here again so that
             // the interface knows wtf they're on about
-            virtual Eigen::Vector3d cm(double time) { return Component::cm(time); }
-            virtual Eigen::Matrix3d inertia(double time) { return Component::inertia(time); }
-            virtual double mass(double time) { return Component::mass(time); }
-            virtual Eigen::Vector3d thrust(double time) { return Component::thrust(time); }
-            virtual Eigen::Vector3d thrustPosition(double time) { return Component::thrustPosition(time); }
-            // reference area and length are still not defined
-            virtual double c_n( double mach, double alpha, double gamma = 1.4 );
+            virtual Eigen::Vector3d cm(double time) override { return Component::cm(time); }
+            virtual Eigen::Matrix3d inertia(double time) override { return Component::inertia(time); }
+            virtual double mass(double time) override { return Component::mass(time); }
+            virtual Eigen::Vector3d thrust(double time) override { return Component::thrust(time); }
+            virtual Eigen::Vector3d thrustPosition(double time) override { return Component::thrustPosition(time); }
+            virtual double c_n( double mach, double alpha, double gamma = 1.4 ) override;
             // calculates c_m about (0,0,0)
-            virtual double c_m( double mach, double alpha, double gamma = 1.4);
-            virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4);
-            virtual double c_m_damp(double time, double omega, double v);
+            virtual double c_m( double mach, double alpha, double gamma = 1.4) override;
+            virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4) override;
+            virtual double c_m_damp(double time, double omega, double v) override;
             //virtual double c_d() = 0;
 
             // shape stuff
             virtual double referenceArea();
             virtual double wettedArea(); // surface area of the shape exposed to the air
             virtual double planformArea();
-            virtual double planformCenter(); // geometric center of the shapes planform
+            virtual Eigen::Vector3d planformCenter(); // geometric center of the shapes planform
             // reference length is undefined in this context and remains virtual
 
-            // inherited from both
+            // component stuff
+            AeroComponent* parent() override;
+            void setParent( Component* parent ) override;
 
             //new
             virtual double c_n_a( double mach, double alpha, double gamma = 1.4 );

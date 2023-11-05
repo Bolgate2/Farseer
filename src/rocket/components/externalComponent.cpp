@@ -2,6 +2,12 @@
 #include <iostream>
 
 namespace Rocket{
+    ExternalComponent::ExternalComponent(std::unique_ptr<Shapes::ExternalComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position):
+    AeroComponent(nullptr, std::move(material), std::move(finish), name, position)
+    {
+        setShape( std::move(shape) );
+    }
+
     std::vector< std::shared_ptr<AeroComponent> > ExternalComponent::aeroComponents(){
         return _components;
     }
@@ -61,5 +67,27 @@ namespace Rocket{
             if( castedParent != NULL ) return castedParent->bodyRadius(x);
         }
         return 0;
+    }
+
+    Shapes::ExternalComponentShape* ExternalComponent::shape(){
+        return _shape.get();
+    }
+    
+    void ExternalComponent::setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ){
+        auto castedShapePointer = dynamic_cast<Shapes::ExternalComponentShape*>(shape.get());
+
+        if(castedShapePointer != NULL){
+            // if casting is successful the a unique pointer of the correct type is crated and the old one is released
+            auto newShapeUniquePtr = std::unique_ptr<Shapes::ExternalComponentShape>(castedShapePointer);
+            shape.release();
+            return setShape( std::move(newShapeUniquePtr) );
+        }
+        // if the function has reached here it has failed
+        std::cerr << "Invalid shape for external component\n"; // TODO: make this more descriptive
+
+    }
+    void ExternalComponent::setShape( std::unique_ptr<Shapes::ExternalComponentShape> shape ){
+        _shape = std::move(shape);
+        clearCaches();
     }
 }

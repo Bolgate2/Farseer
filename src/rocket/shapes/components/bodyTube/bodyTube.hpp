@@ -25,7 +25,7 @@ namespace Shapes{
             virtual double wettedArea() override; // surface area of the shape exposed to the air
             virtual double referenceArea() override; // shapes reference area
             virtual double planformArea() override;
-            virtual double planformCenter() override; // geometric center of the shapes planform
+            virtual Eigen::Vector3d planformCenter() override; // geometric center of the shapes planform
             // defining cm
             virtual Eigen::Vector3d cm() override;
 

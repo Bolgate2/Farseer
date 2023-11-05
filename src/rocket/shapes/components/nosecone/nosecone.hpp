@@ -23,7 +23,7 @@ namespace Shapes{
             virtual double wettedArea() override { return shape()->wettedArea(); }
             virtual double referenceArea() override { return shape()->referenceArea(); }
             virtual double planformArea() override { return shape()->planformArea(); }
-            virtual double planformCenter() override { return shape()->planformCenter(); }
+            virtual Eigen::Vector3d planformCenter() override { return shape()->planformCenter(); }
             virtual Eigen::Vector3d cm() override { return shape()->cm(); }
 
             virtual double shapeParam(){ return shape()->shapeParam(); }

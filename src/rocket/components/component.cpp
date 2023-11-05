@@ -1,5 +1,5 @@
 # include "component.hpp"
-#include "parallelAxis.hpp"
+#include "maths.hpp"
 #include <Eigen/Dense>
 #include <string>
 #include <fmt/core.h>
@@ -48,6 +48,7 @@ namespace Rocket{
             _parent.reset();
         } else {
             _parent = parent->shared_from_this();
+            std::cout << "set parent of " << name << " to " << _parent.lock()->name << std::endl;
         }
     }
 

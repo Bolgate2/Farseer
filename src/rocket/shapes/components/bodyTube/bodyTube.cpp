@@ -48,8 +48,8 @@ namespace Shapes{
         return 2 * radius() * length(); //diameter times length, used for body lift
     }
 
-    double BodyTubeComponentShape::planformCenter(){
-        return cm()[0]; // planform center is in the same spot as the center of mass
+    Eigen::Vector3d BodyTubeComponentShape::planformCenter(){
+        return Eigen::Vector3d{ length()/2, 0, 0 }; // planform center is in the same spot as the center of mass
     }
 
     Eigen::Vector3d BodyTubeComponentShape::cm(){

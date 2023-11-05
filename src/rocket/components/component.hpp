@@ -111,7 +111,7 @@ namespace Rocket{
 
             // parent
             virtual Component* parent();
-            void setParent( Component* parent );
+            virtual void setParent( Component* parent );
             // returns the root of this component tree
             virtual std::shared_ptr<Component> root();
             virtual int height();
