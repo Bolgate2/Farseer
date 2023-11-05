@@ -2,7 +2,7 @@
 #define LAUNCH_CONDITIONS_H_
 
 namespace Rocket{
-    class LaunchConditions{
+    struct LaunchConditions{
         
     };
 }

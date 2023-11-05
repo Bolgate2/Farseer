@@ -31,7 +31,7 @@ namespace Rocket{
     }
 
     // creator
-    std::shared_ptr<Nosecone> Nosecone::create(Shapes::NoseconeShapeTypes type, double radius, double length, double thickness, double shapeParam, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, BodyComponent *parent, std::string name, Eigen::Vector3d position)
+    std::shared_ptr<Nosecone> Nosecone::create(Shapes::NoseconeShapeTypes type, double radius, double length, double thickness, double shapeParam, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, Stage *parent, std::string name, Eigen::Vector3d position)
     {
         auto obj = std::shared_ptr<Nosecone>(
             new Nosecone(type, radius, length, thickness, shapeParam, std::move(material), std::move(finish), name, position)
@@ -94,7 +94,7 @@ namespace Rocket{
     Eigen::Matrix3d Nosecone::calculateInertia(double time) const {
         // inertia about cm
         auto thisInertia = shape()->inertia(); // inertia/density of the shape about cm
-        auto disp = -position(); // THIS LINE HAS CHANGED, the nosecones inertia is calculated about its tip
+        auto disp = position(); // THIS LINE HAS CHANGED, the nosecones inertia is calculated about its tip
         auto thisVolume = shape()->volume();
         auto zeroInertia = Utils::parallel_axis_transform(thisInertia, disp, thisVolume);
         zeroInertia *= material()->density; // multiplying by density so it's the actual inertia

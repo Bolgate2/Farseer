@@ -118,7 +118,6 @@ namespace Rocket{
             virtual void addComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
             virtual void removeComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
 
-            // this function is not virtual as it is essentially a convenience wrapper
             virtual void removeComponent( std::string id );
 
             // position

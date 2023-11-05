@@ -43,7 +43,7 @@ namespace Rocket{
             virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const = 0; // VIRTUAL
 
             virtual double calculateC_n_aWithComponents( double mach, double alpha, double gamma = 1.4 ) const;
-            // nested caches for C_n, access is in 
+            // nested caches for C_n
             std::map<double, std::map<double, std::map<double, double>>> _c_n_aCache = {};
             virtual void createC_n_aMapping( double value, double mach, double alpha, double gamma = 1.4 );
             virtual bool c_n_aExists(double mach, double alpha, double gamma = 1.4 ) const;
@@ -102,7 +102,11 @@ namespace Rocket{
             //virtual double c_d() = 0;
 
             // shape stuff
-            virtual double referenceArea() const;
+            // these are defined by rocket interface
+            virtual double referenceArea() const override;
+            virtual double referenceLength() const override = 0;
+
+
             virtual double wettedArea() const; // surface area of the shape exposed to the air
             virtual double planformArea() const;
             virtual Eigen::Vector3d planformCenter() const; // geometric center of the shapes planform

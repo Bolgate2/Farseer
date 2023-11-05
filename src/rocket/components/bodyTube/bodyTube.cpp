@@ -30,7 +30,7 @@ namespace Rocket{
     }
 
     // creators
-    std::shared_ptr<BodyTube> BodyTube::create(double radius, double length, double thickness, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, BodyComponent *parent, std::string name, Eigen::Vector3d position)
+    std::shared_ptr<BodyTube> BodyTube::create(double radius, double length, double thickness, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, Stage *parent, std::string name, Eigen::Vector3d position)
     {
         auto obj = std::shared_ptr<BodyTube>(
             new BodyTube(radius, length, thickness, std::move(material), std::move(finish), name, position)
@@ -41,7 +41,7 @@ namespace Rocket{
         return obj;
     }
     // creator without thickness
-    std::shared_ptr<BodyTube> BodyTube::create(double radius, double length, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, BodyComponent *parent, std::string name, Eigen::Vector3d position)
+    std::shared_ptr<BodyTube> BodyTube::create(double radius, double length, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, Stage *parent, std::string name, Eigen::Vector3d position)
     {
         auto obj = std::shared_ptr<BodyTube>(
             new BodyTube(radius, length, std::move(material), std::move(finish), name, position)
@@ -52,7 +52,7 @@ namespace Rocket{
         return obj;
     }
     // creator with existing shape
-    std::shared_ptr<BodyTube> BodyTube::create(std::unique_ptr<Shapes::BodyTubeComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, BodyComponent *parent, std::string name, Eigen::Vector3d position)
+    std::shared_ptr<BodyTube> BodyTube::create(std::unique_ptr<Shapes::BodyTubeComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, Stage* parent, std::string name, Eigen::Vector3d position)
     {
         auto obj = std::shared_ptr<BodyTube>(
             new BodyTube(std::move(shape), std::move(material), std::move(finish), name, position)

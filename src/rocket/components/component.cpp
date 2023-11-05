@@ -157,11 +157,11 @@ namespace Rocket{
             thisInertia = _inertia;
         }
         else{
-            thisInertia = this->calculateInertia(time);
+            thisInertia = calculateInertia(time);
         }
         // summing component inertias like this requires them all to be calculated about (0,0,0)
         Eigen::Matrix3d compInertia = Eigen::Matrix3d::Zero();
-        auto comps = this->components();
+        auto comps = components();
         for(auto comp = comps.cbegin(); comp != comps.cend(); ++comp){
             compInertia += (*comp)->inertia(time);
         }
@@ -213,18 +213,18 @@ namespace Rocket{
             thisCm = _cm;
         }
         else{
-            thisCm = this->calculateCm(time);
+            thisCm = calculateCm(time);
         }
         // getting weighted sum of component cms and total component mass
         Eigen::Vector3d weightedCompCm = Eigen::Vector3d::Zero();
         double totalCompMass = 0;
-        auto comps = this->components();
+        auto comps = components();
         for(auto comp = comps.cbegin(); comp != comps.cend(); ++comp){
             weightedCompCm += (*comp)->mass(time)*(*comp)->cm(time);
             totalCompMass += (*comp)->mass(time);
         }
         // adding this cm*mass to weighted cm and this mass to mass 
-        auto thisMass = this->mass(time);
+        auto thisMass = calculateMass(time); // take mass sans components
         auto weightedCm = weightedCompCm + thisCm*thisMass;
         auto totalMass = totalCompMass + thisMass;
         // avoiding div by 0 error
@@ -271,11 +271,11 @@ namespace Rocket{
 
     Eigen::Vector3d Component::calculateThrustWithComponents(double time) const {
         Eigen::Vector3d compThrust = Eigen::Vector3d::Zero();
-        auto comps = this->components();
+        auto comps = components();
         for(auto comp = comps.cbegin(); comp != comps.cend(); ++comp){
             compThrust += (*comp)->thrust(time);
         }
-        auto totalThrust = compThrust + this->calculateThrust(time);
+        auto totalThrust = compThrust + calculateThrust(time);
         return totalThrust;
     }
     
@@ -301,13 +301,13 @@ namespace Rocket{
             weightedThrustPos += tMag * (*comp)->thrustPosition(time);
             thrustMagnitude += tMag;
         }
-        auto tMag = thrust(time).norm();
+        auto tMag = calculateThrust(time).norm();
         thrustMagnitude += tMag;
         // thrust position is zero by default
         Eigen::Vector3d thrustPos = Eigen::Vector3d::Zero();
         if(thrustMagnitude > 0){
             // setting thrust position if thrust is more than zero, this avoids divide by 0 errors
-            weightedThrustPos += tMag*this->calculateThrustPosition(time);
+            weightedThrustPos += tMag*calculateThrustPosition(time);
             thrustPos = weightedThrustPos/thrustMagnitude;
         }
         return thrustPos;
@@ -364,8 +364,8 @@ namespace Rocket{
         const int maxPfxLen = _indentLen*h;
 
         std::string repr = "";
-        std::string fmtStr = "|{:-^" + std::to_string(maxPfxLen+_maxNameLen) + "}|{:-^" + std::to_string(_massLen) +"}|\n";
-        if(header) repr += fmt::format(fmtStr, "Name", "Mass (kg)");
+        std::string fmtStr = "|{:^" + std::to_string(maxPfxLen+_maxNameLen) + "}|{:^" + std::to_string(_massLen) +"}|{:^30}|\n";
+        if(header) repr += fmt::format(fmtStr, "Name", "Mass (kg)", "CM [x,y,z] (m)");
         
         repr += componentTreeRepr("", "", this->height());
         return repr;
@@ -373,8 +373,10 @@ namespace Rocket{
 
     std::string Component::componentTreeRepr( std::string prefix, std::string childPrefix, int treeHeight) const {
         const int maxPfxLen = _indentLen*treeHeight;
-        std::string fmtStr = " {:<" + std::to_string(maxPfxLen+_maxNameLen) + "} {:< " + std::to_string(_massLen) + "." + std::to_string(_massPrecision) + "f} \n";
-        std::string repr = fmt::format(fmtStr, prefix + name, mass(0));
+        std::string fmtStr = " {:<" + std::to_string(maxPfxLen+_maxNameLen) + "} {:< " + std::to_string(_massLen) + "." + std::to_string(_massPrecision) + "f} {:^30} \n";
+        std::stringstream cmstream;
+        cmstream << "[" << cm(0).transpose() << "]";
+        std::string repr = fmt::format(fmtStr, prefix + name, mass(0), cmstream.str());
         if(!components().empty()){
             auto comps = components();
             for(auto comp = comps.cbegin(); comp != comps.cend(); comp++){

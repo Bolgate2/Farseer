@@ -27,13 +27,12 @@ namespace Rocket{
             // constructor
             Stage(std::string name);
         public:
-            /*
             [[nodiscard]]
             static std::shared_ptr<Stage> create(Rocket* parent = nullptr, std::string name = "Stage");
-            */
+
+            // component tree functions            
             virtual Rocket* parent() const override;
             virtual void setParent( Component* parent ) override;
-
             virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() const override;
             virtual std::vector<std::shared_ptr<Component>> components() const override;
             virtual std::shared_ptr<Component> findComponent(std::string id) const override;
@@ -42,15 +41,18 @@ namespace Rocket{
 
             
             // neutering functions that don't apply to the stage
-            virtual double bodyRadius(double x){ return 0; }
-            virtual Finish* finish() { return nullptr; }
-            virtual void setFinish( std::unique_ptr<Finish> finish ) {/*do nothing*/}
-            virtual Material* material() const { return 0; }
-            virtual void setMaterial( std::unique_ptr<Material> material ) {/*do nothing*/}
-            virtual double referenceArea() const;
-            virtual double wettedArea() const; // surface area of the shape exposed to the air
-            virtual double planformArea() const;
-            virtual Eigen::Vector3d planformCenter() const; // geometric center of the shapes planform
+            virtual Shapes::AeroComponentShape* shape() const override { return nullptr; }
+            virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ) override {/*do nothing*/}
+            virtual double bodyRadius(double x) const override { return 0; }
+            virtual Finish* finish() const override { return nullptr; }
+            virtual void setFinish( std::unique_ptr<Finish> finish ) override {/*do nothing*/}
+            virtual Material* material() const override { return 0; }
+            virtual void setMaterial( std::unique_ptr<Material> material ) override {/*do nothing*/}
+            virtual double planformArea() const { return 0; }
+            virtual Eigen::Vector3d planformCenter() const { return Eigen::Vector3d::Zero(); } // geometric center of the shapes planform
+            virtual double referenceArea() const override;
+            virtual double referenceLength() const override;
+            virtual double wettedArea() const override; // surface area of the shape exposed to the air
     };
 }
 

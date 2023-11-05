@@ -5,6 +5,8 @@ target_sources(rocket
         bodyComponentShape.hpp
         externalComponentShape.hpp
         internalComponentShape.hpp
+        componentShape.hpp
+        componentShape.cpp
 )
 
 add_subdirectory(bodyTube)

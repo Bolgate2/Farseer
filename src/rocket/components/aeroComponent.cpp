@@ -181,7 +181,7 @@ namespace Rocket{
          */
         auto thisC_m_a = calculateC_m_a(mach, alpha, gamma);
         auto thisC_n_a = calculateC_n_a(mach, alpha, gamma);
-        auto dist = position().x(); // because this is a moment about the y axis caused by forces in the z direction, only the x distance matters
+        auto dist = cp(mach, alpha, gamma).x(); // because this is a moment about the y axis caused by forces in the z direction, only the x distance matters, CNa is acting about CP
         auto newC_m_a = (thisC_m_a*referenceLength() - thisC_n_a*dist) / referenceLength();
         return newC_m_a;
     }
@@ -316,11 +316,9 @@ namespace Rocket{
 
     Eigen::Matrix3d AeroComponent::calculateInertia(double time) const {
         // inertia about cm
-        auto thisInertia = shape()->inertia(); // inertia/density of the shape about cm
-        auto disp = -calculateCm(time); // moving the moment of inertia back towards the origin
-        auto thisVolume = shape()->volume();
-        auto zeroInertia = Utils::parallel_axis_transform(thisInertia, disp, thisVolume);
-        zeroInertia *= material()->density; // multiplying by density so it's the actual inertia
+        auto thisInertia = shape()->inertia() * material()->density; // inertia/density of the shape about cm
+        auto disp = calculateCm(time); // moving the moment of inertia back towards the origin
+        auto zeroInertia = Utils::parallel_axis_transform(thisInertia, disp, calculateMass(time));
         return zeroInertia;
     }
 

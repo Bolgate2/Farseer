@@ -20,7 +20,7 @@ namespace Rocket{
             [[nodiscard]]
             static std::shared_ptr<Nosecone> create(
                 Shapes::NoseconeShapeTypes type, double radius, double length, double thickness, double shapeParam, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
-                BodyComponent* parent = nullptr, std::string name = Nosecone::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
+                Stage* parent = nullptr, std::string name = Nosecone::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
                 );
             /*
             // create with no thickness

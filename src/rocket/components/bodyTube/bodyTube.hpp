@@ -32,21 +32,21 @@ namespace Rocket{
             [[nodiscard]]
             static std::shared_ptr<BodyTube> create(
                 double radius, double length, double thickness, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
-                BodyComponent* parent = nullptr, std::string name = BodyTube::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
+                Stage* parent = nullptr, std::string name = BodyTube::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
                 );
             
             // create with no thickness
             [[nodiscard]]
             static std::shared_ptr<BodyTube> create(
                 double radius, double length, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
-                BodyComponent* parent = nullptr, std::string name = BodyTube::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
+                Stage* parent = nullptr, std::string name = BodyTube::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
                 );
             
             // create with existing shape
             [[nodiscard]]
             static std::shared_ptr<BodyTube> create(
                 std::unique_ptr<Shapes::BodyTubeComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish,
-                BodyComponent* parent = nullptr, std::string name = BodyTube::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
+                Stage* parent = nullptr, std::string name = BodyTube::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
                 );
             
             // redefine shape getter bc shape has changed

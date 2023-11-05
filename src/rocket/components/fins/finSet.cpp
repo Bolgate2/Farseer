@@ -79,7 +79,7 @@ namespace Rocket{
             // rotating the fins inertia about its own cm, this is ok at the displacement vector is to the fins cm
             Eigen::Matrix3d finRotatedInertia = (rot*finLocalInertia)*rot.transpose();
             Eigen::Vector3d thisFinTotalDisp = pos+thisFinDisp;
-            Eigen::Matrix3d finGlobalInertia = Utils::parallel_axis_transform(finRotatedInertia, thisFinTotalDisp, finMass);
+            Eigen::Matrix3d finGlobalInertia = Utils::parallel_axis_transform(finRotatedInertia, -thisFinTotalDisp, finMass);
             totalInertia += finGlobalInertia;
         }
         return totalInertia;
