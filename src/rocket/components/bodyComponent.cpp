@@ -267,6 +267,8 @@ namespace Rocket{
         const auto cpFromBl = bodyLiftCp();
         const auto bl = bodyLift(alpha);
         auto weightedAvg = (cpFromCna*thisCna + cpFromBl*bl)/(thisCna+bl);
+        std::cout << "cp from bl " << "[" << cpFromBl.transpose() << "]" << std::endl;
+        std::cout << "cp from cna " << "[" << cpFromCna.transpose() << "]" << std::endl;
         return weightedAvg;
     }
     

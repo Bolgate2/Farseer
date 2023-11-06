@@ -19,6 +19,7 @@ namespace Rocket{
             // the fin set will handle the global coords
             // this affects the inertia, it will now be reported about the origin here
             Eigen::Vector3d calculateCm(double time) const override;
+            Eigen::Matrix3d calculateInertia(double time) const override;
             
             // using caching for this
             virtual void clearCaches() override;

@@ -57,7 +57,7 @@ namespace Rocket{
         std::vector<Eigen::Matrix3d> rotations = {};
         auto spacing = (2*M_PI)/numFins();
         for(int i = 0; i < numFins(); i++){
-            Eigen::Matrix3d quat = Eigen::AngleAxis<double>(i*spacing, Eigen::Vector3d(0,0,1)).toRotationMatrix();
+            Eigen::Matrix3d quat = Eigen::AngleAxis<double>(i*spacing, Eigen::Vector3d(1,0,0)).toRotationMatrix();
             rotations.push_back(quat);
         }
         return rotations;
@@ -70,18 +70,25 @@ namespace Rocket{
         const Eigen::Vector3d pos = position();
         auto rotations = finRotations();
         Eigen::Matrix3d totalInertia = Eigen::Matrix3d::Zero();
-        Eigen::Vector3d finDisp = finLocalCm + Eigen::Vector3d{ 0, bodyRadius( position().x() ), 0 }; // distance from the rockets centerline to the fins cm
+        //std::cout << "FIN MASS " << finMass << std::endl; // correct
+        //std::cout << "FIN CM [" << finLocalCm.transpose() << "]" << "\n"; // correct
+        //std::cout << "FIN SET RAD" << bodyRadius( position().x() ) << std::endl; // correct
+        Eigen::Vector3d finDisp = finLocalCm + Eigen::Vector3d{ 0, bodyRadius(position().x()), 0 }; // distance from the rockets centerline to the fins cm
 
         for(auto rotPtr = rotations.cbegin(); rotPtr != rotations.cend(); rotPtr++){
             auto rot = *rotPtr;
             // rotating the fins dispacement vector
             Eigen::Vector3d thisFinDisp = rot*finDisp;
+            thisFinDisp = (std::numeric_limits<double>::epsilon() < thisFinDisp.array().abs()).select(thisFinDisp, 0);
             // rotating the fins inertia about its own cm, this is ok at the displacement vector is to the fins cm
             Eigen::Matrix3d finRotatedInertia = (rot*finLocalInertia)*rot.transpose();
             Eigen::Vector3d thisFinTotalDisp = pos+thisFinDisp;
-            Eigen::Matrix3d finGlobalInertia = Utils::parallel_axis_transform(finRotatedInertia, -thisFinTotalDisp, finMass);
+            
+            Eigen::Matrix3d finGlobalInertia = Utils::parallel_axis_transform(finRotatedInertia, thisFinTotalDisp, finMass);
             totalInertia += finGlobalInertia;
         }
+        // rounding inertia
+        totalInertia = (std::numeric_limits<double>::epsilon() < totalInertia.array().abs()).select(totalInertia, 0);
         return totalInertia;
     }
 
@@ -136,6 +143,8 @@ namespace Rocket{
 
     Eigen::Vector3d FinSet::calculateCp( double mach, double alpha, double gamma) const {
         auto finCP = fin()->cp(mach, alpha, gamma);
+        std::cout << "Fin CP [" << (finCP).transpose() << "]" << std::endl;
+        std::cout << "Fin set CP [" << (finCP + position()).transpose() << "]" << std::endl;
         return position() + Eigen::Vector3d{ finCP.x(), 0, 0 }; //assuming that the fins cp is on the central axis
     }
 
@@ -149,14 +158,17 @@ namespace Rocket{
     Fin* FinSet::fin() const {
         return _fin.get();
     }
+
     void FinSet::setFin( std::unique_ptr<Fin> fin ){
         fin->setFinSet(this);
         _fin = std::move(fin);
         clearCaches();
     }
+
     int FinSet::numFins() const {
         return _numFins;
     }
+
     void FinSet::setNumFins( int num ){
         _numFins = num;
         clearCaches();

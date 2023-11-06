@@ -1,6 +1,7 @@
 #include "trapezoidalPrism.hpp"
 #include "maths.hpp"
 #include <Eigen/Dense>
+#include <iostream>
 
 namespace Shapes{
     TrapezoidalPrism::TrapezoidalPrism(double rootChord, double tipChord, double height, double sweepLength, double thickness){
@@ -84,8 +85,8 @@ namespace Shapes{
             {i_xy,  i_yy,   0   },
             {0,     0,      i_zz}
         };
-        // correct up to here
-        Eigen::Matrix3d cm_tens = Utils::parallel_axis_transform(tens, -cm(), volume());
+        Eigen::Matrix3d cm_tens = Utils::parallel_axis_transform(tens, cm(), volume(), true);
+        // this is correct
         return cm_tens;
     }
 

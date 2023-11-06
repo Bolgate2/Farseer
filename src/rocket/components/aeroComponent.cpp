@@ -150,7 +150,7 @@ namespace Rocket{
     // component and cache calculations of elems
     //C_n
     double AeroComponent::calculateC_n_aWithComponents( double mach, double alpha, double gamma) const {
-        auto thisC_n_a = this->calculateC_n_a(mach, alpha, gamma);
+        auto thisC_n_a = calculateC_n_a(mach, alpha, gamma);
         auto aeroComps = aeroComponents();
         for(auto aeroComp = aeroComps.begin(); aeroComp != aeroComps.end(); ++aeroComp){
             auto compC_n_a = (*aeroComp)->c_n_a(mach, alpha, gamma);
@@ -216,10 +216,9 @@ namespace Rocket{
         // getting cp using ORK eq 3.29
         // because this only considers C_n_a it will only affect the x position of cp, can be improved in future
         Eigen::Vector3d weightedCpSum = Eigen::Vector3d::Zero();
-        double c_n_aSum = 0;
+        double c_n_aSum = 0.0;
         auto aeroComps = aeroComponents();
         for(auto aeroComp = aeroComps.begin(); aeroComp != aeroComps.end(); ++aeroComp){
-            std::cout << "hi" << std::endl;
             //std::cout << "comp name " << (*aeroComp)->name << std::endl;
             auto compC_n_a = (*aeroComp)->c_n_a(mach, alpha, gamma);
             auto compCP = (*aeroComp)->cp(mach, alpha, gamma);

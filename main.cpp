@@ -114,7 +114,7 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto rocket = Rocket::Rocket::create("Jeff the Rocket");
 
     auto stage1 = Rocket::Stage::create(rocket.get());
-
+    
     auto toob = Rocket::BodyTube::create(
         rocketRadius, toobLength, toobThick, std::move(toobMat), std::move(toobFinish), stage1.get(), "toob", Eigen::Vector3d{noseConeLength,0,0}
         );
@@ -122,84 +122,38 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto nose = Rocket::Nosecone::create(
         noseConeShape, rocketRadius, noseConeLength, noseConeThickness, noseConeShapeParam, std::move(noseConeMat), std::move(noseConeFinish), stage1.get()
         );
-
-    //toob->printComponentTree();
-    //nose->printComponentTree();
-
+    
     auto alpha = deg2rad(5);
     auto mach = 0.3;
-
-    /*
-    fmt::print("{0:<20} {1:<20}\n", "Nose Name ",nose->name);
-    fmt::print("Nose mass {0}\n", nose->mass(0));
-    fmt::print("Nose inertia\n{0}\n", toString(nose->inertia(0)));
-    fmt::print("Nose planform area {0}\n", nose->planformArea());
-    fmt::print("Nose cm\n{0}\n", toString(nose->cm(0)));
-    fmt::print("Nose cp {}\n", toString(nose->cp(mach,alpha))); // correct
-    fmt::print("Nose cna {}\n", nose->c_n_a(mach,alpha)); // correct
-    fmt::print("\n");
-
-    fmt::print("{0:<20} {1:<20}\n", "Toob name ",   toob->name);
-    fmt::print("{0:<20} {1:<20}\n", "Toob mass",    toob->mass(0));
-    fmt::print("{0:<20} {1:<20}\n", "Toob ref area",    toob->referenceArea());
-    fmt::print("{0:<20}\n{1}\n",    "Toob inertia", toString(toob->inertia(0)));
-    fmt::print("{0:<20} {1}\n",     "Toob cm",      toString(toob->cm(0).transpose()));
-    fmt::print("{0:<20} {1}\n",     "Toob cp",      toString(toob->cp(mach,alpha).transpose())); // correct
-    fmt::print("{0:<20} {1:<20}\n", "Toob cna",     toob->c_n_a(mach,alpha)); // correct
-    fmt::print("\n");
-    */
 
     
     auto finShape = std::make_unique<Shapes::TrapezoidalFinShape>(finRootChord, finTipChord, finHeight, finSweepLength, finThickness);
     auto fin = std::make_unique<Rocket::Fin>(std::move(finShape), std::move(finMat), std::move(finFinish), "Trapezoidal fin");
-    //auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
-
-    /*
-    toob->printComponentTree();
-    fmt::print("\n");
-
-    fmt::print("aero components size {}\n", toob->aeroComponents().size() );
-    fmt::print("ext components size {}\n", toob->components().size() );
-    fmt::print("aero comp name {}\n", toob->aeroComponents()[0]->name );
-
-    fmt::print("{0:<20} {1:<20}\n", "Fin name ",finSet->fin()->name);
-    fmt::print("{0:<20} {1:<20}\n", "Fin mass", finSet->fin()->mass(0));
-    fmt::print("{0:<20}\n{1}\n",    "Fin inertia", toString(finSet->fin()->inertia(0)));
-    fmt::print("{0:<20} {1}\n",     "Fin cm", toString(finSet->fin()->cm(0).transpose()));
-    fmt::print("{0:<20} {1}\n",     "Fin cp", toString(finSet->fin()->cp(mach,alpha).transpose()));
-    fmt::print("{0:<20} {1:<20}\n", "Fin cna", finSet->fin()->c_n_a(mach,alpha));
-    fmt::print("\n");
-
-    fmt::print("{0:<20} {1:<20}\n", "Fin set name ",finSet->name);
-    fmt::print("{0:<20} {1:<20}\n", "Fin set mass", finSet->mass(0));
-    fmt::print("{0:<20}\n{1}\n",    "Fin set inertia", toString(finSet->inertia(0)));
-    fmt::print("{0:<20} {1}\n",     "Fin set cm", toString(finSet->cm(0).transpose()));
-    fmt::print("{0:<20} {1}\n",     "Fin set cp", toString(finSet->cp(mach,alpha).transpose()));
-    fmt::print("{0:<20} {1:<20}\n", "Fin set cna", finSet->c_n_a(mach,alpha));
-    fmt::print("\n");
-    */
-    fmt::print("{0:<30} {1:<20}\n", "Toob name ",   toob->name);
-    fmt::print("{0:<30} {1:<20}\n", "Toob mass",    toob->mass(0));
-    fmt::print("{0:<30}\n{1}\n",    "Toob inertia", toString(toob->inertia(0)));
-    fmt::print("{0:<30} {1}\n",     "Toob cm",      toString(toob->cm(0).transpose()));
-    fmt::print("{0:<30} {1}\n",     "Toob cp",      toString(toob->cp(mach,alpha).transpose())); // correct
-    fmt::print("{0:<30} {1:<20}\n", "Toob cna",     toob->c_n_a(mach,alpha)); // correct
-    fmt::print("\n");
+    auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
     
-
-    fmt::print("{0:<30}\n{1}\n",    "Rocket inertia at origin", toString(rocket->inertia(0)));
+    fmt::print("{0:<30} [{1}]\n",   "Rocket cm", toString(rocket->cm(0).transpose()));
     fmt::print("{0:<30}\n{1}\n",    "Rocket inertia at cm", toString(
-        Utils::parallel_axis_transform(rocket->inertia(0), rocket->cm(0), rocket->mass(0))
-    )); // wrong
-    fmt::print("{0:<30} [{1}]\n",    "Rocket cm", toString(rocket->cm(0).transpose()));
+        Utils::parallel_axis_transform(rocket->inertia(0), rocket->cm(0), rocket->mass(0), true)
+    ));
+
+    fmt::print("{0:<30} {1}\n",   "Rocket cna", rocket->c_n_a(mach,alpha));
+    fmt::print("{0:<30} [{1}]\n",   "Rocket cp", toString(rocket->cp(mach,alpha).transpose()));
     fmt::print("\n");
 
     rocket->printComponentTree();
     return rocket;
 }
 
+void testInertia(){
+    Eigen::Matrix3d inert1 = Eigen::Matrix3d::Identity();
+    fmt::print("Inert 1\n{}\n", toString(inert1));
+    auto inert2 = Utils::parallel_axis_transform(inert1, Eigen::Vector3d{1,0,0}, 1);
+    fmt::print("Inert 2\n{}\n", toString(inert2));
+    auto inert3 = Utils::parallel_axis_transform(inert2, Eigen::Vector3d{1,0,0}, 1, true);
+    fmt::print("Inert 3\n{}\n", toString(inert3));
+}
+
 int main(int argc, char** argv){
     createTestRocket();
-
     return 0;
 }

@@ -103,6 +103,7 @@ namespace Shapes{
         return NoseconeShape::radius();
     }
 
+    // cache this
     std::array<double,2> NumericalNoseconeShape::bisectedAverageRadius(double x){
         if(x <= 0) return { 0, averageRadius() };
         if(x >= length()) return {averageRadius(), 0};
@@ -155,7 +156,12 @@ namespace Shapes{
         // trapz(y,x) == ((r1+r2)/2*stepArr).sum()
         _wettedArea = ((hyp*(r1+r2))*M_PI).sum();
         _planformArea = ( ( r1+r2 )/2*stepArr ).sum()*2; //trapezoidal integration (then *2)
-        _planformCenter = Eigen::Vector3d{( (r1+r2)*stepArr.pow(2) ).sum()/_planformArea, 0, 0};
+        
+        Eigen::ArrayXd xAvg = (x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<numDivs-1>)) + x(Eigen::seqN( Eigen::fix<1>, Eigen::fix<numDivs-1>)))/2;
+        _planformCenter = Eigen::Vector3d{( (r1+r2)*stepArr*xAvg).sum()/_planformArea, 0, 0};
+
+        std::cout << "Planform center [" << _planformCenter.transpose() << "]\n" << std::endl ;
+
         _filledVolume = ((( r1+r2 )/2).pow(2)*stepArr ).sum()*M_PI; // solid of revolution
         _filledCm = Eigen::Vector3d{_planformCenter.x(), 0, 0}; // same as the planform center as density is uniform
         
@@ -165,8 +171,8 @@ namespace Shapes{
         dV = ( r1 < height || r2 < height ).select(dFullV, dV);
         _unfilledVolume = dV.sum();
 
+        
         // unfilled Cm
-        Eigen::ArrayXd xAvg = x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<numDivs-1>)) + step/2; // subtraction only implemented for arrays
         double cgX = (xAvg * dV).sum()/unfilledVolume();
         _unfilledCm = Eigen::Vector3d{cgX, 0, 0};
 

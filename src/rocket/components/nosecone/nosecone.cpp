@@ -96,7 +96,7 @@ namespace Rocket{
         auto thisInertia = shape()->inertia(); // inertia/density of the shape about cm
         auto disp = position(); // THIS LINE HAS CHANGED, the nosecones inertia is calculated about its tip
         auto thisVolume = shape()->volume();
-        auto zeroInertia = Utils::parallel_axis_transform(thisInertia, disp, thisVolume);
+        auto zeroInertia = Utils::parallel_axis_transform(thisInertia, -disp, thisVolume);
         zeroInertia *= material()->density; // multiplying by density so it's the actual inertia
         return zeroInertia;
     }

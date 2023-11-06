@@ -17,9 +17,10 @@ namespace Shapes{
 
     double TrapezoidalFinShape::mac() {
         // raymer fig 4.15
-        const auto taper = taperRatio();
-        auto returnOfTheMac = (2/3)*rootChord()*(1+taperRatio()+std::pow(taperRatio(),2));
-        return returnOfTheMac;
+        const auto r = rootChord();
+        const auto t = tipChord();
+        double MAC = (2.0/3.0)*( std::pow(r,2)+std::pow(t,2)+r*t )/(r+t);
+        return MAC;
     }
 
     double TrapezoidalFinShape::yMac() {
@@ -32,7 +33,9 @@ namespace Shapes{
 
     double TrapezoidalFinShape::xMacLeadingEdge() {
         // first part of ORK 3.34 RHS, second part is 0.25 MAC and so is not included
-        return sweepLength()/3*(rootChord()+2*tipChord())/(rootChord()+2*tipChord());
+        const auto r = rootChord();
+        const auto t = tipChord();
+        return sweepLength()/3 * (r+2*t)/(r+t);
     }
 
     double TrapezoidalFinShape::midChordSweep() {
@@ -104,10 +107,35 @@ namespace Shapes{
     }
 
     Eigen::Vector3d TrapezoidalFinShape::planformCenter() {
-        const auto root = rootChord();
-        const auto tip = tipChord();
-        const auto sweep = sweepLength();
-        return Eigen::Vector3d{(root/2 + (sweep+tip/2) )/2, height()/2, 0};
+        // splitting the trapezoid into triangle, rectangle, triangle, and finding the centroid
+        /* like this (long ahh fin)
+             |
+            R|\
+            o| \
+            c|  \
+            k|___\
+            e|    |
+            t|    |
+             |____|
+            h|\   |
+            e| \  | 
+            r|  \ |
+            e|   \|
+             |
+        */
+        const auto r = rootChord();
+        const auto t = tipChord();
+        const auto s = sweepLength();
+        const auto h = height();
+        const auto rem = r-s-t;
+        auto xBars = Eigen::Array3d{
+            s*2/3, s+t/2, s+t+rem/3
+        };
+        auto yBars = Eigen::Array3d{ h/3, h/2, h/3 };
+        auto areas = Eigen::Array3d{ s*h/2, t*h, rem*h/2 };
+        auto x = (xBars*areas).sum()/areas.sum();
+        auto y = (yBars*areas).sum()/areas.sum();
+        return Eigen::Vector3d{x,y,0};
     }
 
 }

@@ -75,7 +75,7 @@ namespace Rocket{
         const double AR =  2*yMax()/planformArea();
         const double b = Utils::beta(mach);
         if(mach <= 0.5){
-            CPx = xMacLeadingEdge()+mac()/4;
+            CPx = xMacLeadingEdge() + mac()/4;
         } else if(mach < 2){
             const auto coeffs = cpInterpPolyCoeffs();
             const Eigen::Array<double, 6, 1> vals = (Eigen::Array<double, 6, 1>::Ones()*mach).pow(Eigen::Array<double, 6, 1>{0,1,2,3,4,5});
@@ -84,7 +84,7 @@ namespace Rocket{
             CPx = (AR*b - 0.67)/(2*AR*b-1)*mac();
         }
 
-        Eigen::Vector3d vec { CPx, yMax(), 0 };
+        Eigen::Vector3d vec { CPx, yMac(), 0 };
         return vec;
     }
 
@@ -129,6 +129,11 @@ namespace Rocket{
 
     Eigen::Vector3d Fin::calculateCm(double time) const {
         return shape()->planformCenter();
+    }
+
+    Eigen::Matrix3d Fin::calculateInertia(double time) const {
+        // returns inertia about cm not about the origin
+        return shape()->inertia() * material()->density;
     }
     
     Eigen::Vector3d Fin::position() const {
