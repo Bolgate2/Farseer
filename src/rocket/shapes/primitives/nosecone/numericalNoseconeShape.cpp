@@ -160,8 +160,6 @@ namespace Shapes{
         Eigen::ArrayXd xAvg = (x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<numDivs-1>)) + x(Eigen::seqN( Eigen::fix<1>, Eigen::fix<numDivs-1>)))/2;
         _planformCenter = Eigen::Vector3d{( (r1+r2)*stepArr*xAvg).sum()/_planformArea, 0, 0};
 
-        std::cout << "Planform center [" << _planformCenter.transpose() << "]\n" << std::endl ;
-
         _filledVolume = ((( r1+r2 )/2).pow(2)*stepArr ).sum()*M_PI; // solid of revolution
         _filledCm = Eigen::Vector3d{_planformCenter.x(), 0, 0}; // same as the planform center as density is uniform
         

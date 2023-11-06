@@ -2,11 +2,12 @@
 #define SIMULATION_H
 
 #include "rocketInterface.hpp"
+#include <memory>
 
 namespace Sim{
     class Sim{
         private:
-            RocketInterface* _rocket;
+            std::shared_ptr<RocketInterface> _rocket;
     };
 }
 

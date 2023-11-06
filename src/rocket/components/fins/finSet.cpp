@@ -143,8 +143,6 @@ namespace Rocket{
 
     Eigen::Vector3d FinSet::calculateCp( double mach, double alpha, double gamma) const {
         auto finCP = fin()->cp(mach, alpha, gamma);
-        std::cout << "Fin CP [" << (finCP).transpose() << "]" << std::endl;
-        std::cout << "Fin set CP [" << (finCP + position()).transpose() << "]" << std::endl;
         return position() + Eigen::Vector3d{ finCP.x(), 0, 0 }; //assuming that the fins cp is on the central axis
     }
 
