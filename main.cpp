@@ -20,6 +20,8 @@
 #include "misc/material.hpp"
 #include "maths.hpp"
 
+#include "components/motor/motor.hpp"
+
 #define SMALL 1e-10
 
 void testVectorFunctions(){
@@ -153,7 +155,14 @@ void testInertia(){
     fmt::print("Inert 3\n{}\n", toString(inert3));
 }
 
+void testMotor(){
+    std::filesystem::path motorPath = std::filesystem::current_path().append("..").append("AeroTech_F27R_L.eng");
+    Rocket::Motor::fromFile(motorPath);
+
+}
+
 int main(int argc, char** argv){
-    createTestRocket();
+    //createTestRocket();
+    testMotor();
     return 0;
 }

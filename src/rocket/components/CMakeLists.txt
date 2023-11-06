@@ -1,6 +1,7 @@
 add_subdirectory(bodyTube)
 add_subdirectory(nosecone)
 add_subdirectory(fins)
+add_subdirectory(motor)
 
 target_sources(rocket
     PRIVATE
