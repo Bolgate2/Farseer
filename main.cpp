@@ -113,6 +113,9 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto finFinish = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
     auto numFins = 4;
 
+    // MOTOR PARAMS
+    std::filesystem::path motorPath = std::filesystem::current_path().append("..").append("AeroTech_F27R_L.eng");
+
     auto rocket = Rocket::Rocket::create("Jeff the Rocket");
 
     auto stage1 = Rocket::Stage::create(rocket.get());
@@ -124,6 +127,10 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto nose = Rocket::Nosecone::create(
         noseConeShape, rocketRadius, noseConeLength, noseConeThickness, noseConeShapeParam, std::move(noseConeMat), std::move(noseConeFinish), stage1.get()
         );
+
+    auto motor = Rocket::Motor::fromFile(motorPath, toob.get());
+    auto motorX = noseConeLength+toobLength-motor->shape()->length();
+    motor->setPosition({motorX, 0, 0});
     
     auto alpha = deg2rad(5);
     auto mach = 0.3;
@@ -157,12 +164,13 @@ void testInertia(){
 
 void testMotor(){
     std::filesystem::path motorPath = std::filesystem::current_path().append("..").append("AeroTech_F27R_L.eng");
-    Rocket::Motor::fromFile(motorPath);
-
+    auto motor = Rocket::Motor::fromFile(motorPath);
+    fmt::print("motor mass 0.955 {}\nmotor mass 1     {}\nmotor mass 1.045 {}\n", motor->mass(0.955), motor->mass(1), motor->mass(1.045));
+    fmt::print("motor thrust 0: [{}]\nmotor thrust 1: [{}]\n", toString(motor->thrust(0).transpose()), toString(motor->thrust(1).transpose()));
 }
 
 int main(int argc, char** argv){
-    //createTestRocket();
-    testMotor();
+    createTestRocket();
+    //testMotor();
     return 0;
 }

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <sstream>
 #include <map>
+#include "maths.hpp"
 
 namespace Rocket{
     //static variables and functions
@@ -71,10 +72,6 @@ namespace Rocket{
         }
         auto radius = diameter/2;
 
-        std::cout << name << " " << radius << " " << length << " " << propMass << " " << totalMass << "\n";
-        for(auto k = thrustData.cbegin(); k != thrustData.cend(); k++){
-            std::cout << k->first << " " << k->second << "\n";
-        }
         auto motorPtr = create(radius, length, thrustData, propMass, totalMass, parent, name, position, ignitionTime, dataReferencePressure, nozzleExitArea);
         return motorPtr;
     }
@@ -107,8 +104,8 @@ namespace Rocket{
     // calculating mass data
     std::map<double,double> Motor::calculateMassData(std::map<double,double> thrustData, double propMass, double totalMass){
         // collating data into vectors
-        std::vector<double> timeV = {};
-        std::vector<double> thrustV = {};
+        std::vector<double> timeV = {0};
+        std::vector<double> thrustV = {0};
         for(auto iter = thrustData.begin(); iter != thrustData.end(); iter++){
             timeV.push_back(iter->first);
             thrustV.push_back(iter->second);
@@ -126,45 +123,111 @@ namespace Rocket{
         auto thrustAvg = (thrustD(Eigen::seqN(0, thrustD.size()-1)) + thrustD(Eigen::seqN(1, thrustD.size()-1)))/2;
 
         auto totalImpulse = (timeSteps*thrustAvg).sum();
+        _totalImpulse = totalImpulse;
         // calculating proportion of impulse that has been spent at each time point
         std::vector<double> impulsePropsV = {};
-        std::cout << "impulse props" << "\n";
+
         for(int i = 0; i < timeSteps.size(); i++){
             auto spentImpulse = (timeSteps(Eigen::seq(0,i))*thrustAvg(Eigen::seq(0,i))).sum();
             auto impulseProp = spentImpulse/totalImpulse;
             impulsePropsV.push_back(impulseProp);
-            std::cout << impulseProp << "\n";
         }
-        std::cout << "mass props" << "\n";
-        std::map<double, double> massD = { {0,0} };
-        std::cout << "mass " << 0 << " time " << 0 << "\n";
+
+        std::map<double, double> massD = { {0,totalMass} };
+
         for(int i = 0; i < impulsePropsV.size(); i++){
             auto prop = impulsePropsV[i];
             double m = totalMass - propMass*prop;
             auto t = timeD[i+1];
             massD[t] = m;
-            std::cout << "mass " << m << " time " << t << "\n";
         }
+
         return massD;
+    }
+
+    // calculating properties
+    double Motor::calculateMass(double time) const {
+        auto adjTime = time-ignitionTime();
+        auto mData = massData();
+        auto maxTime = massData().rbegin()->first;
+        if(adjTime <= 0) return totalMass();
+        if(adjTime >= maxTime) return totalMass()-propMass();
+        auto upper = mData.upper_bound(adjTime);
+        auto lower = upper--;
+        auto lowerVal = lower->second;
+        auto lowerTime = lower->first;
+        auto timeStep = adjTime-lowerTime;
+
+        auto lowerThrust = thrustData()[lowerTime];
+        auto tThrust = calculateThrust(adjTime);
+        auto avgThrust = (-tThrust.x() + lowerThrust)/2;
+
+        auto imp = timeStep*avgThrust;
+        auto dMass = propMass() * imp/_totalImpulse;
+        auto m = lowerVal - dMass;
+
+        return m;
+    }
+
+    Eigen::Vector3d Motor::calculateThrust(double time) const {
+        auto adjTime = time-ignitionTime();
+        auto tData = thrustData();
+        auto maxTime = thrustData().rbegin()->first;
+        if(adjTime <= 0) return Eigen::Vector3d::Zero();
+        if(adjTime >= maxTime) return Eigen::Vector3d::Zero();
+        auto upper = tData.upper_bound(adjTime);
+        auto lower = upper--;
+        auto grad = (upper->second - lower->second)/(upper->first - lower->first);
+        auto interpVal = lower->second + grad*(adjTime - lower->first);
+        return {-interpVal, 0, 0};
+    }
+
+    Eigen::Vector3d Motor::calculateThrustPosition(double time) const {
+        return Eigen::Vector3d{shape()->length(), 0, 0} + position();
+    }
+
+    Eigen::Vector3d Motor::calculateCm(double time) const {
+        return Eigen::Vector3d{shape()->length()/2,0,0} + position();
+    }
+
+    Eigen::Matrix3d Motor::calculateInertia(double time) const {
+        auto m = calculateMass(time);
+        auto density = m/shape()->volume();
+        auto thisInertia = shape()->inertia()*density;
+        auto originInertia = Utils::parallel_axis_transform(thisInertia, calculateCm(time), m);
+        //std::cout << "MOTOR INERTIA\n" << thisInertia << std::endl;
+        return originInertia;
     }
 
     // getters, no setters
     Shapes::Cylinder* Motor::shape() const {
         return _shape.get();
     }
+
     std::map<double,double> Motor::thrustData() const {
         return _thrustData;
     }
+
     std::map<double,double> Motor::massData() const {
         return _massData;
+    }
+
+    double Motor::propMass() const {
+        return _propMass;
+    }
+
+    double Motor::totalMass() const {
+        return _totalMass;
     }
 
     double Motor::ignitionTime() const {
         return _ignitionTime;
     }
+
     double Motor::referencePressure() const {
         return _referencePressure;
     }
+    
     double Motor::nozzleExitArea() const {
         return _nozzleExitArea;
     }

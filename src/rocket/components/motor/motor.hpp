@@ -22,6 +22,7 @@ namespace Rocket{
 
             double _propMass;
             double _totalMass;
+            double _totalImpulse;
 
             double _ignitionTime;
             double _referencePressure;
@@ -29,11 +30,11 @@ namespace Rocket{
 
         protected:
             // just declaring these temporarily
-            virtual double calculateMass(double time) const override {return 0;};
-            virtual Eigen::Vector3d calculateCm(double time) const override {return Eigen::Vector3d::Zero();};
-            virtual Eigen::Matrix3d calculateInertia(double time) const override {return Eigen::Matrix3d::Zero();};
-            virtual Eigen::Vector3d calculateThrust(double time) const override {return Eigen::Vector3d::Zero();};
-            virtual Eigen::Vector3d calculateThrustPosition(double time) const override {return Eigen::Vector3d::Zero();};
+            virtual double calculateMass(double time) const override;
+            virtual Eigen::Vector3d calculateCm(double time) const override;
+            virtual Eigen::Matrix3d calculateInertia(double time) const override;
+            virtual Eigen::Vector3d calculateThrust(double time) const override;
+            virtual Eigen::Vector3d calculateThrustPosition(double time) const override;
 
             Motor(
                 double radius, double length, std::map<double,double> thrustData, double propMass, double totalMass,
@@ -61,6 +62,9 @@ namespace Rocket{
             virtual Shapes::Cylinder* shape() const;
             virtual std::map<double,double> thrustData() const;
             virtual std::map<double,double> massData() const;
+
+            virtual double propMass() const;
+            virtual double totalMass() const;
 
             virtual double ignitionTime() const;
             virtual double referencePressure() const;
