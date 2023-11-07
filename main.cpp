@@ -19,6 +19,7 @@
 #include "misc/finish.hpp"
 #include "misc/material.hpp"
 #include "maths.hpp"
+#include "simulation.hpp"
 
 #include "components/motor/motor.hpp"
 
@@ -139,7 +140,7 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto finShape = std::make_unique<Shapes::TrapezoidalFinShape>(finRootChord, finTipChord, finHeight, finSweepLength, finThickness);
     auto fin = std::make_unique<Rocket::Fin>(std::move(finShape), std::move(finMat), std::move(finFinish), "Trapezoidal fin");
     auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
-    
+    /*
     fmt::print("{0:<30} [{1}]\n",   "Rocket cm", toString(rocket->cm(0).transpose()));
     fmt::print("{0:<30}\n{1}\n",    "Rocket inertia at cm", toString(
         Utils::parallel_axis_transform(rocket->inertia(0), rocket->cm(0), rocket->mass(0), true)
@@ -148,8 +149,14 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     fmt::print("{0:<30} {1}\n",   "Rocket cna", rocket->c_n_a(mach,alpha));
     fmt::print("{0:<30} [{1}]\n",   "Rocket cp", toString(rocket->cp(mach,alpha).transpose()));
     fmt::print("\n");
-
+    */
     rocket->printComponentTree();
+
+    auto sim = Sim::Sim::create(rocket.get());
+    auto initialConditions = Sim::defaultStateVector();
+    auto lastStep = sim->solve(initialConditions);
+    fmt::print("last step [{}]\n", toString(lastStep.transpose()));
+
     return rocket;
 }
 
@@ -169,8 +176,17 @@ void testMotor(){
     fmt::print("motor thrust 0: [{}]\nmotor thrust 1: [{}]\n", toString(motor->thrust(0).transpose()), toString(motor->thrust(1).transpose()));
 }
 
+void testSim(){
+    auto sim = Sim::Sim::create(nullptr);
+    auto initialConditions = Sim::defaultStateVector();
+    initialConditions[Sim::StateMappings::Zv] = 10;
+    auto lastStep = sim->solve(initialConditions);
+    fmt::print("last step [{}]\n", toString(lastStep.transpose()));
+}
+
 int main(int argc, char** argv){
     createTestRocket();
     //testMotor();
+    //testSim();
     return 0;
 }
