@@ -55,9 +55,10 @@ namespace Sim{
              */
             std::tuple<double, StateArray> eulerIntegrate( const double time, const double step, const StateArray state);
 
-            
-            std::tuple<double, StateArray> adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol = 1e-3, const double atol = 1e-6);
             // using defaults from scipy ode
+            std::tuple<double, StateArray> adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol = 1e-3, const double atol = 1e-6);
+
+            std::tuple<double, StateArray> RK4Integrate( const double time, const double step, const StateArray state);
 
     };
 }

@@ -43,7 +43,7 @@ namespace Sim{
         StateArray state;
         const int maxSteps = 1e6;
         int counter = 0;
-        double step = 0.002;
+        double step = 0.01;
         double time = 0;
         bool term = false;
         // start timer
@@ -53,7 +53,8 @@ namespace Sim{
         while(!term){
             // doing calc
             //auto timeAndState = eulerIntegrate(time, step, lastState);
-            auto timeAndState = adaptiveRKIntegrate(time, step, lastState);
+            //auto timeAndState = adaptiveRKIntegrate(time, step, lastState);
+            auto timeAndState = RK4Integrate(time, step, lastState);
             state = std::get<1>(timeAndState);
             auto thisStep = std::get<0>(timeAndState) - time;
             step = thisStep;
@@ -161,6 +162,16 @@ namespace Sim{
         }
         //fmt::print("t = {:<8.3}, step {:<8.3} new state [{}]\n", time, newStep, toString(newState.transpose()));
         return {time+newStep, newState};
+    }
+
+    std::tuple<double, StateArray> Sim::RK4Integrate( const double time, const double step, const StateArray state){
+        StateArray k1 = calculate(time, state);
+        StateArray k2 = calculate(time + step/2, state + k1*step/2);
+        StateArray k3 = calculate(time + step/2, state + k2*step/2);
+        StateArray k4 = calculate(time + step, state + k3*step);
+
+        StateArray newState = state + step/6*(k1 + 2*k2 + 2*k3 + k4);
+        return {time+step, newState};
     }
 
     StateArray Sim::calculate( double time, StateArray state ){
