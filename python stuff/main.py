@@ -1,11 +1,10 @@
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
 
 from plotting.plotting import plot3dTrajectory, plot_kinematics
 
-fname = "0"
+fname = "26"
 rootDir = Path(__file__).parent.parent
 resPth = Path(rootDir, "results", fname)
 print(resPth)
@@ -24,6 +23,8 @@ for i,name in enumerate(heads):
 data["Xa"] = np.concatenate([[0],np.diff(data["Xv"])])
 data["Ya"] = np.concatenate([[0],np.diff(data["Yv"])])
 data["Za"] = np.concatenate([[0],np.diff(data["Zv"])])
+
+plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
 
 plot_kinematics(data["t"], data["Zp"], data["Zv"], data["Za"], "z")
 plt.show()

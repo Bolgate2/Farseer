@@ -1,5 +1,6 @@
 # include "component.hpp"
 #include "maths.hpp"
+#include <iostream>
 #include <Eigen/Dense>
 #include <string>
 #include <fmt/core.h>
@@ -86,6 +87,15 @@ namespace Rocket{
         return this->setPosition(posVec);
     }
 
+    double Component::calculateBurnoutTime(){
+        double btime = 0;
+        auto comps = this->components();
+        for(auto comp = comps.cbegin(); comp != comps.cend(); ++comp){
+            btime = std::max(btime, (*comp)->calculateBurnoutTime());
+        }
+        _burnoutTime = btime;
+        return btime;
+    }
     
     // mass
     double Component::calculateMass(double time) const {
@@ -118,6 +128,7 @@ namespace Rocket{
 
     double Component::mass(double time) const {
         if(!caching()) return calculateMassWithComponents(time);
+        time = std::min(time, _burnoutTime); // clamping time to burnout
         // checking cache
         auto cacheKey = _massCache.find(time);
         if(cacheKey != _massCache.end()) return cacheKey->second;
@@ -174,11 +185,14 @@ namespace Rocket{
 
     Eigen::Matrix3d Component::inertia(double time) const {
         if(!caching()) return calculateInertiaWithComponents(time);
+        time = std::min(time, _burnoutTime); // clamping time to burnout
         // checking cache
         auto cacheKey = _inertiaCache.find(time);
         if( cacheKey != _inertiaCache.end()) return cacheKey->second;
         // returning if not found
-        return calculateInertiaWithComponents(time);
+        auto inert = calculateInertiaWithComponents(time);
+        _inertiaCache[time] = inert;
+        return inert;
     }
 
     void Component::overrideInertia(OverrideFlags flags){

@@ -44,7 +44,7 @@ namespace Rocket{
 
             virtual double calculateC_n_aWithComponents( double mach, double alpha, double gamma = 1.4 ) const;
             // nested caches for C_n
-            std::map<double, std::map<double, std::map<double, double>>> _c_n_aCache = {};
+            mutable std::map<double, std::map<double, std::map<double, double>>> _c_n_aCache = {};
             virtual void createC_n_aMapping( double value, double mach, double alpha, double gamma = 1.4 );
             virtual bool c_n_aExists(double mach, double alpha, double gamma = 1.4 ) const;
             virtual void clearC_n_aCache();

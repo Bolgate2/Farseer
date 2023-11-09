@@ -48,6 +48,9 @@ namespace Rocket{
             static int _massPrecision;
         protected:
             virtual void clearCaches();
+            double _burnoutTime;
+
+            
             // mass
             virtual double calculateMass(double time) const;
             virtual double calculateMassWithComponents(double time) const;
@@ -61,7 +64,7 @@ namespace Rocket{
              */
             virtual Eigen::Matrix3d calculateInertia(double time) const;
             virtual Eigen::Matrix3d calculateInertiaWithComponents(double time) const;
-            std::unordered_map<double,Eigen::Matrix3d> _inertiaCache = {};
+            mutable std::unordered_map<double,Eigen::Matrix3d> _inertiaCache = {};
 
             /**
              * @brief Calculates the individual components center of mass in global coordinates
@@ -87,6 +90,7 @@ namespace Rocket{
         public:
             // a component must have a name, this is publically accessible as it's not integral to any functions
             std::string name;
+            virtual double calculateBurnoutTime();
 
             /*
             factory

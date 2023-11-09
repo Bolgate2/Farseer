@@ -417,6 +417,7 @@ namespace RealAtmos
      */
     double RealAtmos::M_(double z)
     {
+        if(z <= 86e3) return M_0;
         auto mole = interp(z, nMap);
         return mole.M;
     }

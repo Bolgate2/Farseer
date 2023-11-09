@@ -102,7 +102,7 @@ namespace Sim{
              * @param gamma Specific heat ratio for the fluid the rocket is moving through, 1.4 for air
              * @return Eigen::Vector3d 
              */
-            virtual Eigen::Vector3d cp( double mach, double alpha, double gamma) const = 0;
+            virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4) const = 0;
 
             /**
              * @brief The rockets pitching moment damping coefficient, these moments are applied to the total pitch moment in the opposite direction

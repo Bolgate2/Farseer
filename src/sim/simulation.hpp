@@ -17,6 +17,9 @@ namespace Sim{
             bool _onRod;
             RocketInterface* _rocket;
             Eigen::Matrix3d _rotmat; // the rotation matrix from the designs coords to the rockets coords
+            double _aRef;
+            double _lRef;
+
             RealAtmos::RealAtmos* _atmos;
             Sim(RocketInterface* rocket);
 
@@ -34,9 +37,10 @@ namespace Sim{
 
         public:
             static std::shared_ptr<Sim> create( RocketInterface* rocket );
+            // defining up
+            inline Eigen::Vector3d thisWayUp() const { return Eigen::Vector3d{0,0,1}; }
 
-
-           StateArray solve( StateArray initialConditions );
+            StateArray solve( StateArray initialConditions );
 
             /**
              * @brief Calculates the derivative of all the state vector fields
@@ -62,6 +66,8 @@ namespace Sim{
 
             std::tuple<double, StateArray> RK4Integrate( const double time, const double step, const StateArray state);
 
+            // wind func
+            Eigen::Vector3d wind(Eigen::Vector3d position) const;
 
             // helper functions
             Eigen::Vector3d originToCenterOfEarth() const;

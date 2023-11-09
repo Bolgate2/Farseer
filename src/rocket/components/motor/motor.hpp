@@ -29,7 +29,9 @@ namespace Rocket{
             double _nozzleExitArea;
 
         protected:
-            // just declaring these temporarily
+
+            virtual double calculateBurnoutTime() override;
+
             virtual double calculateMass(double time) const override;
             virtual Eigen::Vector3d calculateCm(double time) const override;
             virtual Eigen::Matrix3d calculateInertia(double time) const override;

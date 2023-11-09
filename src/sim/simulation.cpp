@@ -1,5 +1,6 @@
 #include "simulation.hpp"
 #include "RealAtmos.hpp"
+#include "maths.hpp"
 #include <iostream>
 #include <fstream>
 #include <fmt/core.h>
@@ -25,9 +26,11 @@ namespace Sim{
 
     Sim::Sim(RocketInterface* rocket){
         _rocket = rocket;
+        _aRef = _rocket->referenceArea();
+        _lRef = _rocket->referenceLength();
         _atmos = RealAtmos::RealAtmos::GetInstance();
         // https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
-        auto thisUp = Eigen::Vector3d{0,0,1};
+        auto thisUp = thisWayUp();
         auto rocketUp = rocket->thisWayUp();
         // setting rotation matrix
         // the maths in the else block doesn't apply if the vectors are either the same or opposite
@@ -85,7 +88,7 @@ namespace Sim{
         std::chrono::high_resolution_clock clock;
         StateArray lastState = initialConditions;
         StateArray state;
-        const int maxSteps = 1e6;
+        const int maxSteps = 1e4;
         int counter = 0;
         double step = 0.01;
         double time = 0;
@@ -96,9 +99,9 @@ namespace Sim{
         auto lastCalc = clock.now();
         while(!term){
             // doing calc
-            //auto timeAndState = eulerIntegrate(time, step, lastState);
+            auto timeAndState = eulerIntegrate(time, step, lastState);
             //auto timeAndState = adaptiveRKIntegrate(time, step, lastState);
-            auto timeAndState = RK4Integrate(time, step, lastState);
+            //auto timeAndState = RK4Integrate(time, step, lastState);
             state = std::get<1>(timeAndState);
             auto thisStep = std::get<0>(timeAndState) - time;
             step = thisStep;
@@ -111,7 +114,7 @@ namespace Sim{
                     state[Zv] = 0.0;
                 }
             }
-            //fmt::print("{}\n", toString(state.transpose()));
+            //fmt::print("t={:<8.4f} {}\n", time+step, toString(state.transpose()));
 
             // checking termination events
             // terminating on landing
@@ -237,7 +240,7 @@ namespace Sim{
         StateArray res = defaultDeriv(state);
         // getting position vectors
         const Eigen::Vector3d position{ state[Xp], state[Yp], state[Zp] };
-        const Eigen::Vector3d orientation{ state[Phi], state[Theta], state[Psi] };
+        const Eigen::Vector3d orientation{ state[Phi], state[Theta], state[Psi] }; //yaw, pitch, roll
         // getting velocity vectors
         const Eigen::Vector3d velocity{ state[Xv], state[Yv], state[Zv] };
         const Eigen::Vector3d angVelocity{ state[dPhi], state[dTheta], state[dPsi] };
@@ -246,16 +249,65 @@ namespace Sim{
         Eigen::Vector3d angAcceleration = Eigen::Vector3d::Zero();
 
         // getting atmospheric properties
-        auto g = _atmos->g(position.z());
+        const auto alt = altitude(position);
+        const auto g = _atmos->g(alt);
+        const auto atmDens = _atmos->density(alt);
+        const auto atmTemp = _atmos->temperature(alt);
+        const auto cSound = _atmos->sound(alt);
+        const auto pres = _atmos->pressure(alt);
+
+        // getting wind velocity
+        const auto windVel = wind(position);
+        const Eigen::Vector3d relativeVelocity = velocity - windVel; // velocity of the rocket relative to the wind, this is opposite freestream velocity (-v_0)
+        const auto relativeSpeed = relativeVelocity.norm();
+
+        // getting atmospheric probs dependent on velocity
+        const auto mach = relativeVelocity.norm()/cSound;
+        const auto dynamicPressure = atmDens*std::pow(relativeSpeed,2)/2;
 
         // getting rocket properties
-        Eigen::Vector3d th = _rotmat*(_rocket->thrust(time));
+        Eigen::Matrix3d rocketRotationMat = Utils::eulerToRotmat(orientation.x(), orientation.y(), orientation.z());
+        Eigen::Vector3d rocketOrientationVec = rocketRotationMat*thisWayUp(); // the rockets current "up" vector in global coords
+        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
         auto m = _rocket->mass(time);
-        auto aRef = _rocket->referenceArea();
-        auto lRef = _rocket->referenceLength();
+        double angleOfAttack;
+        if(relativeSpeed == 0){
+            angleOfAttack = 0;
+        } else {
+            angleOfAttack = std::acos(relativeVelocity.dot(rocketOrientationVec)/( relativeVelocity.norm()*rocketOrientationVec.norm() ));
+        }
+        
+        auto inertia = _rocket->inertia(time);
+
+        auto cn = _rocket->c_n(mach, angleOfAttack);
+
+        // getting direction of normal force
+        Eigen::Vector3d normForceDirection;
+        if(angleOfAttack <= std::numeric_limits<double>::epsilon() ){
+            normForceDirection = Eigen::Vector3d::Zero();
+        } else {
+            normForceDirection = -rocketOrientationVec.cross(relativeVelocity).cross(rocketOrientationVec).normalized();
+        }
+
+        Eigen::Vector3d normForce = cn*_aRef*dynamicPressure*normForceDirection;
+
+        //fmt::print("t={:<8.4f} aoa {}\n", time, angleOfAttack);
+        //fmt::print("t={:<8.4f} cn {}\n", time, cn);
+        //fmt::print("t={:<8.4f} norm force dir [{}]\n", time, toString(normForceDirection.transpose()));
+        //fmt::print("t={:<8.4f} norm force     [{}]\n", time, toString(normForce.transpose()));
+        Eigen::Vector3d normAcc = normForce/m;
+
+        Eigen::Vector3d rockCP = _rocket->cp(mach, angleOfAttack);
+        fmt::print("t={:<8.4f} cp [{}]\n", time, toString(rockCP.transpose()));
+
+        // adding norm force
+        //acceleration += normForce/m;
+        //fmt::print("t={:<8.4f} mass={}\n", time, m);
+        //fmt::print("t={:<8.4f} {}\n", time, toString(normAcc.transpose()));
 
         // adding thrust
         acceleration += th/m;
+        //fmt::print("t={:<8.4f} {}\n", time, toString(acceleration.transpose()));
         // adding gravity
         auto gravVec = centerOfEarthVector(position)*g;
         acceleration += gravVec;
@@ -274,7 +326,14 @@ namespace Sim{
 
     double Sim::altitude(Eigen::Vector3d position) const {
         // TODO: modify this based on latitude and longitude
-        return position.z();
+        Eigen::Vector3d centVec = originToCenterOfEarth();
+        Eigen::Vector3d combinedVec = centVec - position; // -position because its from the rocket to the origin
+        double distToEarthSurf = combinedVec.norm() - centVec.norm(); // assuming a spherical earth
+        return distToEarthSurf;
+    }
+
+    Eigen::Vector3d Sim::wind(Eigen::Vector3d position) const {
+        return Eigen::Vector3d::Zero();
     }
 
     Eigen::Vector3d Sim::originToCenterOfEarth() const {

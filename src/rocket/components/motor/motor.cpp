@@ -145,6 +145,12 @@ namespace Rocket{
         return massD;
     }
 
+    double Motor::calculateBurnoutTime() {
+        auto btime = ignitionTime() + thrustData().rbegin()->first;
+        _burnoutTime = btime;
+        return btime;
+    }
+
     // calculating properties
     double Motor::calculateMass(double time) const {
         auto adjTime = time-ignitionTime();

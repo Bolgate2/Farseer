@@ -23,5 +23,12 @@ namespace Utils{
         return std::sqrt(std::abs(1-std::pow(mach,2)));
     }
 
+    Eigen::Matrix3d eulerToRotmat(double yaw, double pitch, double roll){
+        Eigen::AngleAxisd rotX = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitX());
+        Eigen::AngleAxisd rotY = Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY());
+        Eigen::AngleAxisd rotZ = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitZ());
+        Eigen::Matrix3d rotmat =  (rotZ* rotY * rotX).toRotationMatrix();
+        return rotmat;
+    }
 
 }

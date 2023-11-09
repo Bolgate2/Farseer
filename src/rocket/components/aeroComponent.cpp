@@ -166,7 +166,9 @@ namespace Rocket{
         // checking cache
         if(c_n_aExists(mach, alpha, gamma)) return _c_n_aCache.find(mach)->second.find(alpha)->second.find(gamma)->second;
         // calculating if not there
-        return calculateC_n_aWithComponents(mach, alpha, gamma);
+        auto CNa = calculateC_n_aWithComponents(mach, alpha, gamma);
+        //_c_n_aCache[mach][alpha][gamma] = CNa;
+        return CNa;
     }
 
     double AeroComponent::c_n( double mach, double alpha, double gamma) const {
