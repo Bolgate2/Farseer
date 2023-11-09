@@ -51,7 +51,7 @@ namespace Rocket{
             // mass
             virtual double calculateMass(double time) const;
             virtual double calculateMassWithComponents(double time) const;
-            std::unordered_map<double,double> _massCache = {};
+            mutable std::unordered_map<double,double> _massCache = {};
 
             /**
              * @brief Calculates the inertia of this object about (0,0,0)
@@ -75,7 +75,7 @@ namespace Rocket{
 
             virtual Eigen::Vector3d calculateThrust(double time) const;
             virtual Eigen::Vector3d calculateThrustWithComponents(double time) const;
-            std::unordered_map<double,Eigen::Vector3d> _thrustCache = {};
+            mutable std::unordered_map<double,Eigen::Vector3d> _thrustCache = {};
 
             virtual Eigen::Vector3d calculateThrustPosition(double time) const;
             virtual Eigen::Vector3d calculateThrustPositionWithComponents(double time) const;

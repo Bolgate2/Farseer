@@ -9,7 +9,16 @@ enable_testing()
 # need at least these 3 options enabled for uuid to compile
 # https://github.com/crashoz/uuid_v4/issues/14
 # only actually need mavx2, not the other 2 commands
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 add_compile_options(-mavx2)
+add_compile_options(-std=c++17)
+add_compile_options(-D_USE_MATH_DEFINES)
 
 # creating libraries
 add_library(sim "")

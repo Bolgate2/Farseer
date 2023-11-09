@@ -1,10 +1,9 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
-#pragma once
-
 #include "rocketInterface.hpp"
 #include "stateArray.hpp"
+#include "RealAtmos.hpp"
 #include <memory>
 #include <vector>
 #include <Eigen/Dense>
@@ -16,6 +15,8 @@ namespace Sim{
             bool _takeoff;
             bool _onRod;
             RocketInterface* _rocket;
+            Eigen::Matrix3d _rotmat; // the rotation matrix from the designs coords to the rockets coords
+            RealAtmos::RealAtmos* _atmos;
             Sim(RocketInterface* rocket);
 
             const Eigen::Array<double, 1, 6> RK_A = {0, 1.0/4, 3.0/8, 12.0/13, 1, 1.0/2 };
@@ -60,6 +61,11 @@ namespace Sim{
 
             std::tuple<double, StateArray> RK4Integrate( const double time, const double step, const StateArray state);
 
+
+            // helper functions
+            Eigen::Vector3d originToCenterOfEarth() const;
+            double altitude(Eigen::Vector3d position) const;
+            Eigen::Vector3d centerOfEarthVector(Eigen::Vector3d position) const;
     };
 }
 

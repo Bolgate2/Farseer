@@ -122,7 +122,9 @@ namespace Rocket{
         auto cacheKey = _massCache.find(time);
         if(cacheKey != _massCache.end()) return cacheKey->second;
         // returning if not found in cache
-        return calculateMassWithComponents(time);
+        auto m = calculateMassWithComponents(time);
+        _massCache[time] = m;
+        return m;
     }
 
     void Component::overrideMass(OverrideFlags flags){
@@ -283,7 +285,9 @@ namespace Rocket{
         if(!caching()) return calculateThrustWithComponents(time);
         auto cacheKey = _thrustCache.find(time);
         if(cacheKey != _thrustCache.end()) return cacheKey->second;
-        return calculateThrustWithComponents(time);
+        auto th = calculateThrustWithComponents(time);
+        _thrustCache[time] = th;
+        return th;
     }
 
     //thrust position
@@ -330,7 +334,8 @@ namespace Rocket{
     
     void Component::setAllCaching( bool toCache ){
         setCaching(toCache);
-        for(auto comp = components().begin(); comp != components().end(); ++comp){
+        auto comps = components();
+        for(auto comp = comps.begin(); comp != comps.end(); ++comp){
             (*comp)->setAllCaching(toCache);
         }
     }

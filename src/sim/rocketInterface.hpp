@@ -8,6 +8,14 @@ namespace Sim{
     class RocketInterface{
         public:
             /**
+             * @brief returns the vector created by traversing from the center of the base of the rocket to the tip of its nosecone. This is what is defined as "up"
+             * 
+             * @return Eigen::Vector3d 
+             */
+            virtual Eigen::Vector3d thisWayUp() const = 0;
+
+
+            /**
              * @brief Center of mass from the nosecone tip in body coordinates in meters
              * 
              * @param time Time since launch in seconds

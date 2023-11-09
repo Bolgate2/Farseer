@@ -12,16 +12,19 @@
 #include "shapes/components/nosecone/nosecone.hpp"
 #include "components/bodyTube/bodyTube.hpp"
 
+#include "misc/finish.hpp"
+#include "misc/material.hpp"
+
 #include "components/nosecone/nosecone.hpp"
 #include "shapes/components/fins/trapezoidalFin.hpp"
 #include "components/fins/finSet.hpp"
 #include "components/fins/fin.hpp"
-#include "misc/finish.hpp"
-#include "misc/material.hpp"
+#include "components/motor/motor.hpp"
 #include "maths.hpp"
+
+#include "RealAtmos.hpp"
 #include "simulation.hpp"
 
-#include "components/motor/motor.hpp"
 
 #define SMALL 1e-10
 
@@ -151,7 +154,7 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     fmt::print("\n");
     */
     rocket->printComponentTree();
-
+    rocket->setAllCaching(true);
     auto sim = Sim::Sim::create(rocket.get());
     auto initialConditions = Sim::defaultStateVector();
     auto lastStep = sim->solve(initialConditions);

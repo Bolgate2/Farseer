@@ -1,7 +1,9 @@
 #include "simulation.hpp"
+#include "RealAtmos.hpp"
 #include <iostream>
 #include <fmt/core.h>
 #include <chrono>
+#include <cassert>
 
 namespace Sim{
 
@@ -22,6 +24,34 @@ namespace Sim{
 
     Sim::Sim(RocketInterface* rocket){
         _rocket = rocket;
+        _atmos = RealAtmos::RealAtmos::GetInstance();
+        // https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+        auto thisUp = Eigen::Vector3d{0,0,1};
+        auto rocketUp = rocket->thisWayUp();
+        // setting rotation matrix
+        // the maths in the else block doesn't apply if the vectors are either the same or opposite
+        if(thisUp == -rocketUp){
+            // cannot use cross product with rocket vec as it returns [0,0,0]
+            //_rotmat = Eigen::AngleAxisd(M_PI, thisUp.cross(rocketUp));
+            // use cross product with this vector and some other arbitraty vector
+            // need 2 candicates just in case the arbitrary addition is parallel
+            if(thisUp.normalized() != Eigen::Vector3d{1,1,1}.normalized()){
+                _rotmat = Eigen::AngleAxisd(M_PI, thisUp.cross(thisUp + Eigen::Vector3d{1,1,1}));
+            } else {
+                // something parallel with [1,1,1] cant be parallel with [1,2,3]
+                _rotmat = Eigen::AngleAxisd(M_PI, thisUp.cross(thisUp + Eigen::Vector3d{1,2,3}));
+            }
+        } else if(thisUp == rocketUp){
+            _rotmat = Eigen::Matrix3d::Identity();
+        } else {
+            auto ang = std::acos( thisUp.dot(rocketUp)/(thisUp.norm()*rocketUp.norm()) );
+            auto v = rocketUp.cross(thisUp);
+            auto s = v.norm()*std::sin(ang);
+            auto c = rocketUp.dot(thisUp)*std::cos(ang);
+            Eigen::Matrix3d vx = v.asSkewSymmetric();
+            _rotmat = Eigen::Matrix3d::Identity() + vx + (vx*vx)*(1-c)/std::pow(s,2);
+        }
+        assert( _rotmat*rocketUp == thisUp );
     }
 
     std::shared_ptr<Sim> Sim::create(RocketInterface* rocket){
@@ -97,7 +127,7 @@ namespace Sim{
         // getting apogee to print
         double apogee = 0;
         double apogeeTime = 0;
-        for(int i = 0; i < states.size(); i++){
+        for(long long unsigned int i = 0; i < states.size(); i++){
             StateArray st = states[i];
             double t = times[i];
             if( st[Zp] > apogee ){
@@ -108,7 +138,7 @@ namespace Sim{
         fmt::print("{:.10f} m apogee at t = {:.10f}\n", apogee, apogeeTime);
         // summing comp times
         int totalTime = 0;
-        for(int i = 0; i < compTimes.size(); i++) totalTime += compTimes[i];
+        for(long long unsigned int i = 0; i < compTimes.size(); i++) totalTime += compTimes[i];
         fmt::print("comp time {} s, final step {} s num steps {}\n", totalTime/1e6, step, counter);
         // just returning the final state
         return *(states.rbegin());
@@ -135,7 +165,7 @@ namespace Sim{
                 double xVal = time + newStep*RK_A[i];
                 // adding weighted sum of previous ks to y value
                 StateArray yVal = state;
-                for(int j = 0; j < ks.size(); j++){
+                for(long long unsigned int j = 0; j < ks.size(); j++){
                     yVal += RK_B(i,j)*ks[j];
                 }
                 // calculating this k value
@@ -145,7 +175,7 @@ namespace Sim{
             }
             // calculating the final output and output error
             StateArray err = StateArray::Zero();
-            for(int i = 0; i < ks.size(); i++){
+            for(long long unsigned int i = 0; i < ks.size(); i++){
                 newState += RK_CH[i]*ks[i];
                 err += RK_CT[i]*ks[i];
             }
@@ -176,11 +206,56 @@ namespace Sim{
 
     StateArray Sim::calculate( double time, StateArray state ){
         StateArray res = defaultDeriv(state);
-        auto th = _rocket->thrust(time);
+        // getting position vectors
+        const Eigen::Vector3d position{ state[Xp], state[Yp], state[Zp] };
+        const Eigen::Vector3d orientation{ state[Phi], state[Theta], state[Psi] };
+        // getting velocity vectors
+        const Eigen::Vector3d velocity{ state[Xv], state[Yv], state[Zv] };
+        const Eigen::Vector3d angVelocity{ state[dPhi], state[dTheta], state[dPsi] };
+        // initializing acceleration vectors
+        Eigen::Vector3d acceleration = Eigen::Vector3d::Zero();
+        Eigen::Vector3d angAcceleration = Eigen::Vector3d::Zero();
+
+        // getting atmospheric properties
+        auto g = _atmos->g(position.z());
+
+        // getting rocket properties
+        Eigen::Vector3d th = _rotmat*(_rocket->thrust(time));
         auto m = _rocket->mass(time);
-        //fmt::print("time {:<6.4f} thrust {:<6.4f} mass {:<6.4f}\n", time, th.x(), m);
-        res[Zv] = -9.802 - th.x()/m;
+        auto aRef = _rocket->referenceArea();
+        auto lRef = _rocket->referenceLength();
+
+        // adding thrust
+        acceleration += th/m;
+        // adding gravity
+        auto gravVec = centerOfEarthVector(position)*g;
+        acceleration += gravVec;
+
+        // adding final acceleration vector
+        res[Xv] = acceleration.x();
+        res[Yv] = acceleration.y();
+        res[Zv] = acceleration.z();
+        // adding final angular acceleration vector
+        res[Phi] = angAcceleration.x();
+        res[Theta] = angAcceleration.y();
+        res[Psi] = angAcceleration.z();
+
         return res;
+    }
+
+    double Sim::altitude(Eigen::Vector3d position) const {
+        // TODO: modify this based on latitude and longitude
+        return position.z();
+    }
+
+    Eigen::Vector3d Sim::originToCenterOfEarth() const {
+        return Eigen::Vector3d{0,0,-RealAtmos::R_0};
+    }
+
+    Eigen::Vector3d Sim::centerOfEarthVector(Eigen::Vector3d position) const {
+        Eigen::Vector3d combinedVec = originToCenterOfEarth() - position; // -position because its from the rocket to the origin
+        Eigen::Vector3d normVec = combinedVec.normalized();
+        return normVec;
     }
 
 }

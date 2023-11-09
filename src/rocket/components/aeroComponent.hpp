@@ -86,6 +86,7 @@ namespace Rocket{
             // no create method as this class is abstract
 
             // inherited from rocketInterface
+            virtual Eigen::Vector3d thisWayUp() const override { return Eigen::Vector3d{-1,0,0}; }
             // need to redefine these to clarify override of interface
             // because the implementation of these functions is defined above, it needs to be specified here again so that
             // the interface knows wtf they're on about
