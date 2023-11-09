@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include <Eigen/Dense>
+#include <filesystem>
 
 namespace Sim{
 
@@ -66,6 +67,8 @@ namespace Sim{
             Eigen::Vector3d originToCenterOfEarth() const;
             double altitude(Eigen::Vector3d position) const;
             Eigen::Vector3d centerOfEarthVector(Eigen::Vector3d position) const;
+
+            std::filesystem::path outFile() const;
     };
 }
 

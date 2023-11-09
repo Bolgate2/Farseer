@@ -1,6 +1,7 @@
 #include "simulation.hpp"
 #include "RealAtmos.hpp"
 #include <iostream>
+#include <fstream>
 #include <fmt/core.h>
 #include <chrono>
 #include <cassert>
@@ -61,12 +62,25 @@ namespace Sim{
         return obj;
     }
 
+    std::filesystem::path Sim::outFile() const {
+        const auto initPth = std::filesystem::current_path().append("..").append("results");
+        unsigned int fnum = 0;
+        std::filesystem::path nuPth;
+        while(true){
+            std::filesystem::path basePath = initPth;
+            nuPth = basePath.append( std::to_string(fnum));
+            if(!std::filesystem::exists(nuPth)) break;
+            fnum++;
+        }
+        return nuPth;
+    }
+
     StateArray Sim::solve( StateArray initialConditions ){
         _takeoff = false;
         _onRod = true;
         std::vector<StateArray> states = { initialConditions };
         std::vector<double> times = { 0 };
-        std::vector<int> compTimes = { };
+        std::vector<int> compTimes = { 0 };
 
         std::chrono::high_resolution_clock clock;
         StateArray lastState = initialConditions;
@@ -141,6 +155,21 @@ namespace Sim{
         for(long long unsigned int i = 0; i < compTimes.size(); i++) totalTime += compTimes[i];
         fmt::print("comp time {} s, final step {} s num steps {}\n", totalTime/1e6, step, counter);
         // just returning the final state
+        // writing to file
+        auto fname = outFile();
+        const Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", "\n");
+        std::ofstream resFile;
+        resFile.open(fname, std::ios::out | std::ios::trunc);
+        resFile << fmt::format("t, ctime, Xp, Xv, Yp, Yv, Zp, Zv, Phi, dPhi, Theta, dTheta, Psi, dPsi\n"); //dont need to include LAST
+        fmt::print("writing results to file \"{}\"\n", fname.string());
+        for(int i = 0; i < times.size(); i++){
+            resFile << fmt::format("{}, ", times[i]);
+            resFile << fmt::format("{}, ", compTimes[i]);
+            resFile << states[i].transpose().format(CSVFormat);
+            resFile << "\n";
+        }
+
+        resFile.close();
         return *(states.rbegin());
     }
 
@@ -249,6 +278,7 @@ namespace Sim{
     }
 
     Eigen::Vector3d Sim::originToCenterOfEarth() const {
+        // TODO: modify this based on lat and long
         return Eigen::Vector3d{0,0,-RealAtmos::R_0};
     }
 
