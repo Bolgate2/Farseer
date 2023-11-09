@@ -157,7 +157,7 @@ namespace Sim{
         // just returning the final state
         // writing to file
         auto fname = outFile();
-        const Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", "\n");
+        const Eigen::IOFormat CSVFormat(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", "\n");
         std::ofstream resFile;
         resFile.open(fname, std::ios::out | std::ios::trunc);
         resFile << fmt::format("t, ctime, Xp, Xv, Yp, Yv, Zp, Zv, Phi, dPhi, Theta, dTheta, Psi, dPsi\n"); //dont need to include LAST

@@ -5,7 +5,7 @@ import sys
 
 from plotting.plotting import plot3dTrajectory, plot_kinematics
 
-fname = "1"
+fname = "0"
 rootDir = Path(__file__).parent.parent
 resPth = Path(rootDir, "results", fname)
 print(resPth)
