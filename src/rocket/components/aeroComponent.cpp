@@ -296,7 +296,7 @@ namespace Rocket{
 
     Eigen::Matrix3d AeroComponent::calculateInertia(double time) const {
         // inertia about cm
-        auto thisInertia = shape()->inertia() * material()->density; // inertia/density of the shape about cm
+        Eigen::Matrix3d thisInertia = shape()->inertia() * material()->density; // inertia/density of the shape about cm
         auto disp = calculateCm(time); // moving the moment of inertia back towards the origin
         auto zeroInertia = Utils::parallel_axis_transform(thisInertia, disp, calculateMass(time));
         return zeroInertia;

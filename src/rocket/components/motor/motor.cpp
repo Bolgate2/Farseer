@@ -3,9 +3,15 @@
 #include <filesystem>
 #include <sstream>
 #include <map>
+#include <fmt/core.h>
 #include "maths.hpp"
 
 namespace Rocket{
+    static std::string toString(const Eigen::MatrixXd& mat){
+        std::stringstream ss;
+        ss << mat;
+        return ss.str();
+    }
     //static variables and functions
     const std::string Motor::_defaultName = "Motor";
     std::shared_ptr<Motor> Motor::fromFile( std::filesystem::path fileName, Component* parent, Eigen::Vector3d position, double ignitionTime, double dataReferencePressure, double nozzleExitArea){
@@ -200,7 +206,7 @@ namespace Rocket{
     Eigen::Matrix3d Motor::calculateInertia(double time) const {
         auto m = calculateMass(time);
         auto density = m/shape()->volume();
-        auto thisInertia = shape()->inertia()*density;
+        Eigen::Matrix3d thisInertia = shape()->inertia()*density;
         auto originInertia = Utils::parallel_axis_transform(thisInertia, calculateCm(time), m);
         //std::cout << "MOTOR INERTIA\n" << thisInertia << std::endl;
         return originInertia;

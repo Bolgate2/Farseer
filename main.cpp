@@ -145,7 +145,7 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
     
     rocket->printComponentTree();
-    fmt::print("motor inertia\n{}\n", toString(motor->inertia(0)));
+    //fmt::print("motor inertia\n{}\n", toString(motor->inertia(0)));
     
 
     return rocket;
@@ -178,7 +178,7 @@ void testSim(){
 void simRocket(Rocket::AeroComponent* rocket){
     rocket->setAllCaching(true);
     
-    
+    /*
     for(int i = 0; i < 10; i++){
         auto ang = ((double) i)/180*M_PI;
 
@@ -186,6 +186,7 @@ void simRocket(Rocket::AeroComponent* rocket){
         fmt::print("{} CNa {:.5}\n", i, rocket->c_n_a(0.3, ang));
         fmt::print("{} inertia\n{}\n", i, toString(rocket->inertia(i)));
     }
+    */
     
     
     auto btime = rocket->calculateBurnoutTime();

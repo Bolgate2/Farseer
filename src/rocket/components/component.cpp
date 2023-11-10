@@ -185,8 +185,8 @@ namespace Rocket{
             compInertia += (*comp)->inertia(time);
         }
         // summing this inertia and component inertias
-        Eigen::Matrix3d totalInertia = thisInertia + compInertia;
-        return totalInertia;
+        compInertia += thisInertia;
+        return compInertia;
     }
 
     Eigen::Matrix3d Component::inertia(double time) const {

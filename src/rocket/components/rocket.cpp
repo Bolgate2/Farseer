@@ -4,7 +4,6 @@
 #include <iostream>
 
 namespace Rocket{
-
     Rocket::Rocket(std::string name):AeroComponent(nullptr, nullptr, nullptr, name, Eigen::Vector3d::Zero()){}
 
     std::shared_ptr<Rocket> Rocket::create(std::string name){

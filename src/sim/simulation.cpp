@@ -384,6 +384,11 @@ namespace Sim{
         }
 
         const Eigen::Matrix3d inertia = (_rotmat*_rocket->inertia(time)*(_rotmat.transpose()));
+        const double Ixx = inertia(0,0);
+        const double Iyy = inertia(1,1);
+        const double Izz = inertia(2,2);
+
+        //fmt::println("INERTIA\n{}\n", toString(inertia));
 
         auto cn = _rocket->c_n(mach, angleOfAttack);
         if(std::isnan(cn)){
@@ -503,6 +508,8 @@ namespace Sim{
         res[dTheta] = angAcceleration.y();
         res[dPsi] = angAcceleration.z();
 
+        //fmt::println("INERTIA\n{}\n", toString(inertia));
+
         StepData data = {
             std::pair<std::string, double>{"Altitude", alt},
             std::pair<std::string, double>{"Pressure", pres},
@@ -517,9 +524,9 @@ namespace Sim{
             std::pair<std::string, double>{"CPx", (_rotmat.transpose()*rockCP).x()},
             std::pair<std::string, double>{"Yaw Damping", yawDampingCoeff},
             std::pair<std::string, double>{"Pitch Damping", pitchDampingCoeff},
-            std::pair<std::string, double>{"Ixx", inertia(0,0)},
-            std::pair<std::string, double>{"Iyy", inertia(1,1)},
-            std::pair<std::string, double>{"Izz", inertia(2,2)},
+            std::pair<std::string, double>{"Ixx", Ixx},
+            std::pair<std::string, double>{"Iyy", Iyy},
+            std::pair<std::string, double>{"Izz", Izz},
         };
 
         //fmt::print("TIME {}, OUT [{}]\n\n", time, toString(res.transpose()));
