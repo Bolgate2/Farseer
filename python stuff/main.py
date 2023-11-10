@@ -34,23 +34,52 @@ def plot_mass_data(times:NDArray, orkMasses:NDArray, farMasses:NDArray, massDiff
     ax2.grid(True)
     plt.show()
 
-def plot_Cn_data(orkAoAs, orkMachs, orkCNs, farAoAs, farMachs, farCNs):
+def plot_time_data_with_diffs(ork_times:NDArray, far_times:NDArray, ork_data:NDArray, far_data:NDArray, yname:str, xname:str="Time (s)"):
+    times, orkDataDense, farDataDense, dataDiffs = same_shape_data(ork_times, far_times, ork_data, far_data)
+    dataPercent = dataDiffs/orkDataDense*100
+    dataPercent[np.isnan(dataPercent)] = 0.0
+    fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+    ax1.plot(times, orkDataDense)
+    ax1.plot(times, farDataDense)
+    ax2.plot(times, dataDiffs)
+    ax3.plot(times, dataPercent)
+    fig.legend(["ork data", "Farseer data"])
+    
+    ax1.set_ylabel(fr"{yname}")
+    ax2.set_ylabel(fr"$\Delta${yname}")
+    ax3.set_ylabel(fr"% Err")
+    ax3.set_xlabel(xname)
+    ax1.grid(True)
+    ax2.grid(True)
+    ax3.grid(True)
+    fig.tight_layout()
+    plt.show()
+    
+
+def plot_Cn_data(orkAoAs:NDArray, orkMachs:NDArray, orkCNs:NDArray, farAoAs:NDArray, farMachs:NDArray, farCNs:NDArray):
     fig, (ax1, ax2) = plt.subplots(1,2)
-    ax1.plot(orkAoAs, orkCNs)
-    ax1.plot(farAoAs, farCNs)
-    ax1.set_title(r"$C_N$ vs $\alpha$")
-    ax2.plot(orkMachs, orkCNs)
-    ax2.plot(farMachs, farCNs)
-    ax2.set_title(r"$C_N$ vs $M$")
+    ax1.plot(orkAoAs, orkCNs, )
+    ax1.plot(farAoAs, farCNs, )
+    ax1.set_ylabel(r"$C_N$")
+    ax1.set_xlabel(r"$\alpha$ ($^\circ$)")
+    
+    ax2.plot(orkMachs, orkCNs/np.deg2rad(orkAoAs), )
+    ax2.plot(farMachs, farCNs/np.deg2rad(farAoAs), )
+    ax2.set_ylabel(r"$C_{N_\alpha}$ (rad$^{-1}$)")
+    ax2.set_xlabel(r"$M$")
+    
     fig.legend(["ork data", "Farseer data"])
     ax1.grid(True)
     ax2.grid(True)
+    
+    
+    fig.tight_layout()
     plt.show()
     
 
 print(sys.argv)
 fname = sys.argv[1]
-orkfname = "ork6030res.csv"
+orkfname = sys.argv[2]
 rootDir = Path(__file__).parent.parent
 resPth = Path(rootDir, "results", fname)
 orkResPth = Path(rootDir, "results", orkfname)
@@ -71,22 +100,46 @@ data["atot"] = np.sqrt( data["Xa"]**2 + data["Ya"]**2 + data["Za"]**2 )
 
 print(orkData.keys())
 
-'''
-fig, ax1 = plt.subplots()
-ax1.plot(orkData['Time (s)'], orkData["Total acceleration (m/sÂ²)"])
-ax1.plot(data["t"], data["atot"])
-fig.legend(["ork data", "Farseer data"])
-ax1.grid(True)
-plt.show()
-'''
+orkTimes = orkData['Time (s)']
+farTimes = data["t"]
 
-times = np.arange(0,np.max(np.concatenate([data["t"], orkData['Time (s)']])), 0.001)
-orkMasses = np.interp(times, orkData['Time (s)'], orkData["Mass (g)"])
-farMasses = np.interp(times, data["t"], data["Mass"]*1000)
+orkAlts = orkData["Altitude (m)"]
+farAlts = data["Altitude"]
 
-times, orkMasses, farMasses, massDiffs = same_shape_data(orkData['Time (s)'], data["t"], orkData["Mass (g)"], data["Mass"]*1000)
+orkMasses = orkData["Mass (g)"]/1000
+farMasses = data["Mass"]
+orkThrusts = orkData["Thrust (N)"]
+farThrusts = data["Thrust"]
+orkGs = orkData["Gravitational acceleration (m/sÂ²)"]
+farGs = data["g"]
 
-plot_mass_data(times, orkMasses, farMasses, massDiffs)
+orkLongInert = orkData["Longitudinal moment of inertia (kgÂ·mÂ²)"]
+orkRotInert = orkData["Rotational moment of inertia (kgÂ·mÂ²)"]
+farIxx = data["Ixx"]
+farIyy = data["Iyy"]
+farIzz = data["Izz"]
+
+plot_time_data_with_diffs(orkTimes, farTimes, orkLongInert, farIxx, "Long Inert")
+plot_time_data_with_diffs(orkTimes, farTimes, orkRotInert, farIzz, "Rot Inert")
+plot_time_data_with_diffs(orkTimes, farTimes, orkMasses, farMasses, "Mass (kg)")
+plot_time_data_with_diffs(orkTimes, farTimes, orkThrusts, farThrusts, "Thrust (N)")
+plot_time_data_with_diffs(orkAlts, farAlts, orkGs, farGs, r"g (m/s$^2$)", "Altitude (m)")
+
+# ATMOSPHERIC CONDITIONS
+orkTemps = orkData["Air temperature (Â°C)"]
+orkTempsK = orkTemps + 273.15
+print(orkTempsK)
+orkPres = orkData['Air pressure (mbar)']
+orkPresPa = orkPres*100.0
+orkDens = orkPresPa/(287.053*orkTempsK)
+farPres = data["Pressure"]
+farDens = data["Density"]
+
+print(orkDens)
+print(f"far dens {farDens}")
+
+plot_time_data_with_diffs(orkAlts, farAlts, orkPresPa, farPres, r"P (Pa)", "Altitude (m)")
+plot_time_data_with_diffs(orkAlts, farAlts, orkDens, farDens, r"$\rho$ (kg/m$^3$)", "Altitude (m)")
 
 orkAoAs = orkData["Angle of attack (Â°)"]
 orkMachs = orkData["Mach number (â€‹)"]
@@ -95,7 +148,22 @@ farAoAs = data["AoA"]
 farMachs = data["M"]
 farCNs = data["CN"]
 
+plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
+plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
+plot_time_data_with_diffs(orkTimes, farTimes, orkCNs, farCNs, r"$C_N$")
+
+orkCPx = orkData["CP location (cm)"]/100
+farCPx = data["CPx"]
+orkCGx = orkData["CG location (cm)"]/100
+farCGx = data["CGx"]
+
+plot_time_data_with_diffs(orkTimes, farTimes, orkCPx, farCPx, r"$CP_{x}$ (m)")
+plot_time_data_with_diffs(orkTimes, farTimes, orkCGx, farCGx, r"$CG_{x}$ (m)")
+
+plot_Cn_data(orkAoAs, orkMachs, orkCPx, farAoAs, farMachs, farCPx)
 plot_Cn_data(orkAoAs, orkMachs, orkCNs, farAoAs, farMachs, farCNs)
+
+
 
 #plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
 

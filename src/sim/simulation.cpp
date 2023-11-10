@@ -76,7 +76,7 @@ namespace Sim{
         _takeoff = false;
         _onRod = true;
         std::vector<StateArray> states = { initialConditions };
-        std::vector<StepData> stepData = {};
+        std::vector<StepData> stepData = { std::get<1>(calculate(0, initialConditions)) };
         std::vector<double> times = { 0 };
         std::vector<int> compTimes = { 0 };
 
@@ -85,8 +85,8 @@ namespace Sim{
         StateArray lastState = initialConditions;
         StateArray state = initialConditions;
         StateArray newState;
-        
-        Eigen::Vector3d rodVec = Utils::eulerToRotmat(initialConditions[Phi], initialConditions[Theta], initialConditions[Psi])*thisWayUp();
+
+        setRodVec(Utils::eulerToRotmat(initialConditions[Phi], initialConditions[Theta], initialConditions[Psi])*thisWayUp());
 
         const int maxSteps = 1e5;
         int counter = 0;
@@ -112,8 +112,6 @@ namespace Sim{
             if(!_takeoff){
                 if(newState[Zv] > 0){
                     _takeoff = true;
-                } else {
-                    newState[Zv] = 0.0;
                 }
             }
             // adjusting for rod
@@ -121,17 +119,8 @@ namespace Sim{
                 if( Eigen::Vector3d{newState[Xp], newState[Yp], newState[Zp]}.norm() >  rodLen()){
                     _onRod = false;
                     fmt::print("off rod at step {}\n", counter);
-                } else {
-                    // reverting rotation
-                    newState[Phi] = state[Phi];
-                    newState[dPhi] = 0;
-                    newState[Theta] = state[Theta];
-                    newState[dTheta] = 0;
-                    newState[Psi] = state[Psi];
-                    newState[dPsi] = 0;
                 }
             }
-            //fmt::print("t={:<8.4f} {}\n", time+step, toString(state.transpose()));
 
             // checking termination events
             // terminating on landing
@@ -146,6 +135,7 @@ namespace Sim{
             // incrementing time
             counter++;
             time += thisStep;
+            //fmt::print("t={:<8.4f} {} [{}]\n", time+thisStep, thisStep, toString(state.transpose()));
             // storing data
             times.push_back(time);
             states.push_back(newState);
@@ -179,6 +169,7 @@ namespace Sim{
         int totalTime = 0;
         for(long long unsigned int i = 0; i < compTimes.size(); i++) totalTime += compTimes[i];
         fmt::print("comp time {} s, final step {} s num steps {}\n", totalTime/1e6, step, counter);
+        //fmt::print("final state\n[{}]\n", toString(newState));
         // just returning the final state
         // writing to file
         auto fname = outFile();
@@ -192,6 +183,8 @@ namespace Sim{
         }
         resFile << "\n";
         fmt::print("writing results to file \"{}\"\n", fname.string());
+        auto defaultPrecision = resFile.precision();
+        resFile << std::setprecision(std::numeric_limits<double>::digits10 + 1); // 17
         for(int i = 0; i < times.size(); i++){
             resFile << fmt::format("{}, ", times[i]);
             resFile << fmt::format("{}, ", compTimes[i]);
@@ -201,8 +194,10 @@ namespace Sim{
             }
             resFile << "\n";
         }
+        resFile << std::setprecision(defaultPrecision);
 
         resFile.close();
+
         return *(states.rbegin());
     }
 
@@ -314,7 +309,7 @@ namespace Sim{
         stepCandidates[5] = std::abs( maxPitchStepChange / stDiff[dTheta] );
         if(onRod()){
             stepCandidates[0] /= 5;
-            stepCandidates[6] = rodLen()/stateArrayPosition(k1).norm()/10;
+            stepCandidates[6] = (rodLen()/stateArrayPosition(k1).norm())/10;
         }
         stepCandidates[7] = 1.5*currStep;
         assert(!stepCandidates.hasNaN());
@@ -323,14 +318,17 @@ namespace Sim{
         return chosenStep;
     }
 
-     std::tuple<StateArray, StepData> Sim::calculate( double time, StateArray state ){
+
+    std::tuple<StateArray, StepData> Sim::calculate( const double time, const StateArray state ){
+        //fmt::print("TIME {}, IN [{}]\n", time, toString(state.transpose()));
         StateArray res = defaultDeriv(state);
+        //fmt::print("TIME {}, INITRES [{}]\n", time, toString(res.transpose()));
         // getting position vectors
-        const Eigen::Vector3d position{ state[Xp], state[Yp], state[Zp] };
-        const Eigen::Vector3d orientation{ state[Phi], state[Theta], state[Psi] }; //yaw, pitch, roll
+        const Eigen::Vector3d position = stateArrayPosition(state);
+        const Eigen::Vector3d orientation = stateArrayOrientation(state); //yaw, pitch, roll
         // getting velocity vectors
-        const Eigen::Vector3d velocity{ state[Xv], state[Yv], state[Zv] };
-        const Eigen::Vector3d angVelocity{ state[dPhi], state[dTheta], state[dPsi] };
+        const Eigen::Vector3d velocity = stateArrayVelocity(state);
+        const Eigen::Vector3d angVelocity = stateArrayAngVelocity(state); //yaw, pitch, roll
         // initializing acceleration vectors
         Eigen::Vector3d forces = Eigen::Vector3d::Zero();
         Eigen::Vector3d acceleration = Eigen::Vector3d::Zero();
@@ -339,20 +337,28 @@ namespace Sim{
         Eigen::Vector3d angAcceleration = Eigen::Vector3d::Zero();
 
         // getting atmospheric properties
-        const auto alt = altitude(position);
+        const double alt = altitude(position);
         const auto g = _atmos->g(alt);
         const auto atmDens = _atmos->density(alt);
         const auto atmTemp = _atmos->temperature(alt);
         const auto cSound = _atmos->sound(alt);
         const auto pres = _atmos->pressure(alt);
+        //fmt::print("TIME: {}, STATE [{}]\n", time, toString(state.transpose()));
+
+        //fmt::print("ATM CONDS: pos = [{}] alt = {}, g = {}, cSound = {}, atmDens = {}, pres = {}\n", toString(position.transpose()), alt, g, atmDens, cSound, pres);
 
         // getting wind velocity
-        const auto windVel = wind(position);
+        const Eigen::Vector3d windVel = wind(position);
         const Eigen::Vector3d relativeVelocity = velocity - windVel; // velocity of the rocket relative to the wind, this is opposite freestream velocity (-v_0)
-        const auto relativeSpeed = relativeVelocity.norm();
+        const double relativeSpeed = relativeVelocity.norm();
 
         // getting atmospheric probs dependent on velocity
-        const auto mach = relativeVelocity.norm()/cSound;
+        const double mach = velocity.norm()/cSound;
+        if(std::isnan(mach)){
+            fmt::print("TIME: {}, STATE AT FAILURE [{}]\n", time, toString(state.transpose()));
+            fmt::print("MACH IS NAN vel.norm = [{}], csound = {}\n", velocity.norm(), cSound);
+            assert(!std::isnan(mach));
+        }
         const auto dynamicPressure = atmDens*std::pow(relativeSpeed,2)/2;
 
         // getting rocket properties
@@ -360,7 +366,10 @@ namespace Sim{
         Eigen::Vector3d rocketOrientationVec = rocketRotationMat*thisWayUp(); // the rockets current "up" vector in global coords
         auto m = _rocket->mass(time);
         double angleOfAttack;
-        if(relativeSpeed == 0){
+        if(onRod()){
+            angleOfAttack = 0;
+        }
+        else if(relativeSpeed == 0){
             angleOfAttack = 0;
         } else {
             Eigen::Vector3d normRelVelVec = relativeVelocity.normalized();
@@ -374,11 +383,11 @@ namespace Sim{
             assert(!std::isnan(angleOfAttack));
         }
 
-        
-        auto inertia = (_rotmat*_rocket->inertia(time)*_rotmat.transpose());
+        const Eigen::Matrix3d inertia = (_rotmat*_rocket->inertia(time)*(_rotmat.transpose()));
 
         auto cn = _rocket->c_n(mach, angleOfAttack);
         if(std::isnan(cn)){
+            fmt::print("TIME {}, STATE AT FAILURE [{}]\n", time, toString(state.transpose()));
             fmt::print("CN IS NAN M={:.4f} AoA={:.4f}\n", mach, angleOfAttack);
             assert(!std::isnan(cn));
         }
@@ -395,6 +404,7 @@ namespace Sim{
 
         Eigen::Vector3d normForce = cn*_aRef*dynamicPressure*normForceDirection;
         forces += normForce;
+        //fmt::print("TIME {}, NORM [{}]\n", time, toString(normForce.transpose()));
         assert(!normForce.hasNaN());
 
         //fmt::print("t={:<8.4f} aoa {}\n", time, angleOfAttack);
@@ -409,27 +419,50 @@ namespace Sim{
 
         Eigen::Vector3d normMoments = (rocketRotationMat.transpose()*normForce).cross(rockCM - rockCP);
         moments += normMoments;
+        assert(!normMoments.hasNaN());
 
-        //fmt::print("t={:<8.4f} mass={}\n", time, m);
-        //fmt::print("t={:<8.4f} {}\n", time, toString(normAcc.transpose()));
+        // adding damping
+        auto yawDampingCoeff = _rocket->c_m_damp((_rotmat.transpose()*rockCM).x(), angVelocity.x(), relativeSpeed);
+        auto pitchDampingCoeff = _rocket->c_m_damp((_rotmat.transpose()*rockCM).x(), angVelocity.y(), relativeSpeed);
+
+        Eigen::Vector3d yawDampingMoment = { yawDampingCoeff*referenceArea()*referenceLength()*dynamicPressure, 0, 0 };
+        Eigen::Vector3d pitchDampingMoment = { 0, pitchDampingCoeff*referenceArea()*referenceLength()*dynamicPressure, 0 };
+        assert(!yawDampingMoment.hasNaN());
+        assert(!pitchDampingMoment.hasNaN());
+        
+        // applying yaw damping in opposite direction of yaw velocity
+        if(angVelocity.x() < 0){
+            moments += yawDampingMoment;
+        } else {
+            moments -= yawDampingMoment;
+        }
+        // applying pitch damping in opposite direction of pitch
+        if(angVelocity.z() < 0){
+            moments += pitchDampingMoment;
+        } else {
+            moments -= pitchDampingMoment;
+        }
 
         // adding thrust
         Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
         forces += th;
-        //fmt::print("t={:<8.4f} {}\n", time, toString(acceleration.transpose()));
+        //fmt::print("TIME {:<8.4f} THRUST [{}]\n", time, toString(th.transpose()));
 
         // adding forces to acceleration
         acceleration += forces/m;
+        //fmt::print("TIME {:<8.4f} ACCELERATION WITH F [{}]\n", time, toString(acceleration.transpose()));
         // adding gravity
-        auto gravVec = centerOfEarthVector(position)*g;
+        Eigen::Vector3d gravVec = centerOfEarthVector(position)*g;
         acceleration += gravVec;
+        //fmt::print("TIME {:<8.4f} ACCELERATION WITH GRAV [{}]\n", time, toString(acceleration.transpose()));
+
 
         // adding random pitch and yaw to flight
         double randPitchCoeff = (((double) std::rand())/RAND_MAX - 0.5)*2*0.0005;
         double randYawCoeff = (((double) std::rand())/RAND_MAX - 0.5)*2*0.0005;
 
         moments += Eigen::Vector3d{ randYawCoeff, randPitchCoeff, 0 }*_aRef*_lRef*dynamicPressure;
-
+        assert(!moments.hasNaN());
         // adding moments to angular acceleration
         angAcceleration += inertia.inverse()*moments;
         /*
@@ -442,16 +475,24 @@ namespace Sim{
             fmt::print("t={:<8.4f} norm force dir [{}]\n", time, toString(normForceDirection.transpose()));
         }
         */
+        
 
         assert(!acceleration.hasNaN());
         assert(!angAcceleration.hasNaN());
+        
+        // adjusting for takeoff
+        if(!takeoff()){
+            if(acceleration.z() < 0){
+                acceleration.z() = 0;
+            }
+        }
 
-        StepData data = {
-            std::pair<std::string, double>{"Mass", m},
-            std::pair<std::string, double>{"CN", cn},
-            std::pair<std::string, double>{"AoA", angleOfAttack/M_PI*180},
-            std::pair<std::string, double>{"M", mach}
-        };
+        // adjusting for onRod
+        if(onRod()){
+            auto velNorm = velocity.norm();
+            angAcceleration = Eigen::Vector3d::Zero();
+            acceleration = acceleration.norm()*rodVec();
+        }
 
         // adding final acceleration vector
         res[Xv] = acceleration.x();
@@ -461,6 +502,27 @@ namespace Sim{
         res[dPhi] = angAcceleration.x();
         res[dTheta] = angAcceleration.y();
         res[dPsi] = angAcceleration.z();
+
+        StepData data = {
+            std::pair<std::string, double>{"Altitude", alt},
+            std::pair<std::string, double>{"Pressure", pres},
+            std::pair<std::string, double>{"Density", atmDens},
+            std::pair<std::string, double>{"Mass", m},
+            std::pair<std::string, double>{"g", g},
+            std::pair<std::string, double>{"CGx", (_rotmat.transpose()*rockCM).x()},
+            std::pair<std::string, double>{"Thrust", th.norm()},
+            std::pair<std::string, double>{"CN", cn},
+            std::pair<std::string, double>{"AoA", angleOfAttack/M_PI*180},
+            std::pair<std::string, double>{"M", mach},
+            std::pair<std::string, double>{"CPx", (_rotmat.transpose()*rockCP).x()},
+            std::pair<std::string, double>{"Yaw Damping", yawDampingCoeff},
+            std::pair<std::string, double>{"Pitch Damping", pitchDampingCoeff},
+            std::pair<std::string, double>{"Ixx", inertia(0,0)},
+            std::pair<std::string, double>{"Iyy", inertia(1,1)},
+            std::pair<std::string, double>{"Izz", inertia(2,2)},
+        };
+
+        //fmt::print("TIME {}, OUT [{}]\n\n", time, toString(res.transpose()));
         
         return {res, data};
     }
@@ -469,7 +531,9 @@ namespace Sim{
         // TODO: modify this based on latitude and longitude
         Eigen::Vector3d centVec = originToCenterOfEarth();
         Eigen::Vector3d combinedVec = centVec - position; // -position because its from the rocket to the origin
-        double distToEarthSurf = combinedVec.norm() - centVec.norm(); // assuming a spherical earth
+        double combDist = combinedVec.norm();
+        double centDist = centVec.norm();
+        double distToEarthSurf = combDist - centDist; // assuming a spherical earth
         return distToEarthSurf;
     }
 
@@ -479,11 +543,13 @@ namespace Sim{
 
     Eigen::Vector3d Sim::originToCenterOfEarth() const {
         // TODO: modify this based on lat and long
-        return Eigen::Vector3d{0,0,-RealAtmos::R_0};
+        Eigen::Vector3d originVec =  Eigen::Vector3d{0,0,-RealAtmos::R_0};
+        return originVec;
     }
 
     Eigen::Vector3d Sim::centerOfEarthVector(Eigen::Vector3d position) const {
-        Eigen::Vector3d combinedVec = originToCenterOfEarth() - position; // -position because its from the rocket to the origin
+        Eigen::Vector3d centVec = originToCenterOfEarth();
+        Eigen::Vector3d combinedVec = centVec - position; // -position because its from the rocket to the origin
         Eigen::Vector3d normVec = combinedVec.normalized();
         return normVec;
     }

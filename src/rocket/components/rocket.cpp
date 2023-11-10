@@ -1,5 +1,6 @@
 #include "rocket.hpp"
 #include "stage.hpp"
+#include "maths.hpp"
 #include <iostream>
 
 namespace Rocket{
@@ -101,6 +102,14 @@ namespace Rocket{
             area += (*comp)->wettedArea();
         }
         return area;
+    }
+
+    Eigen::Matrix3d Rocket::inertia(double time) const {
+        auto Io = AeroComponent::inertia(time);
+        auto m = mass(time);
+        auto CM = cm(time);
+        auto Icm = Utils::parallel_axis_transform(Io, -CM, m, true);
+        return Icm;
     }
     
 }

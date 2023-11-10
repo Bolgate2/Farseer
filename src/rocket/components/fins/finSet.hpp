@@ -30,7 +30,7 @@ namespace Rocket{
             virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const override;
             virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override;
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;
-            virtual double calculateC_m_damp(double x, double omega, double v) const override;
+            virtual double calculateC_m_damp(double x) const override;
             // constructor
             FinSet(int numFins, std::string name = FinSet::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero() );
         public:

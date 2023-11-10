@@ -70,12 +70,11 @@ namespace Rocket{
             virtual void clearCpCache();
 
             // because omega is given about CM, this gives the moment about CM
-            virtual double calculateC_m_damp(double x, double omega, double v) const = 0; // VIRTUAL
-            virtual double calculateC_m_dampWithComponents(double x, double omega, double v) const;
-            // nested caches for C_n
-            std::map<double, std::map<double, std::map<double, double>>> _c_m_dampCache = {};
-            virtual void createC_m_dampMapping(double value, double x, double omega, double v);
-            virtual bool c_m_dampExists(double x, double omega, double v) const;
+            // calculate without omega and v for simplicity, then apply it at the end
+            virtual double calculateC_m_damp(double x) const = 0; // VIRTUAL
+            virtual double calculateC_m_dampWithComponents(double x) const;
+
+            mutable std::map<double, double> _c_m_dampCache = {}; //only caching based on x
             virtual void clearC_m_dampCache();
             // constructor
             AeroComponent(

@@ -272,23 +272,24 @@ namespace Rocket{
         return weightedAvg;
     }
     
-    double BodyComponent::c_m_damp_Func(double length, double avgRadius, double omega, double v ) const {
-        return 0.55 * (std::pow( length, 4 ) * avgRadius) / ( referenceArea() * referenceLength() ) * ( std::pow(omega, 2) / std::pow(v, 2) );
+    double BodyComponent::c_m_damp_Func(double length, double avgRadius) const {
+        // no omega^2/v^2 as that is handled at the end
+        return 0.55 * (std::pow( length, 4 ) * avgRadius) / ( referenceArea() * referenceLength() );
     }
 
-    double BodyComponent::calculateC_m_damp( double x, double omega, double v ) const {
+    double BodyComponent::calculateC_m_damp( double x) const {
         auto cmX = x;
         auto compTop = position().x(); // smaller, closer to top
         auto compBottom = compTop + length(); // bigger, further from top
         // calculated seperately for top and bottom
-        if( compBottom <= cmX | compTop >= cmX ){
-            return c_m_damp_Func(length(), averageRadius(), omega, v);
+        if( compBottom <= cmX || compTop >= cmX ){
+            return c_m_damp_Func(length(), averageRadius());
         }
         auto radii = bisectedAverageRadius(x);
         auto topLen = cmX - compTop;
         auto bottomLen = length() - topLen;
-        auto topCoeff = c_m_damp_Func(topLen, radii[0], omega, v);
-        auto bottomCoeff = c_m_damp_Func(bottomLen, radii[1], omega, v);
+        auto topCoeff = c_m_damp_Func(topLen, radii[0]);
+        auto bottomCoeff = c_m_damp_Func(bottomLen, radii[1]);
         return topCoeff + bottomCoeff;
     }
 

@@ -45,8 +45,8 @@ namespace Rocket{
             double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override;
             Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;
 
-            virtual double c_m_damp_Func(double length, double avgRadius, double omega, double v ) const;
-            virtual double calculateC_m_damp(double x, double omega, double v) const override; // same formula for body comps
+            virtual double c_m_damp_Func(double length, double avgRadius) const;
+            virtual double calculateC_m_damp(double x) const override; // same formula for body comps
 
             BodyComponent(
                 std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material,

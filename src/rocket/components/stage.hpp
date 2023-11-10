@@ -23,7 +23,7 @@ namespace Rocket{
             virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const override { return 0; }
             virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override { return 0; }
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override { return Eigen::Vector3d::Zero(); }
-            virtual double calculateC_m_damp(double x, double omega, double v) const override { return 0; }
+            virtual double calculateC_m_damp(double x) const override { return 0; }
             // constructor
             Stage(std::string name);
         public:

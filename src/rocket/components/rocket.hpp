@@ -24,7 +24,7 @@ namespace Rocket{
             virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const override { return 0; }
             virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override { return 0; }
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override { return Eigen::Vector3d::Zero(); }
-            virtual double calculateC_m_damp(double x, double omega, double v) const override { return 0; }
+            virtual double calculateC_m_damp(double x) const override { return 0; }
             // constructors
             Rocket(std::string name);
         public:
@@ -44,6 +44,9 @@ namespace Rocket{
             virtual std::shared_ptr<Component> findComponent(std::string id) const override;
             virtual void addComponent(Component* component) override;
             virtual void removeComponent(Component* component) override;
+
+            // overriding inertia to return inertia at CM
+            virtual Eigen::Matrix3d inertia(double time) const override;
 
             // neutering functions that don't apply to the stage
             virtual Shapes::AeroComponentShape* shape() const override { return nullptr; }

@@ -7,6 +7,12 @@
 
 namespace Rocket{
 
+    static std::string toString(const Eigen::MatrixXd& mat){
+        std::stringstream ss;
+        ss << mat;
+        return ss.str();
+    }
+
     std::string Component::defaultName = "Component";
     UUIDv4::UUIDGenerator<std::mt19937_64> Component::_uuidGenerator = UUIDv4::UUIDGenerator<std::mt19937_64>();
     // creating default component behaviour here
@@ -241,14 +247,14 @@ namespace Rocket{
         }
         // adding this cm*mass to weighted cm and this mass to mass 
         auto thisMass = calculateMass(time); // take mass sans components
-        auto weightedCm = weightedCompCm + thisCm*thisMass;
+        Eigen::Vector3d weightedCm = weightedCompCm + thisCm*thisMass;
         auto totalMass = totalCompMass + thisMass;
         // avoiding div by 0 error
         if(totalMass == 0){
             return Eigen::Vector3d::Zero();
         }
         // getting cm of this object and components
-        auto calculatedCm = weightedCm/totalMass;
+        Eigen::Vector3d calculatedCm = weightedCm/totalMass;
         return calculatedCm;
     }
 
@@ -282,7 +288,8 @@ namespace Rocket{
 
     // thrust
     Eigen::Vector3d Component::calculateThrust(double time) const {
-        return Eigen::Vector3d::Zero();
+        Eigen::Vector3d thisThrust = Eigen::Vector3d::Zero();
+        return thisThrust;
     }
 
     Eigen::Vector3d Component::calculateThrustWithComponents(double time) const {
@@ -291,8 +298,11 @@ namespace Rocket{
         for(auto comp = comps.cbegin(); comp != comps.cend(); ++comp){
             compThrust += (*comp)->thrust(time);
         }
-        auto totalThrust = compThrust + calculateThrust(time);
-        return totalThrust;
+        //Eigen::Vector3d thisThrust = calculateThrust(time);
+        //Eigen::Vector3d totalThrust = compThrust + thisThrust;
+        //fmt::print("CALC THRUST FOR {} [{}]\n", name, toString(totalThrust.transpose()));
+        compThrust += calculateThrust(time);
+        return compThrust;
     }
     
     Eigen::Vector3d Component::thrust(double time) const {

@@ -47,8 +47,6 @@ namespace Rocket{
     }
 
     double FinSet::calculateMass(double time) const {
-        auto finMass = fin()->mass(time);
-        auto m = finMass*numFins();
         return fin()->mass(time)*numFins();
     }
 
@@ -146,11 +144,11 @@ namespace Rocket{
         return position() + Eigen::Vector3d{ finCP.x(), 0, 0 }; //assuming that the fins cp is on the central axis
     }
 
-    double FinSet::calculateC_m_damp(double x, double omega, double v) const {
+    double FinSet::calculateC_m_damp(double x) const {
         auto finArea = fin()->planformArea();
         auto finDist = bodyRadius(position().x()) + fin()->yMac(); // assuming that this force is acting at the MAC
         auto numExposedFins = std::min(numFins(), 4); // ORK says max fins exposed is 4
-        return 0.6*(numExposedFins*finArea*finDist)/(referenceArea()*referenceLength())*( std::pow(omega,2)/std::pow(v,2) );
+        return 0.6*(numExposedFins*finArea*finDist)/(referenceArea()*referenceLength());
     }
 
     Fin* FinSet::fin() const {

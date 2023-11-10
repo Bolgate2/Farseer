@@ -185,7 +185,8 @@ namespace Rocket{
         auto lower = upper--;
         auto grad = (upper->second - lower->second)/(upper->first - lower->first);
         auto interpVal = lower->second + grad*(adjTime - lower->first);
-        return {-interpVal, 0, 0};
+        Eigen::Vector3d thrustVec = Eigen::Vector3d{-interpVal, 0, 0};
+        return thrustVec;
     }
 
     Eigen::Vector3d Motor::calculateThrustPosition(double time) const {

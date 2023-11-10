@@ -16,6 +16,7 @@ namespace Sim{
             double _userStep;
             bool _takeoff;
             bool _onRod;
+            Eigen::Vector3d _rodVec;
             double _rodLen;
             RocketInterface* _rocket;
             Eigen::Matrix3d _rotmat; // the rotation matrix from the designs coords to the rockets coords
@@ -41,6 +42,14 @@ namespace Sim{
             static std::shared_ptr<Sim> create( RocketInterface* rocket, double timeStep);
             // defining up
             inline Eigen::Vector3d thisWayUp() const { return Eigen::Vector3d{0,0,1}; }
+
+            inline const Eigen::Vector3d rodVec() const {
+                return _rodVec;
+            }
+
+            inline void setRodVec(Eigen::Vector3d vec){
+                _rodVec = vec;
+            }
 
             //getters and setters
             inline const double userStep() const {
@@ -85,7 +94,7 @@ namespace Sim{
              * @param state The state vector of the rocket
              * @return StateVector 
              */
-            std::tuple<StateArray, StepData> calculate( double time, StateArray state );
+            std::tuple<StateArray, StepData> calculate( const double time, const StateArray state );
 
             /**
              * @brief Performs a single euler integration step on the calculation, returning the new state and its time

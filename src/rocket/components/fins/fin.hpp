@@ -28,7 +28,7 @@ namespace Rocket{
 
             std::weak_ptr<FinSet> _finSet;
             // aero component functions
-            virtual double calculateC_m_damp(double x, double omega, double v) const override { return 0; } // this is calculated at the fin set
+            virtual double calculateC_m_damp(double x) const override { return 0; } // this is calculated at the fin set
             virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override { return 0; } // formula not given
 
             virtual double subsonicCNa( double mach, double alpha ) const;

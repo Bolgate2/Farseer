@@ -144,19 +144,8 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto fin = std::make_unique<Rocket::Fin>(std::move(finShape), std::move(finMat), std::move(finFinish), "Trapezoidal fin");
     auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
     
-    
-    fmt::print("{0:<30} [{1}]\n",   "Rocket cm", toString(rocket->cm(0).transpose()));
-    fmt::print("{0:<30}\n{1}\n",    "Rocket inertia at cm", toString(
-        Utils::parallel_axis_transform(rocket->inertia(0), rocket->cm(0), rocket->mass(0), true)
-    ));
-
-    fmt::print("{0:<30} {1}\n",   "Rocket cna", rocket->c_n_a(mach,alpha));
-    fmt::print("{0:<30} [{1}]\n",   "Rocket cp", toString(rocket->cp(mach,alpha).transpose()));
-    fmt::print("{0:<30} [{1}]\n",   "toob cp", toString(rocket->cp(mach,alpha).transpose()));
-    fmt::print("{0:<30} [{1}]\n",   "Rocket cp", toString(rocket->cp(mach,alpha).transpose()));
-    fmt::print("\n");
-    
     rocket->printComponentTree();
+    fmt::print("motor inertia\n{}\n", toString(motor->inertia(0)));
     
 
     return rocket;
@@ -188,6 +177,17 @@ void testSim(){
 
 void simRocket(Rocket::AeroComponent* rocket){
     rocket->setAllCaching(true);
+    
+    
+    for(int i = 0; i < 10; i++){
+        auto ang = ((double) i)/180*M_PI;
+
+        fmt::print("{} CP {:.5}\n", i, rocket->cp(0.3, ang).x());
+        fmt::print("{} CNa {:.5}\n", i, rocket->c_n_a(0.3, ang));
+        fmt::print("{} inertia\n{}\n", i, toString(rocket->inertia(i)));
+    }
+    
+    
     auto btime = rocket->calculateBurnoutTime();
     auto sim = Sim::Sim::create(rocket, 0.01);
     auto initialConditions = Sim::defaultStateVector();

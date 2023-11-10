@@ -59,13 +59,7 @@ namespace Rocket{
 
     void AeroComponent::clearC_m_dampCache(){
         // cache is like _cpCache[mach][alpha][gamma] = value;
-        for(auto omegaCache = _c_m_dampCache.begin(); omegaCache != _c_m_dampCache.end(); ++omegaCache){
-            for(auto vCache = (*omegaCache).second.begin(); vCache != (*omegaCache).second.end(); ++omegaCache){
-                (*vCache).second.clear(); // clearing _cpCache[mach][alpha][X]
-            }
-            (*omegaCache).second.clear(); // clearing _cpCache[mach][X]
-        }
-        _c_m_dampCache.clear(); // clearing _cpCache[X]
+        _c_m_dampCache.clear();
     }
 
     // adding cache elems
@@ -77,9 +71,6 @@ namespace Rocket{
     }
     void AeroComponent::createCpMapping( Eigen::Vector3d value, double mach, double alpha, double gamma){
         _cpCache[mach][alpha][gamma] = value;
-    }
-    void AeroComponent::createC_m_dampMapping(double value, double x, double omega, double v){
-        _c_m_dampCache[x][omega][v] = value;
     }
 
     // checking that args exist in cache
@@ -124,22 +115,6 @@ namespace Rocket{
                 auto gammaCache = gammaCacheKey->second;
                 auto valKey = gammaCache.find(gamma);
                 if(valKey != gammaCache.end()){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    bool AeroComponent::c_m_dampExists(double x, double omega, double v) const {
-        auto omegaCacheKey = _c_m_dampCache.find(x);
-        if(omegaCacheKey != _c_m_dampCache.end()){
-            auto omegaCache = omegaCacheKey->second;
-            auto vCacheKey = omegaCache.find(omega);
-            if(vCacheKey != omegaCache.end()){
-                auto vCache = vCacheKey->second;
-                auto valKey = vCache.find(v);
-                if(valKey != vCache.end()){
                     return true;
                 }
             }
@@ -245,11 +220,11 @@ namespace Rocket{
     }
 
     //C_m_damp
-    double AeroComponent::calculateC_m_dampWithComponents(double x, double omega, double v) const {
-        auto thisC_m_damp = calculateC_m_damp(x, omega, v);
+    double AeroComponent::calculateC_m_dampWithComponents(double x) const {
+        auto thisC_m_damp = calculateC_m_damp(x);
         auto aeroComps = aeroComponents();
         for(auto aeroComp = aeroComps.begin(); aeroComp != aeroComps.end(); ++aeroComp){
-            auto compC_m_damp = (*aeroComp)->c_m_damp(x, omega, v);
+            auto compC_m_damp = (*aeroComp)->c_m_damp(x, 1, 1); // using 1 here so that omega^2/v^2 has no effect
             auto compAref = (*aeroComp)->referenceArea();
             auto compDref = (*aeroComp)->referenceLength();
             auto compAdjC_m_damp = compC_m_damp* (compAref*compDref) / (referenceArea()*referenceLength());
@@ -259,9 +234,13 @@ namespace Rocket{
     }
 
     double AeroComponent::c_m_damp(double x, double omega, double v) const {
-        if(!caching()) return calculateC_m_dampWithComponents(x, omega, v);
-        if(c_m_dampExists(x, omega, v)) return _c_m_dampCache.find(x)->second.find(omega)->second.find(v)->second;
-        return calculateC_m_dampWithComponents(x, omega, v);
+        if(omega == 0 || v == 0) return 0;
+        if(!caching()) return calculateC_m_dampWithComponents(x)*std::pow(omega,2)/std::pow(v,2);
+        auto cacheKey = _c_m_dampCache.find(x);
+        if(cacheKey != _c_m_dampCache.end()) return cacheKey->second*std::pow(omega,2)/std::pow(v,2);
+        auto cmDampNoVel = calculateC_m_dampWithComponents(x);
+        _c_m_dampCache[x] = cmDampNoVel;
+        return cmDampNoVel*std::pow(omega,2)/std::pow(v,2);
     }
 
     // shape stuff
@@ -325,7 +304,7 @@ namespace Rocket{
 
     Eigen::Vector3d AeroComponent::calculateCm(double time) const {
         auto thisCm = shape()->cm(); // cm relative to position
-        auto bodyCm = position() + thisCm;
+        Eigen::Vector3d bodyCm = position() + thisCm;
         return bodyCm;
     }
 }
