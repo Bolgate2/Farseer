@@ -91,6 +91,7 @@ def plot_kinematics(times:NDArray, position:NDArray, velocity:NDArray, accelerat
         bbox_to_anchor=(0.5, 1),
     )
     ax1.grid(True)
+    '''
     x_lim = [-0.5,np.round(np.max(times))+0.5]
     ax1.set_xlim(x_lim)
     
@@ -112,7 +113,7 @@ def plot_kinematics(times:NDArray, position:NDArray, velocity:NDArray, accelerat
     x_tick_space = 2
     x_ticks = np.arange(0, x_lim[1], x_tick_space)
     ax1.set_xticks(x_ticks)
-    
+    '''
     ax1.set_xlabel(r'Time (s)')
     ax1.set_ylabel(fr'${name}$ (m)$\quad$$v_{name}$ (m/s)')
     ax2.set_ylabel(fr'$a_{name}$ (m/s$^2$)')

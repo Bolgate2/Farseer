@@ -13,15 +13,17 @@ namespace Sim{
 
     class Sim{
         private:
+            double _userStep;
             bool _takeoff;
             bool _onRod;
+            double _rodLen;
             RocketInterface* _rocket;
             Eigen::Matrix3d _rotmat; // the rotation matrix from the designs coords to the rockets coords
             double _aRef;
             double _lRef;
 
             RealAtmos::RealAtmos* _atmos;
-            Sim(RocketInterface* rocket);
+            Sim(RocketInterface* rocket, double timeStep);
 
             const Eigen::Array<double, 1, 6> RK_A = {0, 1.0/4, 3.0/8, 12.0/13, 1, 1.0/2 };
             const Eigen::Array<double, 6, 5> RK_B = {
@@ -36,10 +38,44 @@ namespace Sim{
             const Eigen::Array<double, 1, 6> RK_CT = {-1.0/360, 0, 128.0/4275, 2197.0/75240, -1.0/50, -2.0/55};
 
         public:
-            static std::shared_ptr<Sim> create( RocketInterface* rocket );
+            static std::shared_ptr<Sim> create( RocketInterface* rocket, double timeStep);
             // defining up
             inline Eigen::Vector3d thisWayUp() const { return Eigen::Vector3d{0,0,1}; }
 
+            //getters and setters
+            inline const double userStep() const {
+                return _userStep;
+            }
+
+            inline const bool takeoff() const {
+                return _takeoff;
+            }
+
+            inline void setTakeoff( bool hasTakenOff ) {
+                _takeoff = hasTakenOff;
+            }
+
+            inline const double rodLen() const {
+                return _rodLen;
+            }
+
+            inline const bool onRod() const {
+                return _onRod;
+            }
+
+            inline void setOnRod( bool isOnRod ) {
+                _onRod = isOnRod;
+            }
+
+            inline const double referenceArea(){
+                return _aRef;
+            }
+
+            inline const double referenceLength(){
+                return _lRef;
+            }
+
+            // sim functions
             StateArray solve( StateArray initialConditions );
 
             /**
@@ -49,7 +85,7 @@ namespace Sim{
              * @param state The state vector of the rocket
              * @return StateVector 
              */
-            StateArray calculate( double time, StateArray state );
+            std::tuple<StateArray, StepData> calculate( double time, StateArray state );
 
             /**
              * @brief Performs a single euler integration step on the calculation, returning the new state and its time
@@ -59,12 +95,14 @@ namespace Sim{
              * @param state the state at the given time
              * @return std::tuple<double, StateArray> returns the new state and its associated time, any changes to step can be inferred from the returned time
              */
-            std::tuple<double, StateArray> eulerIntegrate( const double time, const double step, const StateArray state);
+            //std::tuple<double, StateArray> eulerIntegrate( const double time, const double step, const StateArray state);
 
             // using defaults from scipy ode
-            std::tuple<double, StateArray> adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol = 1e-3, const double atol = 1e-6);
+            //std::tuple<double, StateArray> adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol = 1e-3, const double atol = 1e-6);
 
-            std::tuple<double, StateArray> RK4Integrate( const double time, const double step, const StateArray state);
+            std::tuple<double, StateArray, StepData> RK4Integrate( const double time, const double step, const StateArray state, const StateArray lastState);
+
+            double selectTimeStep(const StateArray state, const StateArray lastState, const StateArray k1, const double currStep) const;
 
             // wind func
             Eigen::Vector3d wind(Eigen::Vector3d position) const;

@@ -2,6 +2,9 @@
 #define STATE_ARRAY_H_
 
 #include <Eigen/Dense>
+#include <vector>
+#include <utility>
+#include <string>
 
 namespace Sim{
     enum StateMappings {
@@ -13,6 +16,13 @@ namespace Sim{
     StateArray defaultStateVector();
 
     StateArray defaultDeriv(StateArray state);
+
+    const Eigen::Vector3d stateArrayVelocity(StateArray state);
+    const Eigen::Vector3d stateArrayPosition(StateArray state);
+    const Eigen::Vector3d stateArrayAngVelocity(StateArray state);
+    const Eigen::Vector3d stateArrayOrientation(StateArray state);
+
+    using StepData = std::vector<std::pair<std::string, double>>;
 }
 
 #endif

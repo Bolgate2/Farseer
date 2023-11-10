@@ -6,4 +6,6 @@ target_sources(sim
         rocketInterface.hpp
         RealAtmos.hpp
         RealAtmos.cpp
+        stateArray.hpp
+        stateArray.cpp
 )

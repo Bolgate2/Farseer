@@ -1,6 +1,7 @@
 #include "simulation.hpp"
 #include "RealAtmos.hpp"
 #include "maths.hpp"
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <fmt/core.h>
@@ -15,17 +16,10 @@ namespace Sim{
         return ss.str();
     }
 
-    StateArray defaultStateVector() {
-        return StateArray::Zero();
-    } // this is a function so that it returns a new instance each time it is called
-
-    StateArray defaultDeriv(StateArray state){
-        // automatically shifts derivative quantities to the left, and sets their cells to 0;
-        return {state[Xv], 0, state[Yv], 0, state[Zv], 0, state[dPhi], 0, state[dTheta], 0, state[dPsi], 0};
-    }
-
-    Sim::Sim(RocketInterface* rocket){
+    Sim::Sim(RocketInterface* rocket, double timeStep){
+        _userStep = timeStep;
         _rocket = rocket;
+        _rodLen = 0.1;
         _aRef = _rocket->referenceArea();
         _lRef = _rocket->referenceLength();
         _atmos = RealAtmos::RealAtmos::GetInstance();
@@ -58,9 +52,9 @@ namespace Sim{
         assert( _rotmat*rocketUp == thisUp );
     }
 
-    std::shared_ptr<Sim> Sim::create(RocketInterface* rocket){
+    std::shared_ptr<Sim> Sim::create(RocketInterface* rocket, double timeStep){
         auto obj = std::shared_ptr<Sim>(
-            new Sim(rocket)
+            new Sim(rocket, timeStep)
         );
         return obj;
     }
@@ -82,15 +76,21 @@ namespace Sim{
         _takeoff = false;
         _onRod = true;
         std::vector<StateArray> states = { initialConditions };
+        std::vector<StepData> stepData = {};
         std::vector<double> times = { 0 };
         std::vector<int> compTimes = { 0 };
 
         std::chrono::high_resolution_clock clock;
+        std::srand( 69 );
         StateArray lastState = initialConditions;
-        StateArray state;
-        const int maxSteps = 1e4;
+        StateArray state = initialConditions;
+        StateArray newState;
+        
+        Eigen::Vector3d rodVec = Utils::eulerToRotmat(initialConditions[Phi], initialConditions[Theta], initialConditions[Psi])*thisWayUp();
+
+        const int maxSteps = 1e5;
         int counter = 0;
-        double step = 0.01;
+        double step = userStep();
         double time = 0;
         bool term = false;
         // start timer
@@ -99,26 +99,43 @@ namespace Sim{
         auto lastCalc = clock.now();
         while(!term){
             // doing calc
-            auto timeAndState = eulerIntegrate(time, step, lastState);
+            std::tuple<double, StateArray, StepData> timeAndState;
+            //auto timeAndState = eulerIntegrate(time, step, lastState);
             //auto timeAndState = adaptiveRKIntegrate(time, step, lastState);
-            //auto timeAndState = RK4Integrate(time, step, lastState);
-            state = std::get<1>(timeAndState);
+            timeAndState = RK4Integrate(time, step, state, lastState);
+            newState = std::get<1>(timeAndState);
             auto thisStep = std::get<0>(timeAndState) - time;
             step = thisStep;
-            state = (std::numeric_limits<double>::epsilon() < state.abs()).select(state, 0);
+            //step = thisStep;
+            newState = (std::numeric_limits<double>::epsilon() < newState.abs()).select(newState, 0);
             // adjusting for takeoff
             if(!_takeoff){
-                if(state[Zv] > 0){
+                if(newState[Zv] > 0){
                     _takeoff = true;
                 } else {
-                    state[Zv] = 0.0;
+                    newState[Zv] = 0.0;
+                }
+            }
+            // adjusting for rod
+            if(_onRod){
+                if( Eigen::Vector3d{newState[Xp], newState[Yp], newState[Zp]}.norm() >  rodLen()){
+                    _onRod = false;
+                    fmt::print("off rod at step {}\n", counter);
+                } else {
+                    // reverting rotation
+                    newState[Phi] = state[Phi];
+                    newState[dPhi] = 0;
+                    newState[Theta] = state[Theta];
+                    newState[dTheta] = 0;
+                    newState[Psi] = state[Psi];
+                    newState[dPsi] = 0;
                 }
             }
             //fmt::print("t={:<8.4f} {}\n", time+step, toString(state.transpose()));
 
             // checking termination events
             // terminating on landing
-            if( state[Zp] < 0 && lastState[Zp] >= 0 && _takeoff){
+            if( newState[Zp] < 0 && state[Zp] >= 0 && _takeoff){
                 // rocket has passed 0 negatively
                 term = true;
             }
@@ -131,9 +148,14 @@ namespace Sim{
             time += thisStep;
             // storing data
             times.push_back(time);
-            states.push_back(state);
+            states.push_back(newState);
+            if(stepData.empty()){
+                stepData.push_back(std::get<2>(timeAndState)); // duplicating first elem so that arrays are same size
+            }
+            stepData.push_back(std::get<2>(timeAndState));
             // reallocating array
             lastState = state;
+            state = newState;
             // store timer val
             auto thisCalc = clock.now();
             std::chrono::duration<int64_t, std::nano> calcTimeDur {thisCalc - lastCalc};
@@ -163,12 +185,20 @@ namespace Sim{
         const Eigen::IOFormat CSVFormat(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", "\n");
         std::ofstream resFile;
         resFile.open(fname, std::ios::out | std::ios::trunc);
-        resFile << fmt::format("t, ctime, Xp, Xv, Yp, Yv, Zp, Zv, Phi, dPhi, Theta, dTheta, Psi, dPsi\n"); //dont need to include LAST
+        resFile << fmt::format("t, ctime, Xp, Xv, Yp, Yv, Zp, Zv, Phi, dPhi, Theta, dTheta, Psi, dPsi"); //dont need to include LAST
+        // writing custom data headers
+        for(auto el = stepData[0].begin(); el != stepData[0].end(); el++){
+            resFile << ", " << el->first;
+        }
+        resFile << "\n";
         fmt::print("writing results to file \"{}\"\n", fname.string());
         for(int i = 0; i < times.size(); i++){
             resFile << fmt::format("{}, ", times[i]);
             resFile << fmt::format("{}, ", compTimes[i]);
             resFile << states[i].transpose().format(CSVFormat);
+            for(auto el = stepData[i].begin(); el != stepData[i].end(); el++){
+                resFile << ", " << el->second;
+            }
             resFile << "\n";
         }
 
@@ -176,12 +206,15 @@ namespace Sim{
         return *(states.rbegin());
     }
 
+    /*
     std::tuple<double, StateArray> Sim::eulerIntegrate( const double time, const double step, const StateArray state){
         StateArray k1 = calculate(time, state);
         StateArray newState = state + k1*step;
         return { time+step, newState };
     }
+    */
 
+   /*
     std::tuple<double, StateArray> Sim::adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol, const double atol){
         bool errPass = false;
         
@@ -225,18 +258,72 @@ namespace Sim{
         //fmt::print("t = {:<8.3}, step {:<8.3} new state [{}]\n", time, newStep, toString(newState.transpose()));
         return {time+newStep, newState};
     }
+    */
 
-    std::tuple<double, StateArray> Sim::RK4Integrate( const double time, const double step, const StateArray state){
-        StateArray k1 = calculate(time, state);
-        StateArray k2 = calculate(time + step/2, state + k1*step/2);
-        StateArray k3 = calculate(time + step/2, state + k2*step/2);
-        StateArray k4 = calculate(time + step, state + k3*step);
+    std::tuple<double, StateArray, StepData> Sim::RK4Integrate( const double time, const double step, const StateArray state, const StateArray lastState){
+        std::tuple<StateArray, StepData> k1Dat = calculate(time, state);
+        StateArray k1 = std::get<0>(k1Dat);
+        // determine step size
+        auto newStep = selectTimeStep(state, lastState, k1, step);
 
-        StateArray newState = state + step/6*(k1 + 2*k2 + 2*k3 + k4);
-        return {time+step, newState};
+        std::tuple<StateArray, StepData> k2Dat = calculate(time + newStep/2, state + k1*newStep/2);
+        StateArray k2 = std::get<0>(k2Dat);
+        
+        std::tuple<StateArray, StepData> k3Dat = calculate(time + newStep/2, state + k2*newStep/2);
+        StateArray k3 = std::get<0>(k3Dat);
+
+        std::tuple<StateArray, StepData> k4Dat = calculate(time + newStep, state + k3*newStep);
+        StateArray k4 = std::get<0>(k4Dat);
+
+        StateArray newState = state + newStep/6*(k1 + 2*k2 + 2*k3 + k4);
+
+        StepData stepDatAvg = {}; // weighted total of all step data
+        StepData k1St = std::get<1>(k1Dat);
+        StepData k2St = std::get<1>(k2Dat);
+        StepData k3St = std::get<1>(k3Dat);
+        StepData k4St = std::get<1>(k4Dat);
+        for(int i = 0; i < k1St.size(); i++){
+            stepDatAvg.push_back(
+                std::pair<std::string, double>{
+                    k1St[i].first,
+                    (k1St[i].second + 2*k2St[i].second + 2*k3St[i].second + k4St[i].second)/6
+                }
+            );
+        }
+
+        std::tuple<double, StateArray, StepData> res = {time+newStep, newState, stepDatAvg};
+        return res;
     }
 
-    StateArray Sim::calculate( double time, StateArray state ){
+    double Sim::selectTimeStep(const StateArray state, const StateArray lastState, const StateArray k1, const double currStep) const{
+        if((state == lastState).all()) return userStep();
+        StateArray stDiff = (state-lastState)/currStep;
+
+        static const double maxAngleStep = 3 * M_PI / 180; // 3 degrees
+        static const double maxRollStepAng = 2 * 28.32 * M_PI;
+        static const double maxRollRateChange = 2 * M_PI / 180;
+        static const double maxPitchStepChange = 4 * M_PI / 180; // 4 degrees
+        static const double minTimeStep = 0.001;
+
+        Eigen::Array<double, 8, 1> stepCandidates = Eigen::Array<double, 8, 1>::Ones() * std::numeric_limits<double>::max();
+        stepCandidates[0] = std::max(userStep(), minTimeStep); // the current time step, gated to the minimum allowed step
+        //stepCandidates[1] = ; // the maximum allowed time step
+        stepCandidates[2] = std::abs(maxAngleStep/state[dTheta]); // the maximum pitch rate per second (shouldnt this be multiplied by the step size?)
+        // the max roll rate
+        // the max roll rate change
+        stepCandidates[5] = std::abs( maxPitchStepChange / stDiff[dTheta] );
+        if(onRod()){
+            stepCandidates[0] /= 5;
+            stepCandidates[6] = rodLen()/stateArrayPosition(k1).norm()/10;
+        }
+        stepCandidates[7] = 1.5*currStep;
+        assert(!stepCandidates.hasNaN());
+        auto chosenStep = stepCandidates.minCoeff();
+        //fmt::print("chosen step {}\n", chosenStep);
+        return chosenStep;
+    }
+
+     std::tuple<StateArray, StepData> Sim::calculate( double time, StateArray state ){
         StateArray res = defaultDeriv(state);
         // getting position vectors
         const Eigen::Vector3d position{ state[Xp], state[Yp], state[Zp] };
@@ -245,7 +332,10 @@ namespace Sim{
         const Eigen::Vector3d velocity{ state[Xv], state[Yv], state[Zv] };
         const Eigen::Vector3d angVelocity{ state[dPhi], state[dTheta], state[dPsi] };
         // initializing acceleration vectors
+        Eigen::Vector3d forces = Eigen::Vector3d::Zero();
         Eigen::Vector3d acceleration = Eigen::Vector3d::Zero();
+
+        Eigen::Vector3d moments = Eigen::Vector3d::Zero();
         Eigen::Vector3d angAcceleration = Eigen::Vector3d::Zero();
 
         // getting atmospheric properties
@@ -268,60 +358,111 @@ namespace Sim{
         // getting rocket properties
         Eigen::Matrix3d rocketRotationMat = Utils::eulerToRotmat(orientation.x(), orientation.y(), orientation.z());
         Eigen::Vector3d rocketOrientationVec = rocketRotationMat*thisWayUp(); // the rockets current "up" vector in global coords
-        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
         auto m = _rocket->mass(time);
         double angleOfAttack;
         if(relativeSpeed == 0){
             angleOfAttack = 0;
         } else {
-            angleOfAttack = std::acos(relativeVelocity.dot(rocketOrientationVec)/( relativeVelocity.norm()*rocketOrientationVec.norm() ));
+            Eigen::Vector3d normRelVelVec = relativeVelocity.normalized();
+            // floating point errs occur here without clamping
+            double cosAoA = std::clamp( normRelVelVec.dot(rocketOrientationVec)/( normRelVelVec.norm()*rocketOrientationVec.norm() ), -1.0, 1.0);
+            angleOfAttack = std::acos(cosAoA);
         }
+        if(std::isnan(angleOfAttack)){
+            fmt::print("AoA IS NAN relvel = [{}], ori = [{}], prod= {}\n", toString(relativeVelocity.normalized().transpose()), toString(rocketOrientationVec.transpose()),
+            relativeVelocity.dot(rocketOrientationVec)/( relativeVelocity.norm()*rocketOrientationVec.norm()));
+            assert(!std::isnan(angleOfAttack));
+        }
+
         
-        auto inertia = _rocket->inertia(time);
+        auto inertia = (_rotmat*_rocket->inertia(time)*_rotmat.transpose());
 
         auto cn = _rocket->c_n(mach, angleOfAttack);
+        if(std::isnan(cn)){
+            fmt::print("CN IS NAN M={:.4f} AoA={:.4f}\n", mach, angleOfAttack);
+            assert(!std::isnan(cn));
+        }
+        //fmt::print("time {:.4f}, cn: {} aoa: {}\n", time, cn, angleOfAttack/M_PI*180);
 
         // getting direction of normal force
         Eigen::Vector3d normForceDirection;
         if(angleOfAttack <= std::numeric_limits<double>::epsilon() ){
             normForceDirection = Eigen::Vector3d::Zero();
         } else {
-            normForceDirection = -rocketOrientationVec.cross(relativeVelocity).cross(rocketOrientationVec).normalized();
+            Eigen::Vector3d vdiff = relativeVelocity-rocketOrientationVec;
+            normForceDirection = (rocketOrientationVec.cross(rocketOrientationVec.cross(vdiff))).normalized();
         }
 
         Eigen::Vector3d normForce = cn*_aRef*dynamicPressure*normForceDirection;
+        forces += normForce;
+        assert(!normForce.hasNaN());
 
         //fmt::print("t={:<8.4f} aoa {}\n", time, angleOfAttack);
         //fmt::print("t={:<8.4f} cn {}\n", time, cn);
-        //fmt::print("t={:<8.4f} norm force dir [{}]\n", time, toString(normForceDirection.transpose()));
+        
         //fmt::print("t={:<8.4f} norm force     [{}]\n", time, toString(normForce.transpose()));
-        Eigen::Vector3d normAcc = normForce/m;
 
-        Eigen::Vector3d rockCP = _rocket->cp(mach, angleOfAttack);
-        fmt::print("t={:<8.4f} cp [{}]\n", time, toString(rockCP.transpose()));
+        Eigen::Vector3d rockCP = _rotmat*_rocket->cp(mach, angleOfAttack);
+        Eigen::Vector3d rockCM = _rotmat*_rocket->cm(time);
+        Eigen::Vector3d globCP = rocketRotationMat*rockCP;
+        Eigen::Vector3d globCM = rocketRotationMat*rockCM;
 
-        // adding norm force
-        //acceleration += normForce/m;
+        Eigen::Vector3d normMoments = (rocketRotationMat.transpose()*normForce).cross(rockCM - rockCP);
+        moments += normMoments;
+
         //fmt::print("t={:<8.4f} mass={}\n", time, m);
         //fmt::print("t={:<8.4f} {}\n", time, toString(normAcc.transpose()));
 
         // adding thrust
-        acceleration += th/m;
+        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
+        forces += th;
         //fmt::print("t={:<8.4f} {}\n", time, toString(acceleration.transpose()));
+
+        // adding forces to acceleration
+        acceleration += forces/m;
         // adding gravity
         auto gravVec = centerOfEarthVector(position)*g;
         acceleration += gravVec;
+
+        // adding random pitch and yaw to flight
+        double randPitchCoeff = (((double) std::rand())/RAND_MAX - 0.5)*2*0.0005;
+        double randYawCoeff = (((double) std::rand())/RAND_MAX - 0.5)*2*0.0005;
+
+        moments += Eigen::Vector3d{ randYawCoeff, randPitchCoeff, 0 }*_aRef*_lRef*dynamicPressure;
+
+        // adding moments to angular acceleration
+        angAcceleration += inertia.inverse()*moments;
+        /*
+        if(time > 1 && time < 1.5){
+            fmt::print("t={:<8.4f} diffs          [{}]\n", time, toString((rockCP - rockCM).transpose()));
+            fmt::print("t={:<8.4f} moments        [{}]\n", time, toString(moments.transpose()));
+            fmt::print("t={:<8.4f} angacc         [{}]\n", time, toString(angAcceleration.transpose()));
+            fmt::print("t={:<8.4f} relvel         [{}]\n", time, toString(relativeVelocity.transpose()));
+            fmt::print("t={:<8.4f} orientation    [{}]\n", time, toString(rocketOrientationVec.transpose()));
+            fmt::print("t={:<8.4f} norm force dir [{}]\n", time, toString(normForceDirection.transpose()));
+        }
+        */
+
+        assert(!acceleration.hasNaN());
+        assert(!angAcceleration.hasNaN());
+
+        StepData data = {
+            std::pair<std::string, double>{"Mass", m},
+            std::pair<std::string, double>{"CN", cn},
+            std::pair<std::string, double>{"AoA", angleOfAttack/M_PI*180},
+            std::pair<std::string, double>{"M", mach}
+        };
 
         // adding final acceleration vector
         res[Xv] = acceleration.x();
         res[Yv] = acceleration.y();
         res[Zv] = acceleration.z();
         // adding final angular acceleration vector
-        res[Phi] = angAcceleration.x();
-        res[Theta] = angAcceleration.y();
-        res[Psi] = angAcceleration.z();
-
-        return res;
+        res[dPhi] = angAcceleration.x();
+        res[dTheta] = angAcceleration.y();
+        res[dPsi] = angAcceleration.z();
+        
+        return {res, data};
     }
 
     double Sim::altitude(Eigen::Vector3d position) const {

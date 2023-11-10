@@ -228,6 +228,7 @@ namespace Rocket{
         const auto pos = position();
         const auto Al = area(length()+pos.x());
         const auto A0 = area(pos.x());
+        if(Al == A0) return 0;
         double c_n_a = 2/referenceArea()*(Al-A0);
         if(alpha != 0) c_n_a *= std::sin(alpha)/alpha; // avoiding div by 0 err
         return c_n_a;
@@ -266,6 +267,7 @@ namespace Rocket{
         const auto thisCna = c_n_aWithoutBodyLift(mach, alpha, gamma);
         const auto cpFromBl = bodyLiftCp();
         const auto bl = bodyLift(alpha);
+        if(thisCna+bl == 0) return Eigen::Vector3d::Zero(); // prevent div by 0 err
         auto weightedAvg = (cpFromCna*thisCna + cpFromBl*bl)/(thisCna+bl);
         return weightedAvg;
     }

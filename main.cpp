@@ -179,7 +179,7 @@ void testMotor(){
 }
 
 void testSim(){
-    auto sim = Sim::Sim::create(nullptr);
+    auto sim = Sim::Sim::create(nullptr, 0.01);
     auto initialConditions = Sim::defaultStateVector();
     initialConditions[Sim::StateMappings::Zv] = 10;
     auto lastStep = sim->solve(initialConditions);
@@ -189,7 +189,7 @@ void testSim(){
 void simRocket(Rocket::AeroComponent* rocket){
     rocket->setAllCaching(true);
     auto btime = rocket->calculateBurnoutTime();
-    auto sim = Sim::Sim::create(rocket);
+    auto sim = Sim::Sim::create(rocket, 0.01);
     auto initialConditions = Sim::defaultStateVector();
     // setting initial conds
     auto initialAzimuth = M_PI/6;
