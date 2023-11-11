@@ -388,8 +388,6 @@ namespace Sim{
         const double Iyy = inertia(1,1);
         const double Izz = inertia(2,2);
 
-        //fmt::println("INERTIA\n{}\n", toString(inertia));
-
         auto cn = _rocket->c_n(mach, angleOfAttack);
         if(std::isnan(cn)){
             fmt::print("TIME {}, STATE AT FAILURE [{}]\n", time, toString(state.transpose()));

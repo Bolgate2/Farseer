@@ -24,7 +24,7 @@ namespace Rocket{
             // using caching for this
             virtual void clearCaches() override;
             Eigen::Array<double, 6, 1> _cpInterpPolyCoeffs = Eigen::Array<double, 6, 1>::Ones()*NAN_D;
-            virtual Eigen::Array<double, 6, 1> cpInterpPolyCoeffs() const;
+            virtual double calculateCpInterpPoly(double mach, double ar) const;
 
             std::weak_ptr<FinSet> _finSet;
             // aero component functions
@@ -34,9 +34,9 @@ namespace Rocket{
             virtual double subsonicCNa( double mach, double alpha ) const;
             virtual double supersonicCNa( double mach, double alpha, double gamma = 1.4 ) const;
             virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const override;
-            virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;
 
         public:
+            virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;
             // constructor
             Fin(std::unique_ptr<Shapes::FinComponentShape> shape, std::unique_ptr<Material> material, std::unique_ptr<Finish> finish, std::string name);
             virtual FinSet* finSet() const;

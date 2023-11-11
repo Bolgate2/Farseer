@@ -203,8 +203,27 @@ void simRocket(Rocket::AeroComponent* rocket){
     fmt::print("last step [{}]\n", toString(lastStep.transpose()));
 }
 
+void testFin(){
+    // FIN PARAMS
+    auto finRootChord = 0.1;
+    auto finTipChord = 0.03;
+    auto finSweepLength = 0.06;
+    auto finHeight = 0.06;
+    auto finThickness = 0.003;
+    auto finMat = std::make_unique<Rocket::Material>("Plywood", 630);
+    auto finFinish = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
+    auto finShape = std::make_unique<Shapes::TrapezoidalFinShape>(finRootChord, finTipChord, finHeight, finSweepLength, finThickness);
+    auto fin = std::make_unique<Rocket::Fin>(std::move(finShape), std::move(finMat), std::move(finFinish), "Trapezoidal fin");
+
+    for(double i = 0; i < 3; i+=0.05){
+        std::cout << "m " << i << " cpx " << fin->calculateCp(i,0).x() << std::endl;
+    }
+
+}
+
 int main(int argc, char** argv){
-    auto rocket = createTestRocket();
-    simRocket(rocket.get());
+    testFin();
+    //auto rocket = createTestRocket();
+    //simRocket(rocket.get());
     return 0;
 }

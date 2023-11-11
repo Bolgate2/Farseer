@@ -1,6 +1,7 @@
 #include "fin.hpp"
 #include <cmath>
 #include "maths.hpp"
+#include <fmt/core.h>
 
 namespace Rocket{
     std::string Fin::defaultName = "Fin";
@@ -27,21 +28,22 @@ namespace Rocket{
         _finSet = std::dynamic_pointer_cast<FinSet>(finSet->shared_from_this());
     }
 
-    Eigen::Array<double, 6, 1> Fin::cpInterpPolyCoeffs() const {
-        // adapted this to calculate these
-        // https://github.com/openrocket/openrocket/blob/unstable/core/src/net/sf/openrocket/aerodynamics/barrowman/FinSetCalc.java#L581
-        // index is the power of x it's the coeff for
-        if(!_cpInterpPolyCoeffs.hasNaN()) return _cpInterpPolyCoeffs;
-        Eigen::Array<double, 6, 1> coeffs;
-        const auto ar = 2*yMax()/planformArea();
-        const double denom = std::pow(1 - 3.4641 * ar, 2); // common denominator
-		coeffs[5] = (-1.58025 * (-0.728769 + ar) * (-0.192105 + ar)) / denom;
-		coeffs[4] = (12.8395 * (-0.725688 + ar) * (-0.19292 + ar)) / denom;
-		coeffs[3] = (-39.5062 * (-0.72074 + ar) * (-0.194245 + ar)) / denom;
-		coeffs[2] = (55.3086 * (-0.711482 + ar) * (-0.196772 + ar)) / denom;
-		coeffs[1] = (-31.6049 * (-0.705375 + ar) * (-0.198476 + ar)) / denom;
-		coeffs[0] = (9.16049 * (-0.588838 + ar) * (-0.20624 + ar)) / denom;
-        return coeffs;
+    double Fin::calculateCpInterpPoly(const double mach, const double ar) const {
+        static const Eigen::Matrix<double, 6, 3 > numerCoeffs {
+            {9.7900515337,             -7.7838569163,              1.1889239133},
+            {-33.7769972053,              30.529368226,             -4.7287796087},
+            {59.1097451092,            -53.6866891547,              8.2753643153},
+            {-42.2212465066,             38.6317948476,             -5.9109745109},
+            {13.7219051146,            -12.6050612795,              1.9210667161},
+            {-1.6888498603,              1.5552173847,             -0.2364389804}
+        };
+        static const Eigen::Vector3d denomCoeffs {12.8247036264, -7.404346091, 1.0687253022};
+        static const Eigen::Array3d pow2arr {2,1,0};
+        static const Eigen::Array<double, 1,6> pow5arr {0, 1, 2, 3, 4, 5};
+        Eigen::Vector3d arVec = (Eigen::Array3d::Ones()*ar).pow(pow2arr);
+        Eigen::Vector<double,6> machVec = (Eigen::Array<double,1,6>::Ones()*mach).pow(pow5arr);
+        double cpVal = (numerCoeffs*arVec).dot(machVec)/denomCoeffs.dot(arVec);
+        return cpVal;
     }
 
 
@@ -72,18 +74,17 @@ namespace Rocket{
 
     Eigen::Vector3d Fin::calculateCp( double mach, double alpha, double gamma) const {
         double CPx;
-        const double AR =  2*yMax()/planformArea();
+        const double AR =  2*std::pow(yMax(),2)/planformArea();
         const double b = Utils::beta(mach);
         if(mach <= 0.5){
-            CPx = xMacLeadingEdge() + mac()/4;
+            CPx = 0.25;
         } else if(mach < 2){
-            const auto coeffs = cpInterpPolyCoeffs();
-            const Eigen::Array<double, 6, 1> vals = (Eigen::Array<double, 6, 1>::Ones()*mach).pow(Eigen::Array<double, 6, 1>{0,1,2,3,4,5});
-            CPx = (coeffs*vals).sum();
+            CPx = calculateCpInterpPoly(mach, AR);
         } else {
-            CPx = (AR*b - 0.67)/(2*AR*b-1)*mac();
+            CPx = (AR*b - 0.67)/(2*AR*b-1);
         }
-
+        CPx *= mac();
+        CPx += xMacLeadingEdge();
         Eigen::Vector3d vec { CPx, yMac(), 0 };
         return vec;
     }
@@ -124,7 +125,6 @@ namespace Rocket{
     void Fin::setShape( std::unique_ptr<Shapes::FinComponentShape> shape ){
         _shape = std::move(shape);
         clearCaches();
-        _cpInterpPolyCoeffs = cpInterpPolyCoeffs();
     }
 
     Eigen::Vector3d Fin::calculateCm(double time) const {

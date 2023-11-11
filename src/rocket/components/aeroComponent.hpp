@@ -73,9 +73,22 @@ namespace Rocket{
             // calculate without omega and v for simplicity, then apply it at the end
             virtual double calculateC_m_damp(double x) const = 0; // VIRTUAL
             virtual double calculateC_m_dampWithComponents(double x) const;
-
             mutable std::map<double, double> _c_m_dampCache = {}; //only caching based on x
             virtual void clearC_m_dampCache();
+
+            virtual double Cda2Cd(const double Cda, const double alpha) const {
+                double cd;
+                double adjFac;
+                double absAlpha = std::abs(alpha);
+                if(absAlpha <= 17*M_PI/180){
+                    adjFac = -22.9706*std::pow(absAlpha,3) + 10.2233*std::pow(absAlpha,2) + 1;
+                } else {
+                    adjFac = -1.48*std::pow(absAlpha,4) + 6.7849*std::pow(absAlpha,3) - 10.0627*std::pow(absAlpha,2) + 4.334*absAlpha + 0.7342;
+                }
+                cd = adjFac*Cda;
+                return cd;
+            }
+
             // constructor
             AeroComponent(
                 std::unique_ptr<Shapes::AeroComponentShape> shape, std::unique_ptr<Material> material,
@@ -130,6 +143,8 @@ namespace Rocket{
             // getter and setter for material
             virtual Material* material() const;
             virtual void setMaterial( std::unique_ptr<Material> material ); // CLEAR CACHES
+
+            //virtual double Cd(double alpha);
     };
 
 }
