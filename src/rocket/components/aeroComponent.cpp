@@ -334,6 +334,6 @@ namespace Rocket{
 
     double AeroComponent::surfaceDistanceTravelled(double x) const {
         if(parent() == nullptr) return calculateSurfaceDistanceTravelled(x);
-        return parent()->calculateSurfaceDistanceTravelled(x);
+        return parent()->surfaceDistanceTravelled(x);
     }
 }

@@ -146,7 +146,25 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     
     rocket->printComponentTree();
     //fmt::print("motor inertia\n{}\n", toString(motor->inertia(0)));
-    
+
+    for(double i = 0; i < 1.1; i+=0.01){
+        fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "rokkit ", i, rocket->surfaceDistanceTravelled(i));
+    }
+    std::cout << std::endl;
+
+    for(double i = 0; i < 1.1; i+=0.01){
+        fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "nose ", i, nose->surfaceDistanceTravelled(i));
+    }
+    std::cout << std::endl;
+
+    for(double i = 0; i < 1.1; i+=0.01){
+        fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "toob ", i, toob->surfaceDistanceTravelled(i));
+    }
+    std::cout << std::endl;
+
+    for(double i = 0; i < 1.1; i+=0.01){
+        fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "finz ", i, finSet->surfaceDistanceTravelled(i));
+    }
 
     return rocket;
 }
@@ -222,8 +240,8 @@ void testFin(){
 }
 
 int main(int argc, char** argv){
-    testFin();
-    //auto rocket = createTestRocket();
+    //testFin();
+    auto rocket = createTestRocket();
     //simRocket(rocket.get());
     return 0;
 }

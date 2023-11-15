@@ -143,10 +143,9 @@ namespace Shapes{
         if(x <= 0) return 0;
         if(x >= length()) return maxSurfaceDistanceTravelled();
         const int numElems = std::min( (int)std::ceil(x/length()*numDivs), 2 );
-        const double stepLen = x/numElems;
 
         Eigen::ArrayXd xVals;
-        xVals.setEqualSpaced(numElems, 0, stepLen);
+        xVals.setLinSpaced(numElems, 0, x);
 
         Eigen::ArrayXd y = radius(xVals);
         Eigen::ArrayXd r1 = y(Eigen::seqN( 1, numElems-1));
