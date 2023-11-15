@@ -147,6 +147,7 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     rocket->printComponentTree();
     //fmt::print("motor inertia\n{}\n", toString(motor->inertia(0)));
 
+    /*
     for(double i = 0; i < 1.1; i+=0.01){
         fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "rokkit ", i, rocket->surfaceDistanceTravelled(i));
     }
@@ -165,6 +166,7 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     for(double i = 0; i < 1.1; i+=0.01){
         fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "finz ", i, finSet->surfaceDistanceTravelled(i));
     }
+    */
 
     return rocket;
 }
