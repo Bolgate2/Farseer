@@ -111,4 +111,31 @@ namespace Rocket{
         return Icm;
     }
     
+    double Rocket::calculateLowestPoint() const {
+        double lowestPoint = 0;
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            double compLow = (*comp)->calculateLowestPoint();
+            if( compLow > lowestPoint) lowestPoint = compLow;
+        }
+        return lowestPoint;
+    }
+
+    double Rocket::calculateSurfaceDistanceTravelled(double x) const {
+        double distTravelled = 0;
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            distTravelled += (*comp)->calculateSurfaceDistanceTravelled(x);
+        }
+        return distTravelled;
+    }
+
+    double Rocket::maxSurfaceDistanceTravelled() const {
+        double distTravelled = 0;
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            distTravelled += (*comp)->maxSurfaceDistanceTravelled();
+        }
+        return distTravelled;
+    }
 }

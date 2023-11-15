@@ -36,6 +36,8 @@ namespace Shapes{
             virtual double averageRadius() = 0; // required for damping
             virtual std::array<double,2> bisectedAverageRadius(double x) = 0;
             
+            virtual double maxSurfaceDistanceTravelled() = 0;
+            virtual double calculateSurfaceDistanceTravelled(double x) = 0;
     };
 }
 

@@ -11,6 +11,7 @@
 namespace Rocket{
 
     using Utils::OverrideFlags;
+    class Motor; // predeclaring motor for motors function
 
     // this class template defines the bare minimum of what a component should do
     // the base class of allowed child and parent types can be defined here
@@ -92,19 +93,6 @@ namespace Rocket{
             std::string name;
             virtual double calculateBurnoutTime();
 
-            /*
-            factory
-            "best" example in cpp docs
-            https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
-            setting the parent is handled here
-            this is really just here as an example. only need to implement this for non abstract classes
-
-            [[nodiscard]] static std::shared_ptr<Component> create(
-                Component* parent = nullptr, std::string name = Component::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero()
-                );
-            
-            */
-
             // id
             virtual std::string id() const;
 
@@ -121,6 +109,8 @@ namespace Rocket{
             virtual std::shared_ptr<Component> findComponent(std::string id) const = 0; // VIRTUAL
             virtual void addComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
             virtual void removeComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
+
+            virtual std::vector< std::shared_ptr<const Motor> > motors() const;
 
             virtual void removeComponent( std::string id );
 

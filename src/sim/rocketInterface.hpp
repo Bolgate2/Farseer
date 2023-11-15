@@ -113,6 +113,17 @@ namespace Sim{
              * @return double 
              */
             virtual double c_m_damp(double x, double omega, double v) const = 0;
+
+            /**
+             * @brief The drag coefficient of the rocket
+             * 
+             * @param t Time since launch in seconds
+             * @param alpha rocket angle of attack
+             * @param mach mach number
+             * @param reL reynolds number divided by length
+             * @return double 
+             */
+            virtual double Cd(double t, double alpha, double mach, double reL) const = 0;
     };
 }
 

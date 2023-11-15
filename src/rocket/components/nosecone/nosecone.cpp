@@ -100,4 +100,11 @@ namespace Rocket{
         zeroInertia *= material()->density; // multiplying by density so it's the actual inertia
         return zeroInertia;
     }
+
+    double Nosecone::maxSurfaceDistanceTravelled() const {
+        return shape()->maxSurfaceDistanceTravelled();
+    }
+    double Nosecone::calculateSurfaceDistanceTravelled(double x) const {
+        return shape()->calculateSurfaceDistanceTravelled(x);
+    }
 }

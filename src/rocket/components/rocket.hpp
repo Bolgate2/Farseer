@@ -34,7 +34,7 @@ namespace Rocket{
             LaunchConditions* launchConditions() const { return _launchConditions.get(); }
             // tree stuff
             // parent
-            virtual Component* parent() const override { return nullptr; }
+            virtual AeroComponent* parent() const override { return nullptr; }
             virtual void setParent( Component* parent ) override {/*do nothing*/};
             // returns the root of this component tree
             virtual std::shared_ptr<Component> root() override { return shared_from_this(); }
@@ -62,6 +62,11 @@ namespace Rocket{
             virtual double referenceArea() const override;
             virtual double wettedArea() const override; // surface area of the shape exposed to the air
             virtual double referenceLength() const override;
+
+            virtual double calculateLowestPoint() const;
+
+            virtual double calculateSurfaceDistanceTravelled(double x) const;
+            virtual double maxSurfaceDistanceTravelled() const;
     };
 }
 

@@ -54,6 +54,10 @@ namespace Rocket{
             virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::BodyComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::BodyTubeComponentShape> shape );
+
+            // surf distance
+            virtual double maxSurfaceDistanceTravelled() const override;
+            virtual double calculateSurfaceDistanceTravelled(double x) const override;
     };
 }
 

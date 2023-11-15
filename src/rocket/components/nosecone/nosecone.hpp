@@ -44,7 +44,8 @@ namespace Rocket{
             virtual double shapeParam() const;
             virtual void setShapeParam(double val); // CLEAR CACHES
 
-
+            virtual double maxSurfaceDistanceTravelled() const override;
+            virtual double calculateSurfaceDistanceTravelled(double x) const override;
     };
 }
 

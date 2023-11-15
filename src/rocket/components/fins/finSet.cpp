@@ -174,4 +174,18 @@ namespace Rocket{
     double FinSet::wettedArea() const {
         return fin()->wettedArea()*numFins();
     }
+
+    double FinSet::calculateLowestPoint() const {
+        return position().x() + fin()->calculateLowestPoint();
+    }
+
+    double FinSet::maxSurfaceDistanceTravelled() const {
+        return fin()->maxSurfaceDistanceTravelled();
+    }
+    
+    double FinSet::calculateSurfaceDistanceTravelled(double x) const {
+        if( x < position().x()) return 0;
+        if( x >= calculateLowestPoint() ) return maxSurfaceDistanceTravelled();
+        return x - position().x();
+    }
 }

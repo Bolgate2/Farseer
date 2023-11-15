@@ -59,6 +59,11 @@ namespace Shapes{
         return _averageRadius;
     }
 
+    double NumericalNoseconeShape::maxSurfaceDistanceTravelled() {
+        if(std::isnan(_maxSurfaceDistanceTravelled)) calculateProperties();
+        return _maxSurfaceDistanceTravelled;
+    }
+
     void NumericalNoseconeShape::clearProperties(){
         _unfilledInertia = NAN_M3D;
         _filledInertia = NAN_M3D;
@@ -134,6 +139,27 @@ namespace Shapes{
         return { avgRadFromTip, avgRadToBase };
     }
 
+    double NumericalNoseconeShape::calculateSurfaceDistanceTravelled(double x){
+        if(x <= 0) return 0;
+        if(x >= length()) return maxSurfaceDistanceTravelled();
+        const int numElems = std::min( (int)std::ceil(x/length()*numDivs), 2 );
+        const double stepLen = x/numElems;
+
+        Eigen::ArrayXd xVals;
+        xVals.setEqualSpaced(numElems, 0, stepLen);
+
+        Eigen::ArrayXd y = radius(xVals);
+        Eigen::ArrayXd r1 = y(Eigen::seqN( 1, numElems-1));
+        Eigen::ArrayXd r2 = y(Eigen::seqN( 0, numElems-1));
+        Eigen::ArrayXd stepArr = xVals(Eigen::seqN( 1, numElems-1)) - xVals(Eigen::seqN( 0, numElems-1));
+
+        Eigen::ArrayXd hyp = ( (r1-r2).pow(2) + stepArr.pow(2) ).sqrt();
+
+        double dist = hyp.sum();
+
+        return dist;
+    }
+
     void NumericalNoseconeShape::calculateProperties(){
         clearProperties();
         const double step = length()/(numDivs-1);
@@ -141,8 +167,6 @@ namespace Shapes{
         x.setEqualSpaced(0,step);
 
         Eigen::Array<double, 1, numDivs> y = radius(x);
-
-        Eigen::Array<double, 2, numDivs> radiiArray;
 
         _averageRadius = y.mean();
 
@@ -152,6 +176,8 @@ namespace Shapes{
         Eigen::ArrayXd stepArr = x(Eigen::seqN( Eigen::fix<1>, Eigen::fix<numDivs-1>)) - x(Eigen::seqN( Eigen::fix<0>, Eigen::fix<numDivs-1>));
         Eigen::ArrayXd hyp = ( (r1-r2).pow(2) + stepArr.pow(2) ).sqrt();
         Eigen::ArrayXd height = thickness()*hyp/step;
+
+        _maxSurfaceDistanceTravelled = hyp.sum();
 
         // trapz(y,x) == ((r1+r2)/2*stepArr).sum()
         _wettedArea = ((hyp*(r1+r2))*M_PI).sum();

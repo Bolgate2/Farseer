@@ -314,4 +314,10 @@ namespace Rocket{
         }
     }
     
+    double BodyComponent::calculateLowestPoint() const {
+        Eigen::Vector3d pos = position();
+        return pos.x() + length();
+    }
+
+    
 }

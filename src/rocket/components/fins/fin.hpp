@@ -68,7 +68,9 @@ namespace Rocket{
             virtual double midChordSweep() const { return shape()->midChordSweep(); }
             virtual double yMax() const { return shape()->yMax(); } // distance to the outermost point of the fin from the root. used for aspect ratio
 
-            
+            virtual double calculateLowestPoint() const override;
+            virtual double maxSurfaceDistanceTravelled() const override;
+            virtual double calculateSurfaceDistanceTravelled(double x) const override;
     };
 }
 

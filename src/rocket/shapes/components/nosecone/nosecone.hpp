@@ -31,6 +31,9 @@ namespace Shapes{
 
             virtual double averageRadius() override { return shape()->averageRadius(); }
             virtual std::array<double,2> bisectedAverageRadius(double x) override { return shape()->bisectedAverageRadius(x); }
+
+            virtual double maxSurfaceDistanceTravelled() { return shape()->maxSurfaceDistanceTravelled(); }
+            virtual double calculateSurfaceDistanceTravelled(double x) { return shape()->calculateSurfaceDistanceTravelled(x); }
     };
 }
 

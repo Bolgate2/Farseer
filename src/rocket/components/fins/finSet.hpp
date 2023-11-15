@@ -58,6 +58,10 @@ namespace Rocket{
             virtual int numFins() const;
             virtual void setNumFins( int num );
 
+            virtual double calculateLowestPoint() const override;
+            
+            virtual double maxSurfaceDistanceTravelled() const override;
+            virtual double calculateSurfaceDistanceTravelled(double x) const override;
     };
 }
 

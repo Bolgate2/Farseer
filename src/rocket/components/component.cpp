@@ -1,4 +1,6 @@
-# include "component.hpp"
+#include "component.hpp"
+#include "motor/motor.hpp"
+
 #include "maths.hpp"
 #include <iostream>
 #include <Eigen/Dense>
@@ -284,6 +286,16 @@ namespace Rocket{
     void Component::overrideCm(OverrideFlags flags, Eigen::Vector3d value){
         setCm(value);
         overrideCm(flags);
+    }
+
+    std::vector< std::shared_ptr<const Motor> > Component::motors() const {
+        std::vector< std::shared_ptr<const Motor> > motors = {};
+        auto comps = components();
+        for( auto comp = comps.begin(); comp != comps.end(); comp++ ){
+            auto compMotors = (*comp)->motors();
+            motors.insert( motors.end(), compMotors.begin(), compMotors.end());
+        }
+        return motors;
     }
 
     // thrust

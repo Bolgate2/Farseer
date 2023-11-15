@@ -89,6 +89,7 @@ namespace Rocket{
             virtual std::array<double,2> bisectedAverageRadius(double x) const; //returns [from top, to bottom]
             virtual double averageRadius() const; // required for damping
 
+            virtual double calculateLowestPoint() const override;
     };
 
 }

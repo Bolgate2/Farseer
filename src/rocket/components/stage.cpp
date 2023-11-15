@@ -128,4 +128,32 @@ namespace Rocket{
         }
         return area;
     }
+
+    double Stage::calculateLowestPoint() const {
+        double lowestPoint = 0;
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            double compLow = (*comp)->calculateLowestPoint();
+            if( compLow > lowestPoint) lowestPoint = compLow;
+        }
+        return lowestPoint;
+    }
+
+    double Stage::calculateSurfaceDistanceTravelled(double x) const {
+        double distTravelled = 0;
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            distTravelled += (*comp)->calculateSurfaceDistanceTravelled(x);
+        }
+        return distTravelled;
+    }
+
+    double Stage::maxSurfaceDistanceTravelled() const {
+        double distTravelled = 0;
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            distTravelled += (*comp)->maxSurfaceDistanceTravelled();
+        }
+        return distTravelled;
+    }
 }

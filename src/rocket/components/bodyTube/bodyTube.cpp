@@ -99,5 +99,14 @@ namespace Rocket{
     Shapes::BodyTubeComponentShape* BodyTube::shape() const {
         return _shape.get();
     }
+
+    double BodyTube::maxSurfaceDistanceTravelled() const {
+        return length();
+    }
     
+    double BodyTube::calculateSurfaceDistanceTravelled(double x) const {
+        if( x < position().x()) return 0;
+        if( x >= calculateLowestPoint() ) return maxSurfaceDistanceTravelled();
+        return x - position().x();
+    }
 }

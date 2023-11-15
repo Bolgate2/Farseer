@@ -24,6 +24,12 @@ namespace Rocket{
         Component::clearCaches();
     }
 
+    AeroComponent* AeroComponent::parent() const {
+        if(_parent.expired()) return NULL;
+        if(_parent.lock().get() == NULL) return NULL;
+        return _parent.lock().get();
+    }
+
     void AeroComponent::clearC_n_aCache(){
         // cache is like _c_n_aCache[mach][alpha][gamma] = value;
         for(auto alphaCache = _c_n_aCache.begin(); alphaCache != _c_n_aCache.end(); ++alphaCache){
@@ -306,5 +312,28 @@ namespace Rocket{
         auto thisCm = shape()->cm(); // cm relative to position
         Eigen::Vector3d bodyCm = position() + thisCm;
         return bodyCm;
+    }
+
+    double AeroComponent::Cda2Cd(const double Cda, const double alpha) const {
+        double cd;
+        double adjFac;
+        double absAlpha = std::abs(alpha);
+        if(absAlpha <= 17*M_PI/180){
+            adjFac = -22.9706*std::pow(absAlpha,3) + 10.2233*std::pow(absAlpha,2) + 1;
+        } else {
+            adjFac = -1.48*std::pow(absAlpha,4) + 6.7849*std::pow(absAlpha,3) - 10.0627*std::pow(absAlpha,2) + 4.334*absAlpha + 0.7342;
+        }
+        cd = adjFac*Cda;
+        return cd;
+    }
+
+    double AeroComponent::lowestPoint() const {
+        if(parent() == nullptr) return calculateLowestPoint();
+        return parent()->lowestPoint();
+    }
+
+    double AeroComponent::surfaceDistanceTravelled(double x) const {
+        if(parent() == nullptr) return calculateSurfaceDistanceTravelled(x);
+        return parent()->calculateSurfaceDistanceTravelled(x);
     }
 }

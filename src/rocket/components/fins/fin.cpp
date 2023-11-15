@@ -147,4 +147,18 @@ namespace Rocket{
     double Fin::referenceLength() const {
         return finSet()->referenceLength();
     } // using reference area of the parent
+
+    double Fin::calculateLowestPoint() const {
+        return chord(0);
+    }
+
+    double Fin::maxSurfaceDistanceTravelled() const {
+        return chord(0);
+    }
+    
+    double Fin::calculateSurfaceDistanceTravelled(double x) const {
+        if( x < position().x()) return 0;
+        if( x >= calculateLowestPoint() ) return maxSurfaceDistanceTravelled();
+        return x;
+    }
 }

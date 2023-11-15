@@ -31,6 +31,7 @@ namespace Rocket{
         protected:
 
             virtual double calculateBurnoutTime() override;
+            virtual std::vector< std::shared_ptr<const Motor> > motors() const override;
 
             virtual double calculateMass(double time) const override;
             virtual Eigen::Vector3d calculateCm(double time) const override;

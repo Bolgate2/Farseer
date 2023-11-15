@@ -212,6 +212,13 @@ namespace Rocket{
         return originInertia;
     }
 
+    std::vector< std::shared_ptr<const Motor> > Motor::motors() const {
+        auto thisPtr = shared_from_this();
+        auto thisPtrCasted = std::static_pointer_cast<const Motor>(thisPtr);
+        std::vector< std::shared_ptr<const Motor> > motors = { thisPtrCasted };
+        return motors;
+    }
+
     // getters, no setters
     Shapes::Cylinder* Motor::shape() const {
         return _shape.get();

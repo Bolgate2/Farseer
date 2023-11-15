@@ -41,6 +41,8 @@ namespace Shapes{
             Eigen::Vector3d _planformCenter = NAN_V3D;
 
             double _averageRadius = NAN_D;
+
+            double _maxSurfaceDistanceTravelled = NAN_D;
             
         public:
             NumericalNoseconeShape(double radius, double length, double thickness, double shapeParam);
@@ -65,6 +67,9 @@ namespace Shapes{
 
             virtual double averageRadius() override; // required for damping
             virtual std::array<double,2> bisectedAverageRadius(double x) override; // returns [from tip, to base]
+
+            virtual double maxSurfaceDistanceTravelled() override;
+            virtual double calculateSurfaceDistanceTravelled(double x) override;
     };
 }
 

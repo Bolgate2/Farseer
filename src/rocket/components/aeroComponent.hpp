@@ -76,18 +76,15 @@ namespace Rocket{
             mutable std::map<double, double> _c_m_dampCache = {}; //only caching based on x
             virtual void clearC_m_dampCache();
 
-            virtual double Cda2Cd(const double Cda, const double alpha) const {
-                double cd;
-                double adjFac;
-                double absAlpha = std::abs(alpha);
-                if(absAlpha <= 17*M_PI/180){
-                    adjFac = -22.9706*std::pow(absAlpha,3) + 10.2233*std::pow(absAlpha,2) + 1;
-                } else {
-                    adjFac = -1.48*std::pow(absAlpha,4) + 6.7849*std::pow(absAlpha,3) - 10.0627*std::pow(absAlpha,2) + 4.334*absAlpha + 0.7342;
-                }
-                cd = adjFac*Cda;
-                return cd;
-            }
+            virtual double Cda2Cd(const double Cda, const double alpha) const;
+
+            // friction coefficient
+            //virtual double Cf(const double mach, const double reL) const;
+            // Cf with compressibility correction
+            //virtual double Cfc(const double mach, const double reL) const;
+            // frictional drag coefficient
+            //virtual double Cdf(const double mach, const double reL) const;
+
 
             // constructor
             AeroComponent(
@@ -96,6 +93,8 @@ namespace Rocket{
                 );
         public:
             // no create method as this class is abstract
+
+            AeroComponent* parent() const override;
 
             // inherited from rocketInterface
             virtual Eigen::Vector3d thisWayUp() const override { return Eigen::Vector3d{-1,0,0}; }
@@ -112,7 +111,8 @@ namespace Rocket{
             virtual double c_m( double mach, double alpha, double gamma = 1.4) const override;
             virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4) const override;
             virtual double c_m_damp(double time, double omega, double v) const override;
-            //virtual double c_d() = 0;
+
+            virtual double Cd(double t, double alpha, double mach, double reL) const override { return 0; }
 
             // shape stuff
             // these are defined by rocket interface
@@ -143,8 +143,13 @@ namespace Rocket{
             // getter and setter for material
             virtual Material* material() const;
             virtual void setMaterial( std::unique_ptr<Material> material ); // CLEAR CACHES
+            
+            virtual double calculateLowestPoint() const = 0;
+            virtual double lowestPoint() const;
 
-            //virtual double Cd(double alpha);
+            virtual double calculateSurfaceDistanceTravelled(double x) const = 0;
+            virtual double maxSurfaceDistanceTravelled() const = 0;
+            virtual double surfaceDistanceTravelled(double x) const;
     };
 
 }
