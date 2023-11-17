@@ -188,4 +188,8 @@ namespace Rocket{
         if( x >= calculateLowestPoint() ) return maxSurfaceDistanceTravelled();
         return x - position().x();
     }
+
+    double FinSet::calculateCdfA(const double mach, const double reL) const {
+        return fin()->CdfA(mach, reL)*numFins();
+    }
 }

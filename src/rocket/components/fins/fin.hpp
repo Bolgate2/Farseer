@@ -35,6 +35,8 @@ namespace Rocket{
             virtual double supersonicCNa( double mach, double alpha, double gamma = 1.4 ) const;
             virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const override;
 
+            virtual double calculateCdfA(const double mach, const double reL) const override;
+
         public:
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;
             // constructor
@@ -52,10 +54,10 @@ namespace Rocket{
             // tree stuff. fins dont exist in the component tree as they are a part of their fin set
             virtual std::vector< std::shared_ptr<AeroComponent> > aeroComponents() const override { return std::vector< std::shared_ptr<AeroComponent> >{}; };
             virtual std::vector<std::shared_ptr<Component>> components() const override { return std::vector< std::shared_ptr<Component> >{}; };
-            virtual AeroComponent* parent() const override { return nullptr; };
-            virtual void setParent( Component* parent ) override { /*do nothing*/ };
-            virtual void addComponent(Component* component) override { /*do nothing*/ };
-            virtual void removeComponent(Component* component) override { /*do nothing*/ };
+            virtual AeroComponent* parent() const override { return nullptr; }
+            virtual void setParent( Component* parent ) override { /*do nothing*/ }
+            virtual void addComponent(Component* component) override { /*do nothing*/ }
+            virtual void removeComponent(Component* component) override { /*do nothing*/ }
             // positions stuff. the fins position is dictated by its set
             virtual Eigen::Vector3d position() const override;
             virtual void setPosition() { /*do nothing*/ }
@@ -68,9 +70,16 @@ namespace Rocket{
             virtual double midChordSweep() const { return shape()->midChordSweep(); }
             virtual double yMax() const { return shape()->yMax(); } // distance to the outermost point of the fin from the root. used for aspect ratio
 
+            virtual double thickness() const { return shape()->thickness(); }
+            virtual void setThickness(double t) { shape()->setThickness(t); }
+
+            virtual double lowestPoint() const;
             virtual double calculateLowestPoint() const override;
             virtual double maxSurfaceDistanceTravelled() const override;
             virtual double calculateSurfaceDistanceTravelled(double x) const override;
+            virtual double surfaceDistanceTravelled(double x) const override;
+
+
     };
 }
 

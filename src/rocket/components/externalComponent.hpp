@@ -35,7 +35,7 @@ namespace Rocket{
             virtual void setShape( std::unique_ptr<Shapes::AeroComponentShape> shape ) override;
             virtual void setShape( std::unique_ptr<Shapes::ExternalComponentShape> shape );
 
-            // new methods
+            virtual double finenessRatio() const override { return 1; } // realistically shouldn't be used in this context
     };
 }
 

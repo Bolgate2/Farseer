@@ -31,6 +31,9 @@ namespace Rocket{
             virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override;
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;
             virtual double calculateC_m_damp(double x) const override;
+
+            virtual double calculateCdfA(const double mach, const double reL) const override;
+
             // constructor
             FinSet(int numFins, std::string name = FinSet::defaultName, Eigen::Vector3d position = Eigen::Vector3d::Zero() );
         public:
@@ -62,6 +65,8 @@ namespace Rocket{
             
             virtual double maxSurfaceDistanceTravelled() const override;
             virtual double calculateSurfaceDistanceTravelled(double x) const override;
+
+
     };
 }
 

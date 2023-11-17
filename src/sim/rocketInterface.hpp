@@ -114,16 +114,35 @@ namespace Sim{
              */
             virtual double c_m_damp(double x, double omega, double v) const = 0;
 
+            // drag functions
             /**
-             * @brief The drag coefficient of the rocket
+             * @brief Frictional drag coefficient
              * 
-             * @param t Time since launch in seconds
-             * @param alpha rocket angle of attack
-             * @param mach mach number
-             * @param reL reynolds number divided by length
+             * @param mach Mach number
+             * @param reL Reynolds number divided by length
+             * @param alpha Angle of attack in radians
              * @return double 
              */
-            virtual double Cd(double t, double alpha, double mach, double reL) const = 0;
+            virtual double Cdf(const double mach, const double reL, const double alpha) const = 0;
+
+            /**
+             * @brief Pressure drag coefficient
+             * 
+             * @param mach Mach number
+             * @param alpha Angle of attack in radians
+             * @return double 
+             */
+            virtual double Cdp(const double mach, const double alpha) const = 0;
+
+            /**
+             * @brief Base drag coefficient
+             * 
+             * @param mach Mach number
+             * @param time Time since launch in seconds
+             * @param alpha Angle of attack in radians
+             * @return double 
+             */
+            virtual double Cdb(const double mach, const double time, const double alpha) const = 0;
     };
 }
 

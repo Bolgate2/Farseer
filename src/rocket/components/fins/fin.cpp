@@ -148,6 +148,10 @@ namespace Rocket{
         return finSet()->referenceLength();
     } // using reference area of the parent
 
+    double Fin::lowestPoint() const {
+        return finSet()->lowestPoint();
+    }
+
     double Fin::calculateLowestPoint() const {
         return chord(0);
     }
@@ -160,5 +164,15 @@ namespace Rocket{
         if( x < position().x()) return 0;
         if( x >= calculateLowestPoint() ) return maxSurfaceDistanceTravelled();
         return x;
+    }
+
+    double Fin::surfaceDistanceTravelled(double x) const {
+        return finSet()->surfaceDistanceTravelled(x);
+    }
+
+    double Fin::calculateCdfA(const double mach, const double reL) const {
+        double cf = Cf(mach, reL);
+        double cdfa = (1 + 2*thickness()/mac())*wettedArea()*cf/referenceArea();
+        return cdfa;
     }
 }

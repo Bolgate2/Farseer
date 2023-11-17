@@ -336,4 +336,112 @@ namespace Rocket{
         if(parent() == nullptr) return calculateSurfaceDistanceTravelled(x);
         return parent()->surfaceDistanceTravelled(x);
     }
+
+    double AeroComponent::CfOrk(const double mach, const double reL) const {
+        //const double rockL = lowestPoint();
+        const double rockL = surfaceDistanceTravelled(lowestPoint());
+        double Re = reL*rockL;
+
+        double cf;
+        if(Re < 1e4){
+            cf = 1.48*1e-2;
+            cf *= 1.0-0.1*std::pow(mach,2);
+        } else {
+            double turbCf = 1/std::pow(1.5*std::log(Re) - 5.6, 2);
+            double matCf = 0.032*std::pow(finish()->roughness/rockL, 0.2);
+
+            if(mach <= 1){
+                turbCf *= 1.0-0.1*std::pow(mach,2);
+                matCf *= 1.0-0.1*std::pow(mach,2);
+                cf = std::max(turbCf, matCf);
+            } else {
+                turbCf /= std::pow(1+0.15*std::pow(mach,2),0.58);
+                matCf /= 1 + 0.18*std::pow(mach,2);
+                cf = std::max(turbCf, matCf);
+            }
+        }
+        return cf;
+    }
+
+    double AeroComponent::CfNew(const double mach, const double reL) const {
+        if(reL <= 0) return 0;
+
+        double lamCritDist = 1e4/reL;
+        double turbCritDist = 51*std::pow(finish()->roughness/lowestPoint(), -1.039)/reL;
+
+        double topPoint = surfaceDistanceTravelled(position().x());
+        double bottomPoint = surfaceDistanceTravelled(calculateLowestPoint());
+        double maxDist = bottomPoint - maxDist;
+
+        // distances of each region on the component
+        double lamDist = std::clamp(lamCritDist-topPoint, 0.0, maxDist);
+        double turbDist = std::clamp(turbCritDist-(topPoint+lamDist), 0.0, maxDist-lamDist);
+        double matDist = std::max(maxDist-(turbDist+lamDist), 0.0);
+
+        // turbulence start in global coords
+        double turbStart = lamCritDist;
+        double turbEnd = turbStart + turbDist;
+
+        // getting friction coeffs (not adjusted for compressibility)
+        double lamCf = 1.48*1e-2;
+        double turbCf;
+        // numerically integrate for average turbulant Cf
+        if(turbDist == 0){
+            turbCf = 0;
+        } else {
+            // split into 10 regions then take average
+            Eigen::Array<double, 1, 10> turbVals;
+            for(int i = 0; i < 10; i++){
+                double regionStart = turbStart + turbDist/10*i;
+                double regionEnd = turbStart + turbDist/10*(i+1);
+                double thisRe = reL*(regionStart + regionEnd)/2; // average reynolds number in the region
+                turbVals[i] = 1/std::pow(1.5*std::log(thisRe) - 5.6, 2);
+            }
+            turbCf = turbVals.mean();
+        }
+        double matCf = 0.032*std::pow(finish()->roughness/lowestPoint(), 0.2);
+
+        // adjusting for compressibility
+        // no adj for lam
+
+        if(mach <= 1){
+            turbCf *= 1.0-0.1*std::pow(mach,2);
+            matCf *= 1.0-0.1*std::pow(mach,2);
+        } else {
+            turbCf /= std::pow(1+0.15*std::pow(mach,2),0.58);
+            matCf /= 1.0-0.18*std::pow(mach,2);
+        }
+
+        // taking weighted average
+        // this isn't 100% accurate as the average weighting should be done on Awet exposed to each region, not length
+        double avgCf = (lamDist*lamCf + turbDist*turbCf + matDist*matCf)/(lamDist + turbDist + matDist);
+        return avgCf;
+    }
+
+    double AeroComponent::calculateCdfAWithComponents(const double mach, const double reL) const {
+        auto thisCdf = calculateCdfA(mach, reL);
+        auto thisAref = referenceArea();
+        auto comps = aeroComponents();
+        auto CdfSum = thisCdf;
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            auto compCdf = (*comp)->CdfA(mach, reL);
+            auto compAref = (*comp)->referenceArea();
+            auto compCdfAdj = compCdf*compAref/thisAref;
+            CdfSum += compCdfAdj;
+        }
+        return CdfSum;
+    }
+
+    double AeroComponent::CdfA(const double mach, const double reL) const {
+        return calculateCdfAWithComponents(mach, reL);
+    }
+
+    double AeroComponent::finenessRatioRocket() const {
+        if(parent() != nullptr) return parent()->finenessRatioRocket();
+        return finenessRatio();
+    }
+
+    double AeroComponent::finenessRatio() const {
+        return 1;
+    }
 }

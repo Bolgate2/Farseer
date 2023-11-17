@@ -100,6 +100,11 @@ namespace Rocket{
         std::cerr << "Unable to find component \"" << component->name  << "\" to remove from component \"" << name << std::endl;
     }
 
+    void Stage::clearCaches(){
+        AeroComponent::clearCaches();
+        _finenessRatio = NAN_D;
+    }
+
     double Stage::referenceArea() const {
         // biggest is boss
         auto comps = aeroComponents();
@@ -155,5 +160,23 @@ namespace Rocket{
             distTravelled += (*comp)->maxSurfaceDistanceTravelled();
         }
         return distTravelled;
+    }
+
+    double Stage::finenessRatio() const {
+        if(!std::isnan(_finenessRatio)) return _finenessRatio;
+
+        double top = NAN_D;
+        auto bottom = calculateLowestPoint();
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            auto compTop = (*comp)->position().x();
+            if(std::isnan(top)){
+                top = compTop;
+            } else if(compTop < top) {
+                top = compTop;
+            }
+        }
+        if(std::isnan(top)) return 1;
+        return (bottom-top)/referenceLength();
     }
 }

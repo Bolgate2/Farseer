@@ -25,6 +25,7 @@ namespace Rocket{
             virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override { return 0; }
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override { return Eigen::Vector3d::Zero(); }
             virtual double calculateC_m_damp(double x) const override { return 0; }
+            virtual double calculateCdfA(const double mach, const double reL) const { return 0; }
             // constructors
             Rocket(std::string name);
         public:
@@ -67,6 +68,9 @@ namespace Rocket{
 
             virtual double calculateSurfaceDistanceTravelled(double x) const;
             virtual double maxSurfaceDistanceTravelled() const;
+
+            virtual double finenessRatio() const override;
+            virtual double finenessRatioRocket() const override { return finenessRatio(); };
     };
 }
 

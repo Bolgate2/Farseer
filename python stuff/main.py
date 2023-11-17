@@ -2,6 +2,7 @@ from os import PathLike
 from pathlib import Path
 import numpy as np
 from numpy.typing import NDArray
+import matplotlib
 import matplotlib.pyplot as plt
 import sys
 
@@ -119,27 +120,23 @@ farIxx = data["Ixx"]
 farIyy = data["Iyy"]
 farIzz = data["Izz"]
 
-plot_time_data_with_diffs(orkTimes, farTimes, orkLongInert, farIxx, "Long Inert")
-plot_time_data_with_diffs(orkTimes, farTimes, orkRotInert, farIzz, "Rot Inert")
-plot_time_data_with_diffs(orkTimes, farTimes, orkMasses, farMasses, "Mass (kg)")
-plot_time_data_with_diffs(orkTimes, farTimes, orkThrusts, farThrusts, "Thrust (N)")
-plot_time_data_with_diffs(orkAlts, farAlts, orkGs, farGs, r"g (m/s$^2$)", "Altitude (m)")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkLongInert, farIxx, "Long Inert")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkRotInert, farIzz, "Rot Inert")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkMasses, farMasses, "Mass (kg)")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkThrusts, farThrusts, "Thrust (N)")
+#plot_time_data_with_diffs(orkAlts, farAlts, orkGs, farGs, r"g (m/s$^2$)", "Altitude (m)")
 
 # ATMOSPHERIC CONDITIONS
 orkTemps = orkData["Air temperature (Â°C)"]
 orkTempsK = orkTemps + 273.15
-print(orkTempsK)
 orkPres = orkData['Air pressure (mbar)']
 orkPresPa = orkPres*100.0
 orkDens = orkPresPa/(287.053*orkTempsK)
 farPres = data["Pressure"]
 farDens = data["Density"]
 
-print(orkDens)
-print(f"far dens {farDens}")
-
-plot_time_data_with_diffs(orkAlts, farAlts, orkPresPa, farPres, r"P (Pa)", "Altitude (m)")
-plot_time_data_with_diffs(orkAlts, farAlts, orkDens, farDens, r"$\rho$ (kg/m$^3$)", "Altitude (m)")
+#plot_time_data_with_diffs(orkAlts, farAlts, orkPresPa, farPres, r"P (Pa)", "Altitude (m)")
+#plot_time_data_with_diffs(orkAlts, farAlts, orkDens, farDens, r"$\rho$ (kg/m$^3$)", "Altitude (m)")
 
 orkAoAs = orkData["Angle of attack (Â°)"]
 orkMachs = orkData["Mach number (â€‹)"]
@@ -148,25 +145,65 @@ farAoAs = data["AoA"]
 farMachs = data["M"]
 farCNs = data["CN"]
 
-plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
-plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
-plot_time_data_with_diffs(orkTimes, farTimes, orkCNs, farCNs, r"$C_N$")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkCNs, farCNs, r"$C_N$")
 
 orkCPx = orkData["CP location (cm)"]/100
 farCPx = data["CPx"]
 orkCGx = orkData["CG location (cm)"]/100
 farCGx = data["CGx"]
 
-plot_time_data_with_diffs(orkTimes, farTimes, orkCPx, farCPx, r"$CP_{x}$ (m)")
-plot_time_data_with_diffs(orkTimes, farTimes, orkCGx, farCGx, r"$CG_{x}$ (m)")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkCPx, farCPx, r"$CP_{x}$ (m)")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkCGx, farCGx, r"$CG_{x}$ (m)")
 
-plot_Cn_data(orkAoAs, orkMachs, orkCPx, farAoAs, farMachs, farCPx)
+#plot_Cn_data(orkAoAs, orkMachs, orkCPx, farAoAs, farMachs, farCPx)
 plot_Cn_data(orkAoAs, orkMachs, orkCNs, farAoAs, farMachs, farCNs)
 
+orkVelTotal = orkData["Total velocity (m/s)"]
+farVelTotal = data["vtot"]
+
+farReynL = data["ReL"]
+orkReyn = orkData["Reynolds number (â€‹)"]
+orkReynL = orkReyn/0.79 # total length of the rocket
+
+orkKinViscInv = orkReynL/orkVelTotal # i/kinematicViscosity
+farKinViscInv = farReynL/farVelTotal
+'''
+fig, ax1 = plt.subplots()
+ax1.plot(orkAlts, orkReynU, )
+ax1.plot(farAlts, farReynU, )
+ax1.set_yscale("log")
+ax1.grid(True)
+
+ax1.set_ylabel(r" $\frac{\text{Re}}{L.u}$ ")
+ax1.set_xlabel(r"altitude")
+fig.legend(["ork data", "Farseer data"])
+fig.tight_layout()
+'''
+
+
+farCdf = data["Cdf"]
+orkCdf = orkData["Friction drag coefficient (â€‹)"]
+farCdp = data["Cdp"]
+orkCdp = orkData["Pressure drag coefficient (â€‹)"]
+farCdb = data["Cdp"]
+orkCdb = orkData["Base drag coefficient (â€‹)"]
+farCd = data["Cd"]
+
+fig, ax1 = plt.subplots()
+ax1.plot(orkReynL, orkCdf, )
+ax1.plot(farReynL, farCdf, )
+ax1.set_xscale("log")
+ax1.grid(True)
+
+ax1.set_ylabel(r" $C_{D_f}$")
+ax1.set_xlabel(r"$\frac{\text{Re}}{L}$ (m$^{-1}$)")
+fig.legend(["ork data", "Farseer data"])
+fig.tight_layout()
 
 
 #plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
-
 
 #plt.plot(data["t"][1:], np.diff(data["t"]))
 #print(min(np.diff(data["t"])))

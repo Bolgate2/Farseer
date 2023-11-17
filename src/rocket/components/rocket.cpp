@@ -138,4 +138,8 @@ namespace Rocket{
         }
         return distTravelled;
     }
+
+    double Rocket::finenessRatio() const {
+        return lowestPoint()/referenceLength();
+    }
 }

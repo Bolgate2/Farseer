@@ -336,9 +336,42 @@ namespace Sim{
         Eigen::Vector3d moments = Eigen::Vector3d::Zero();
         Eigen::Vector3d angAcceleration = Eigen::Vector3d::Zero();
 
+        /*
+        --------------------------
+        --- THRUST AND GRAVITY ---
+        --------------------------
+        */
+        auto m = _rocket->mass(time);
+        Eigen::Matrix3d rocketRotationMat = Utils::eulerToRotmat(orientation.x(), orientation.y(), orientation.z());
+        Eigen::Vector3d rocketOrientationVec = rocketRotationMat*thisWayUp(); // the rockets current "up" vector in global coords
+        const Eigen::Matrix3d inertia = (_rotmat*_rocket->inertia(time)*(_rotmat.transpose()));
+        const double Ixx = inertia(0,0);
+        const double Iyy = inertia(1,1);
+        const double Izz = inertia(2,2);
+
+
+        // adding thrust
+        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
+        forces += th;
+
+        // adding gravity
         // getting atmospheric properties
         const double alt = altitude(position);
         const auto g = _atmos->g(alt);
+        Eigen::Vector3d gravVec = centerOfEarthVector(position)*g;
+        acceleration += gravVec;
+
+
+        /*
+        ---------------------------
+        ------- AERO FORCES -------
+        ---------------------------
+        */
+        /*
+        ---------------------------
+        ------ NORMAL FORCES ------
+        ---------------------------
+        */
         const auto atmDens = _atmos->density(alt);
         const auto atmTemp = _atmos->temperature(alt);
         const auto cSound = _atmos->sound(alt);
@@ -362,9 +395,6 @@ namespace Sim{
         const auto dynamicPressure = atmDens*std::pow(relativeSpeed,2)/2;
 
         // getting rocket properties
-        Eigen::Matrix3d rocketRotationMat = Utils::eulerToRotmat(orientation.x(), orientation.y(), orientation.z());
-        Eigen::Vector3d rocketOrientationVec = rocketRotationMat*thisWayUp(); // the rockets current "up" vector in global coords
-        auto m = _rocket->mass(time);
         double angleOfAttack;
         if(onRod()){
             angleOfAttack = 0;
@@ -382,11 +412,6 @@ namespace Sim{
             relativeVelocity.dot(rocketOrientationVec)/( relativeVelocity.norm()*rocketOrientationVec.norm()));
             assert(!std::isnan(angleOfAttack));
         }
-
-        const Eigen::Matrix3d inertia = (_rotmat*_rocket->inertia(time)*(_rotmat.transpose()));
-        const double Ixx = inertia(0,0);
-        const double Iyy = inertia(1,1);
-        const double Izz = inertia(2,2);
 
         auto cn = _rocket->c_n(mach, angleOfAttack);
         if(std::isnan(cn)){
@@ -446,17 +471,31 @@ namespace Sim{
             moments -= pitchDampingMoment;
         }
 
-        // adding thrust
-        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
-        forces += th;
-        //fmt::print("TIME {:<8.4f} THRUST [{}]\n", time, toString(th.transpose()));
+        /*
+        ---------------------------
+        ------- DRAG FORCES -------
+        ---------------------------
+        */
+        // calculate reynolds number of air
+        double kinVisc = _atmos->kinematic_viscosity(alt);
+        double reynL = relativeVelocity.norm()/kinVisc;
+
+        Eigen::Vector3d dragvec = -relativeVelocity.normalized(); // drag occurs in opposite direction to relative velocity
+
+        double cdf = _rocket->Cdf(mach, reynL, angleOfAttack);
+        double cdp = _rocket->Cdp(mach, angleOfAttack);
+        double cdb = _rocket->Cdb(mach, time, angleOfAttack);
+        double cd = cdf + cdp + cdb;
+
+        /*
+        --------------------------------
+        CONSOLIDATING FORCES AND MOMENTS
+        --------------------------------
+        */
 
         // adding forces to acceleration
         acceleration += forces/m;
         //fmt::print("TIME {:<8.4f} ACCELERATION WITH F [{}]\n", time, toString(acceleration.transpose()));
-        // adding gravity
-        Eigen::Vector3d gravVec = centerOfEarthVector(position)*g;
-        acceleration += gravVec;
         //fmt::print("TIME {:<8.4f} ACCELERATION WITH GRAV [{}]\n", time, toString(acceleration.transpose()));
 
 
@@ -468,16 +507,6 @@ namespace Sim{
         assert(!moments.hasNaN());
         // adding moments to angular acceleration
         angAcceleration += inertia.inverse()*moments;
-        /*
-        if(time > 1 && time < 1.5){
-            fmt::print("t={:<8.4f} diffs          [{}]\n", time, toString((rockCP - rockCM).transpose()));
-            fmt::print("t={:<8.4f} moments        [{}]\n", time, toString(moments.transpose()));
-            fmt::print("t={:<8.4f} angacc         [{}]\n", time, toString(angAcceleration.transpose()));
-            fmt::print("t={:<8.4f} relvel         [{}]\n", time, toString(relativeVelocity.transpose()));
-            fmt::print("t={:<8.4f} orientation    [{}]\n", time, toString(rocketOrientationVec.transpose()));
-            fmt::print("t={:<8.4f} norm force dir [{}]\n", time, toString(normForceDirection.transpose()));
-        }
-        */
         
 
         assert(!acceleration.hasNaN());
@@ -525,6 +554,11 @@ namespace Sim{
             std::pair<std::string, double>{"Ixx", Ixx},
             std::pair<std::string, double>{"Iyy", Iyy},
             std::pair<std::string, double>{"Izz", Izz},
+            std::pair<std::string, double>{"ReL", reynL},
+            std::pair<std::string, double>{"Cdf", cdf},
+            std::pair<std::string, double>{"Cdp", cdp},
+            std::pair<std::string, double>{"Cdb", cdb},
+            std::pair<std::string, double>{"Cd", cd}
         };
 
         //fmt::print("TIME {}, OUT [{}]\n\n", time, toString(res.transpose()));

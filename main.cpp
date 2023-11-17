@@ -244,6 +244,6 @@ void testFin(){
 int main(int argc, char** argv){
     //testFin();
     auto rocket = createTestRocket();
-    //simRocket(rocket.get());
+    simRocket(rocket.get());
     return 0;
 }

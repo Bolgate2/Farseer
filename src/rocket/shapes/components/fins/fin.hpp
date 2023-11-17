@@ -10,6 +10,8 @@ namespace Shapes{
     class FinComponentShape: public ExternalComponentShape{
         // TODO, modify this to accomodate freeform fin types maybe (tbh no one uses them)
         public:
+            virtual double thickness() = 0;
+            virtual void setThickness(double t) = 0;
             // new functions
             virtual double chord(double y) = 0; // returns the chord at the given point y from the root chord
             virtual double mac() = 0; // mean area chord

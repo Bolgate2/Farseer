@@ -284,7 +284,7 @@ namespace RealAtmos
         z = std::clamp(z, -5e3, 1000e3);
 
         if (z <= 0) {
-            auto h = H_(z) / 1000;
+            auto h = H_(z) / 1000.0;
             auto geop = GEOPS.at(0.0);
             return geop.T_MB - geop.L_MB*h;
         } else if (z <= 91e3) {
@@ -366,12 +366,11 @@ namespace RealAtmos
     {
         z = std::clamp(z, -5e3, 86e3);
         auto T = temperature(z);
-        return BETA * std::pow(T, 3/2)/(T + S);
+        return BETA * std::pow(T, 1.5)/(T + S);
     }
 
     double RealAtmos::kinematic_viscosity(double z)
     {
-        z = std::clamp(z, -5e3, 86e3);
         return dynamic_viscosity(z)/density(z);
     }
     

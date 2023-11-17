@@ -319,5 +319,18 @@ namespace Rocket{
         return pos.x() + length();
     }
 
-    
+    double BodyComponent::calculateCdfA(const double mach, const double reL) const {
+        double cf = Cf(mach, reL);
+        auto fineness = finenessRatioRocket();
+        auto aRef = referenceArea();
+        auto aWet = wettedArea();
+        auto cdfa = cf*(1.0+1.0/(2*fineness))*aWet/aRef;
+        //auto cdfa = cf*aWet/aRef;
+        return cdfa;
+    }
+
+
+    double BodyComponent::finenessRatio() const {
+        return length()*referenceLength();
+    }
 }

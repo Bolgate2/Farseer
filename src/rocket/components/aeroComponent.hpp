@@ -78,13 +78,16 @@ namespace Rocket{
 
             virtual double Cda2Cd(const double Cda, const double alpha) const;
 
-            // friction coefficient
-            //virtual double Cf(const double mach, const double reL) const;
-            // Cf with compressibility correction
-            //virtual double Cfc(const double mach, const double reL) const;
-            // frictional drag coefficient
-            //virtual double Cdf(const double mach, const double reL) const;
+            // friction coefficient ()
+            virtual double CfNew(const double mach, const double reL) const;
+            // these 2 have swapped names
+            virtual double CfOrk(const double mach, const double reL) const;
 
+            virtual double Cf(const double mach, const double reL) const { return CfOrk(mach, reL); }
+
+
+            virtual double calculateCdfA(const double mach, const double reL) const = 0;
+            virtual double calculateCdfAWithComponents(const double mach, const double reL) const;
 
             // constructor
             AeroComponent(
@@ -112,7 +115,38 @@ namespace Rocket{
             virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4) const override;
             virtual double c_m_damp(double time, double omega, double v) const override;
 
-            virtual double Cd(double t, double alpha, double mach, double reL) const override { return 0; }
+            // drag functions
+            /**
+             * @brief Calculates the frictional drag coefficient of this component and its children
+             * 
+             * @param mach mach number
+             * @param reL reynolds number divided by length
+             * @param alpha angle or attack in radians
+             * @return double 
+             * 
+             * @note Re/L = density*velocity/dynamicViscocity = velocity/kinematicViscocity
+             */
+            //virtual double Cdf(const double mach, const double reL, const double alpha) const override { return CdfA(mach, reL); }
+            virtual double Cdf(const double mach, const double reL, const double alpha) const override { return Cda2Cd(CdfA(mach, reL), alpha); }
+
+            /**
+             * @brief Calculates the axial frictional drag coefficient of this component and its children
+             * 
+             * @param mach mach number
+             * @param reL reynolds number divided by length
+             * @return double 
+             * 
+             * @note Re/L = density*velocity/dynamicViscocity = velocity/kinematicViscocity
+             */
+            virtual double CdfA(const double mach, const double reL) const;
+
+            virtual double Cdp(const double mach, const double alpha) const override { return Cda2Cd(CdpA(mach), alpha); }
+
+            virtual double CdpA(const double mach) const { return 0; }
+
+
+            virtual double Cdb(const double mach, const double time, const double alpha) const override { return Cda2Cd(CdbA(mach, time), alpha); }
+            virtual double CdbA(const double mach, const double time) const { return 0; }
 
             // shape stuff
             // these are defined by rocket interface
@@ -150,6 +184,9 @@ namespace Rocket{
             virtual double calculateSurfaceDistanceTravelled(double x) const = 0;
             virtual double maxSurfaceDistanceTravelled() const = 0;
             virtual double surfaceDistanceTravelled(double x) const;
+
+            virtual double finenessRatio() const = 0;
+            virtual double finenessRatioRocket() const;
     };
 
 }

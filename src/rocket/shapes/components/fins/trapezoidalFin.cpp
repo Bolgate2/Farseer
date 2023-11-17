@@ -99,7 +99,8 @@ namespace Shapes{
         const auto tipEdgeArea = tip*thick;
         const auto bottomEdgeArea = std::hypot( rootChord()-sweep-tip, h )*thick;
         // inner edge is not exposed and is therefore not counted
-        return 2*faceArea + topEdgeArea + tipEdgeArea + bottomEdgeArea;
+        //return 2*faceArea + topEdgeArea + tipEdgeArea + bottomEdgeArea; // ork only uses face area
+        return planformArea()*2;
     }
 
     double TrapezoidalFinShape::planformArea() {

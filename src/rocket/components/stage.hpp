@@ -15,6 +15,9 @@ namespace Rocket{
             std::vector<std::shared_ptr<BodyComponent>> _components; // a stage may only have body components
             std::weak_ptr<Rocket> _parent;
         protected:
+            double _finenessRatio = NAN_D;
+            virtual void clearCaches() override;
+
             // physical functions
             virtual double calculateMass(double time) const override { return 0; }
             virtual Eigen::Matrix3d calculateInertia(double time) const override { return Eigen::Matrix3d::Zero(); }
@@ -24,6 +27,9 @@ namespace Rocket{
             virtual double calculateC_m_a( double mach, double alpha, double gamma = 1.4 ) const override { return 0; }
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override { return Eigen::Vector3d::Zero(); }
             virtual double calculateC_m_damp(double x) const override { return 0; }
+
+            virtual double calculateCdfA(const double mach, const double reL) const { return 0; }
+            
 
             virtual double calculateLowestPoint() const;
 
@@ -56,8 +62,10 @@ namespace Rocket{
             virtual double referenceLength() const override;
             virtual double wettedArea() const override; // surface area of the shape exposed to the air
 
-            virtual double calculateSurfaceDistanceTravelled(double x) const;
-            virtual double maxSurfaceDistanceTravelled() const;
+            virtual double calculateSurfaceDistanceTravelled(double x) const override;
+            virtual double maxSurfaceDistanceTravelled() const override;
+
+            virtual double finenessRatio() const override;
     };
 }
 

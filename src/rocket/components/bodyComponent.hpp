@@ -48,6 +48,8 @@ namespace Rocket{
             virtual double c_m_damp_Func(double length, double avgRadius) const;
             virtual double calculateC_m_damp(double x) const override; // same formula for body comps
 
+            virtual double calculateCdfA(const double mach, const double reL) const override;
+
             BodyComponent(
                 std::unique_ptr<Shapes::BodyComponentShape> shape, std::unique_ptr<Material> material,
                 std::unique_ptr<Finish> finish, std::string name, Eigen::Vector3d position
@@ -90,6 +92,8 @@ namespace Rocket{
             virtual double averageRadius() const; // required for damping
 
             virtual double calculateLowestPoint() const override;
+
+            virtual double finenessRatio() const override;
     };
 
 }
