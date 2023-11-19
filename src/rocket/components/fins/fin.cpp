@@ -223,7 +223,21 @@ namespace Rocket{
         return cdfa;
     }
 
+    double Fin::cDotStag(const double mach) const {
+        double qstagonq; 
+        if(mach <= 1){
+            qstagonq = 1 + std::pow(mach,2)/4 + std::pow(mach,4)/40;
+        } else {
+            qstagonq = 1.84 - 0.76/std::pow(mach,2) + 0.166/std::pow(mach,4) + 0.035/std::pow(mach,6);
+        }
+        return 0.85*qstagonq; // should never reach here, just here so that compiler stops complaining
+    }
+
     double Fin::calculateCdpA(const double mach) const {
-        return 0;
+        auto frontCdpdot = cDotStag(mach)*0.5; // 0.5 is placeholder, should be cos(Gamma_l)^2
+        auto rearCdpdot = Cdotb(mach);
+        auto cdpdot = frontCdpdot + rearCdpdot;
+        auto refArea = thickness()*yMax()/referenceArea();
+        return cdpdot*refArea;
     }
 }

@@ -331,6 +331,6 @@ namespace Rocket{
 
 
     double BodyComponent::finenessRatio() const {
-        return length()*referenceLength();
+        return length()/referenceLength();
     }
 }

@@ -37,6 +37,7 @@ namespace Rocket{
             virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const override;
 
             virtual double calculateCdfA(const double mach, const double reL) const override;
+            virtual double cDotStag(const double mach) const;
             virtual double calculateCdpA(const double mach) const override;
         public:
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;

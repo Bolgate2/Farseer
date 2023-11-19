@@ -142,12 +142,13 @@ namespace Rocket{
     }
 
     double Nosecone::cDotStag(const double mach) const {
+        double qstagonq; 
         if(mach <= 1){
-            return 1 + std::pow(mach,2)/4 + std::pow(mach,4)/40;
+            qstagonq = 1 + std::pow(mach,2)/4 + std::pow(mach,4)/40;
         } else {
-            return 1.84 - 0.76/std::pow(mach,2) + 0.166/std::pow(mach,4) + 0.035/std::pow(mach,6);
+            qstagonq = 1.84 - 0.76/std::pow(mach,2) + 0.166/std::pow(mach,4) + 0.035/std::pow(mach,6);
         }
-        return 0; // should never reach here, just here so that compiler stops complaining
+        return 0.85*qstagonq; // should never reach here, just here so that compiler stops complaining
     }
 
     double Nosecone::conicalSubsonicCdpdot(const double mach) const {
@@ -285,7 +286,9 @@ namespace Rocket{
 
         auto c3 = (1-interpParam)*d1 + interpParam*d2;
 
-        return finenessCorrection(mach, c3);
+        auto findrag = finenessCorrection(mach, c3);
+
+        return findrag;
     }
 
 
@@ -317,6 +320,6 @@ namespace Rocket{
                 cdpdot = 0;
                 break;
         }
-        return cdpdot*referenceArea();
+        return cdpdot;
     }
 }

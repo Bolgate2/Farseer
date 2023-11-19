@@ -187,9 +187,12 @@ farCdf = data["Cdf"]
 orkCdf = orkData["Friction drag coefficient (â€‹)"]
 farCdp = data["Cdp"]
 orkCdp = orkData["Pressure drag coefficient (â€‹)"]
-farCdb = data["Cdp"]
+farCdb = data["Cdb"]
 orkCdb = orkData["Base drag coefficient (â€‹)"]
 farCd = data["Cd"]
+plot_time_data_with_diffs(orkTimes, farTimes, orkCdf, farCdf, r"$C_{D_f}$")
+plot_time_data_with_diffs(orkTimes, farTimes, orkCdp, farCdp, r"$C_{D_P}$")
+plot_time_data_with_diffs(orkTimes, farTimes, orkCdb, farCdb, r"$C_{D_B}$")
 '''
 fig, ax1 = plt.subplots()
 ax1.plot(orkReynL, orkCdf, )
@@ -214,12 +217,13 @@ ax1.set_xlabel(r"$M$")
 fig.legend(["ork data", "Farseer data"])
 fig.tight_layout()
 '''
-plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
+
+#plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
 
 #plt.plot(data["t"][1:], np.diff(data["t"]))
 #print(min(np.diff(data["t"])))
 #plt.show()
-
+'''
 plot_kinematics(data["t"], data["Zp"], data["Zv"], data["Za"], "z")
 plot_kinematics(data["t"], data["Yp"], data["Yv"], data["Ya"], "y")
 plot_kinematics(data["t"], data["Xp"], data["Xv"], data["Xa"], "x")
@@ -229,7 +233,7 @@ plot_kinematics(data["t"], data["Theta"], data["dTheta"], data["ddTheta"], "thet
 plot_kinematics(data["t"], data["Phi"], data["dPhi"], data["ddPhi"], "phi")
 
 plot_kinematics(data["t"], data["ptot"], data["vtot"], data["atot"], "total")
-
+'''
 
 plt.show()
 

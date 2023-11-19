@@ -500,7 +500,7 @@ namespace Sim{
         Eigen::Vector3d dragForce = dragMag*dragDir;
         assert(!dragForce.hasNaN());
         forces += dragForce;
-        fmt::print("TIME {}, DRAG [{}]\n", time, toString(dragForce.transpose()));
+        //fmt::print("TIME {}, DRAG [{}]\n", time, toString(dragForce.transpose()));
 
         Eigen::Vector3d dragMoments = (rocketRotationMat.transpose()*dragForce).cross(rockCM - rockCP);
         //moments += dragMoments;

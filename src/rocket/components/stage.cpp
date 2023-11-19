@@ -210,6 +210,6 @@ namespace Rocket{
                 motarea += (*mot)->shape()->area(0);
             }
         }
-        return std::max(cddot*(area-motarea),0.0);
+        return std::max(cddot,0.0);
     }
 }
