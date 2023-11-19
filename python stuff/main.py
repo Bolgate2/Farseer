@@ -123,7 +123,7 @@ farIzz = data["Izz"]
 #plot_time_data_with_diffs(orkTimes, farTimes, orkLongInert, farIxx, "Long Inert")
 #plot_time_data_with_diffs(orkTimes, farTimes, orkRotInert, farIzz, "Rot Inert")
 #plot_time_data_with_diffs(orkTimes, farTimes, orkMasses, farMasses, "Mass (kg)")
-#plot_time_data_with_diffs(orkTimes, farTimes, orkThrusts, farThrusts, "Thrust (N)")
+plot_time_data_with_diffs(orkTimes, farTimes, orkThrusts, farThrusts, "Thrust (N)")
 #plot_time_data_with_diffs(orkAlts, farAlts, orkGs, farGs, r"g (m/s$^2$)", "Altitude (m)")
 
 # ATMOSPHERIC CONDITIONS
@@ -145,9 +145,9 @@ farAoAs = data["AoA"]
 farMachs = data["M"]
 farCNs = data["CN"]
 
-#plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
-#plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
-#plot_time_data_with_diffs(orkTimes, farTimes, orkCNs, farCNs, r"$C_N$")
+plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
+plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
+plot_time_data_with_diffs(orkTimes, farTimes, orkCNs, farCNs, r"$C_N$")
 
 orkCPx = orkData["CP location (cm)"]/100
 farCPx = data["CPx"]
@@ -190,7 +190,7 @@ orkCdp = orkData["Pressure drag coefficient (â€‹)"]
 farCdb = data["Cdp"]
 orkCdb = orkData["Base drag coefficient (â€‹)"]
 farCd = data["Cd"]
-
+'''
 fig, ax1 = plt.subplots()
 ax1.plot(orkReynL, orkCdf, )
 ax1.plot(farReynL, farCdf, )
@@ -201,23 +201,33 @@ ax1.set_ylabel(r" $C_{D_f}$")
 ax1.set_xlabel(r"$\frac{\text{Re}}{L}$ (m$^{-1}$)")
 fig.legend(["ork data", "Farseer data"])
 fig.tight_layout()
+'''
+'''
+fig, ax1 = plt.subplots()
+ax1.plot(orkMachs, orkCdp, )
+ax1.plot(farMachs, farCdp, )
+ax1.grid(True)
 
-
-#plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
+ax1.set_ylabel(r" $C_{D_p}$")
+ax1.set_xlabel(r"$M$")
+fig.legend(["ork data", "Farseer data"])
+fig.tight_layout()
+'''
+plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
 
 #plt.plot(data["t"][1:], np.diff(data["t"]))
 #print(min(np.diff(data["t"])))
 #plt.show()
 
-#plot_kinematics(data["t"], data["Zp"], data["Zv"], data["Za"], "z")
-#plot_kinematics(data["t"], data["Yp"], data["Yv"], data["Ya"], "y")
-#plot_kinematics(data["t"], data["Xp"], data["Xv"], data["Xa"], "x")
+plot_kinematics(data["t"], data["Zp"], data["Zv"], data["Za"], "z")
+plot_kinematics(data["t"], data["Yp"], data["Yv"], data["Ya"], "y")
+plot_kinematics(data["t"], data["Xp"], data["Xv"], data["Xa"], "x")
 
-#plot_kinematics(data["t"], data["Psi"], data["dPsi"], data["ddPsi"], "psi")
-#plot_kinematics(data["t"], data["Theta"], data["dTheta"], data["ddTheta"], "theta")
-#plot_kinematics(data["t"], data["Phi"], data["dPhi"], data["ddPhi"], "phi")
+plot_kinematics(data["t"], data["Psi"], data["dPsi"], data["ddPsi"], "psi")
+plot_kinematics(data["t"], data["Theta"], data["dTheta"], data["ddTheta"], "theta")
+plot_kinematics(data["t"], data["Phi"], data["dPhi"], data["ddPhi"], "phi")
 
-#plot_kinematics(data["t"], data["ptot"], data["vtot"], data["atot"], "total")
+plot_kinematics(data["t"], data["ptot"], data["vtot"], data["atot"], "total")
 
 
 plt.show()

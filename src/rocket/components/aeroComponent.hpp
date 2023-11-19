@@ -89,6 +89,9 @@ namespace Rocket{
             virtual double calculateCdfA(const double mach, const double reL) const = 0;
             virtual double calculateCdfAWithComponents(const double mach, const double reL) const;
 
+            virtual double calculateCdpA(const double mach) const = 0;
+            virtual double calculateCdpAWithComponents(const double mach) const;
+
             // constructor
             AeroComponent(
                 std::unique_ptr<Shapes::AeroComponentShape> shape, std::unique_ptr<Material> material,
@@ -142,11 +145,11 @@ namespace Rocket{
 
             virtual double Cdp(const double mach, const double alpha) const override { return Cda2Cd(CdpA(mach), alpha); }
 
-            virtual double CdpA(const double mach) const { return 0; }
-
+            virtual double CdpA(const double mach) const;
 
             virtual double Cdb(const double mach, const double time, const double alpha) const override { return Cda2Cd(CdbA(mach, time), alpha); }
             virtual double CdbA(const double mach, const double time) const { return 0; }
+            virtual double Cdotb(const double mach) const;
 
             // shape stuff
             // these are defined by rocket interface

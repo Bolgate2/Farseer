@@ -63,13 +63,60 @@ namespace Rocket{
         const auto K2 = ( (gamma+1)*std::pow(mach,4) - 4*std::pow(b,2) )/(4*std::pow(b,4));
         const auto K3 = ( (gamma+1)*std::pow(mach,8) + (2*std::pow(gamma,2) - 7*gamma - 5)*std::pow(mach,6) + 10*(gamma+1)*std::pow(mach,4) + 8 )/(6*std::pow(b,7));
         // ORK eq 3.49
-        return planformArea()/referenceArea()*(K1+K2*alpha+K3*std::pow(alpha,2));
+        auto cna = planformArea()/referenceArea()*(K1+K2*alpha+K3*std::pow(alpha,2));
+        return cna;
+    }
+
+    double Fin::transonicCNa( double mach, double alpha, double gamma ) const {
+        // finding derivatives like this bc I'm tired
+        const auto cd09 = subsonicCNa(0.9, alpha);
+        const auto dcd09 = (subsonicCNa(0.90001, alpha) - cd09)/0.00001;
+        const auto cd15 = supersonicCNa(1.5, alpha, gamma);
+        const auto dcd15 = (supersonicCNa(1.50001, alpha, gamma) - cd15)/0.00001;
+
+        static const Eigen::Matrix<double,5,4> coeffScales {
+            {625.0/27, 250.0/27, -625.0/27, 125.0/27 }, //corr
+            {-2750.0/27, -125.0/3, 2750.0/27, -175.0/9 }, //corr
+            {325.0/2, 135.0/2, -325.0/2, 30 }, //corr
+            {-225.0/2, -185.0/4, 225.0/2, -81.0/4}, //corr
+            {475.0/16, 45.0/4, -459.0/16, 81.0/16}
+        };
+        Eigen::Vector<double, 4> coeffs { cd09, dcd09, cd15, dcd15 };
+        // a, b, c, d, e
+        Eigen::Vector<double,5> machVec {
+            std::pow(mach,4),
+            std::pow(mach,3),
+            std::pow(mach,2),
+            mach,
+            1
+        };
+        double cna = (coeffScales*coeffs).dot(machVec);
+        return cna;
     }
 
     // cna for below 0.5
     double Fin::calculateC_n_a( double mach, double alpha, double gamma) const {
-        if(mach <= 1) return subsonicCNa(mach, alpha);
-        return supersonicCNa(mach, alpha, gamma);
+        // INTERPOLATE
+        double cna;
+        if(mach <= 0.9)
+        {
+            cna = subsonicCNa(mach, alpha);
+        }
+        else if(mach <= 1.5)
+        {
+            cna = transonicCNa(mach, alpha, gamma);
+        }
+        else
+        {
+            cna = supersonicCNa(mach, alpha, gamma);
+        }
+
+        if(cna > 100){
+            std::cout << cna << " " << name << " M = " << mach << " alpha " << alpha;
+            assert(cna < 100);
+        }
+        
+        return cna;
     }
 
     Eigen::Vector3d Fin::calculateCp( double mach, double alpha, double gamma) const {
@@ -174,5 +221,9 @@ namespace Rocket{
         double cf = Cf(mach, reL);
         double cdfa = (1 + 2*thickness()/mac())*wettedArea()*cf/referenceArea();
         return cdfa;
+    }
+
+    double Fin::calculateCdpA(const double mach) const {
+        return 0;
     }
 }

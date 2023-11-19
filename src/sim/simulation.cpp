@@ -430,11 +430,16 @@ namespace Sim{
             normForceDirection = (rocketOrientationVec.cross(rocketOrientationVec.cross(vdiff))).normalized();
         }
 
-        Eigen::Vector3d normForce = cn*_aRef*dynamicPressure*normForceDirection;
+        Eigen::Vector3d normForce = cn*referenceArea()*dynamicPressure*normForceDirection;
         forces += normForce;
         //fmt::print("TIME {}, NORM [{}]\n", time, toString(normForce.transpose()));
         assert(!normForce.hasNaN());
+        if(cn > 1000){
+            fmt::print("TIME {}, STATE AT FAILURE [{}], mach {} cn {}\n", time, toString(state.transpose()), mach, cn);
+            assert(cn < 1000);
+        }
 
+        //fmt::print("TIME {}, STATE AT FAILURE [{}]}\n", time, toString(state.transpose()));
         //fmt::print("t={:<8.4f} aoa {}\n", time, angleOfAttack);
         //fmt::print("t={:<8.4f} cn {}\n", time, cn);
         
@@ -480,12 +485,24 @@ namespace Sim{
         double kinVisc = _atmos->kinematic_viscosity(alt);
         double reynL = relativeVelocity.norm()/kinVisc;
 
-        Eigen::Vector3d dragvec = -relativeVelocity.normalized(); // drag occurs in opposite direction to relative velocity
+        Eigen::Vector3d dragDir = -relativeVelocity.normalized(); // drag occurs in opposite direction to relative velocity
 
         double cdf = _rocket->Cdf(mach, reynL, angleOfAttack);
         double cdp = _rocket->Cdp(mach, angleOfAttack);
         double cdb = _rocket->Cdb(mach, time, angleOfAttack);
         double cd = cdf + cdp + cdb;
+        double dragMag = cd*referenceArea()*dynamicPressure;
+
+        assert(!std::isnan(cdf));
+        assert(!std::isnan(cdp));
+        assert(!std::isnan(cdb));
+
+        Eigen::Vector3d dragForce = dragMag*dragDir;
+        assert(!dragForce.hasNaN());
+        forces += dragForce;
+
+        Eigen::Vector3d dragMoments = (rocketRotationMat.transpose()*dragForce).cross(rockCM - rockCP);
+        moments += dragMoments;
 
         /*
         --------------------------------

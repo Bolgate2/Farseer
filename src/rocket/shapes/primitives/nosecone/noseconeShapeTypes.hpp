@@ -7,9 +7,6 @@
 
 
 namespace Shapes{
-    enum NoseconeShapeTypes{
-        HAACK
-    };
 
     class NoseconeShapeFactory{
         public:
@@ -17,8 +14,12 @@ namespace Shapes{
     };
 
     class HaackNoseconeShape : public NumericalNoseconeShape{
+        private:
+            static const NoseconeShapeTypes _type;
         public:
             HaackNoseconeShape(double radius, double length, double thickness, double shapeParam);
+
+            virtual NoseconeShapeTypes type() const override;
 
             virtual Eigen::ArrayXd radius(Eigen::ArrayXd exes) override;
             virtual double radius() override;

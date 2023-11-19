@@ -2,6 +2,7 @@
 #include "nanValues.hpp"
 #include "maths.hpp"
 #include <cmath>
+#include <cassert>
 
 namespace Rocket{
     // constructors
@@ -132,6 +133,12 @@ namespace Rocket{
     //C_n
     double AeroComponent::calculateC_n_aWithComponents( double mach, double alpha, double gamma) const {
         auto thisC_n_a = calculateC_n_a(mach, alpha, gamma);
+        
+        if(thisC_n_a > 1000){
+            std::cout << thisC_n_a << " " << name;
+            assert(thisC_n_a < 1000);
+        }
+        
         auto aeroComps = aeroComponents();
         for(auto aeroComp = aeroComps.begin(); aeroComp != aeroComps.end(); ++aeroComp){
             auto compC_n_a = (*aeroComp)->c_n_a(mach, alpha, gamma);
@@ -443,5 +450,28 @@ namespace Rocket{
 
     double AeroComponent::finenessRatio() const {
         return 1;
+    }
+
+    double AeroComponent::calculateCdpAWithComponents(const double mach) const {
+        auto thisCdp = calculateCdpA(mach);
+        auto thisAref = referenceArea();
+        auto comps = aeroComponents();
+        auto CdpSum = thisCdp;
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            auto compCdp = (*comp)->CdpA(mach);
+            auto compAref = (*comp)->referenceArea();
+            auto compCdpAdj = compCdp*compAref/thisAref;
+            CdpSum += compCdpAdj;
+        }
+        return CdpSum;
+    }
+
+    double AeroComponent::CdpA(const double mach) const {
+        return calculateCdpAWithComponents(mach);
+    }
+
+    double AeroComponent::Cdotb(const double mach) const {
+        // https://www.w3schools.com/cpp/cpp_conditions_shorthand.asp
+        return (mach <= 1) ? 0.12+0.13*std::pow(mach,2) : 0.25/mach;
     }
 }

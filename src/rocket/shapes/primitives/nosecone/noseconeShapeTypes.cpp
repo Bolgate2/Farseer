@@ -21,7 +21,12 @@ namespace Shapes{
     HaackNoseconeShape::HaackNoseconeShape(double radius, double length, double thickness, double shapeParam):
     NumericalNoseconeShape(radius, length, thickness, shapeParam) {}
 
-    
+    const NoseconeShapeTypes HaackNoseconeShape::_type = NoseconeShapeTypes::HAACK;
+
+    NoseconeShapeTypes HaackNoseconeShape::type() const {
+        return _type;
+    }
+
     double HaackNoseconeShape::radius(){
         return NumericalNoseconeShape::radius();
     }

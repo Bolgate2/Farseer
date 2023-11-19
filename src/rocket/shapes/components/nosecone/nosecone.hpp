@@ -19,6 +19,8 @@ namespace Shapes{
             virtual NoseconeShape* shape() override;
             virtual void setShape( std::unique_ptr<Shape> shape ) override;
 
+            virtual Shapes::NoseconeShapeTypes type() {return shape()->type();}
+
             virtual double referenceLength() override { return shape()->radius()*2; }
             virtual double wettedArea() override { return shape()->wettedArea(); }
             virtual double referenceArea() override { return shape()->referenceArea(); }

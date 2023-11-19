@@ -10,6 +10,9 @@ namespace Rocket{
             static std::string defaultName;
             std::unique_ptr<Shapes::BodyTubeComponentShape> _shape;
         protected:
+            // aero functions
+            virtual double calculateCdpA(const double mach) const override {return 0;} // no pressure drag from components
+
             // constructors
             BodyTube(
                 double radius, double length, double thickness, std::unique_ptr<Material> material,

@@ -192,4 +192,8 @@ namespace Rocket{
     double FinSet::calculateCdfA(const double mach, const double reL) const {
         return fin()->CdfA(mach, reL)*numFins();
     }
+
+    double FinSet::calculateCdpA(const double mach) const {
+        return fin()->CdpA(mach)*numFins();
+    }
 }

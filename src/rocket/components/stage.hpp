@@ -28,8 +28,8 @@ namespace Rocket{
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override { return Eigen::Vector3d::Zero(); }
             virtual double calculateC_m_damp(double x) const override { return 0; }
 
-            virtual double calculateCdfA(const double mach, const double reL) const { return 0; }
-            
+            virtual double calculateCdfA(const double mach, const double reL) const override { return 0; }
+            virtual double calculateCdpA(const double mach) const override { return 0; }
 
             virtual double calculateLowestPoint() const;
 

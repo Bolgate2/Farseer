@@ -33,10 +33,11 @@ namespace Rocket{
 
             virtual double subsonicCNa( double mach, double alpha ) const;
             virtual double supersonicCNa( double mach, double alpha, double gamma = 1.4 ) const;
+            virtual double transonicCNa( double mach, double alpha, double gamma = 1.4 ) const;
             virtual double calculateC_n_a( double mach, double alpha, double gamma = 1.4 ) const override;
 
             virtual double calculateCdfA(const double mach, const double reL) const override;
-
+            virtual double calculateCdpA(const double mach) const override;
         public:
             virtual Eigen::Vector3d calculateCp( double mach, double alpha, double gamma = 1.4 ) const override;
             // constructor

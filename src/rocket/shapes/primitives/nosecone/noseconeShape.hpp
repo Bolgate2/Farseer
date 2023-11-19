@@ -6,6 +6,16 @@
 #include <Eigen/Dense>
 
 namespace Shapes{
+    
+    enum NoseconeShapeTypes{
+        CONICAL,
+        OGIVE,
+        ELLIPSOID,
+        POWER,
+        PARABOLIC,
+        HAACK
+    };
+
     // this will remain abstract
     // THE NOSECONES ORIGIN IS AT ITS TIP, inertia is easier to calculate from here for numerical models and its cm is unpredictable
     class NoseconeShape: public HollowAxisymmetricShape, virtual public AeroShapeFunctions{
@@ -19,6 +29,8 @@ namespace Shapes{
             virtual Eigen::Vector3d filledCm() override = 0;
         public:
             NoseconeShape(double radius, double length, double thickness, double shapeparam);
+
+            virtual NoseconeShapeTypes type() const = 0;
 
             virtual double shapeParam();
             virtual void setShapeParam(double val);
