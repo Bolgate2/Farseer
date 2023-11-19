@@ -1,5 +1,6 @@
 #include "stage.hpp"
 #include "bodyComponent.hpp"
+#include "motor/motor.hpp"
 
 namespace Rocket{
     std::string Stage::defaultName = "Sustainer";
@@ -178,5 +179,37 @@ namespace Rocket{
         }
         if(std::isnan(top)) return 1;
         return (bottom-top)/referenceLength();
+    }
+
+    BodyComponent* Stage::getLowestComponent() const{
+        BodyComponent* lowComp = nullptr;
+        double lowPoint = 0;
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            BodyComponent* castedComp = dynamic_cast<BodyComponent*>( (*comp).get() );
+            if(castedComp != nullptr){
+                double compLow = castedComp->calculateLowestPoint();
+                if(lowComp == nullptr || compLow > lowPoint){
+                    lowComp = castedComp;
+                    lowPoint = compLow;
+                }
+            }
+        }
+        return lowComp;
+    }
+
+    double Stage::CdbA(const double mach, const double time) const {
+        auto comp = getLowestComponent();
+        if(comp == nullptr) return 0;
+        auto cddot = Cdotb(mach);
+        auto area = comp->area(comp->lowestPoint());
+        auto mots = motors();
+        double motarea = 0;
+        for(auto mot = mots.begin(); mot != mots.end(); mot++){
+            if((*mot)->thrustData().rbegin()->first > time){
+                motarea += (*mot)->shape()->area(0);
+            }
+        }
+        return std::max(cddot*(area-motarea),0.0);
     }
 }

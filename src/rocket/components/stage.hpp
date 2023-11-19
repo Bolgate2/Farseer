@@ -31,8 +31,6 @@ namespace Rocket{
             virtual double calculateCdfA(const double mach, const double reL) const override { return 0; }
             virtual double calculateCdpA(const double mach) const override { return 0; }
 
-            virtual double calculateLowestPoint() const;
-
             // constructor
             Stage(std::string name);
         public:
@@ -66,6 +64,11 @@ namespace Rocket{
             virtual double maxSurfaceDistanceTravelled() const override;
 
             virtual double finenessRatio() const override;
+
+            virtual double calculateLowestPoint() const;
+            BodyComponent* getLowestComponent() const;
+            double CdbA(const double mach, const double time) const override;
+
     };
 }
 

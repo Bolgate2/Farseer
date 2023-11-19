@@ -142,4 +142,27 @@ namespace Rocket{
     double Rocket::finenessRatio() const {
         return lowestPoint()/referenceLength();
     }
+
+    Stage* Rocket::getLowestStage() const {
+        Stage* lowComp = nullptr;
+        double lowPoint = 0;
+        auto comps = aeroComponents();
+        for(auto comp = comps.begin(); comp != comps.end(); comp++){
+            Stage* castedComp = dynamic_cast<Stage*>( (*comp).get() );
+            if(castedComp != nullptr){
+                double compLow = castedComp->calculateLowestPoint();
+                if(lowComp == nullptr || compLow > lowPoint){
+                    lowComp = castedComp;
+                    lowPoint = compLow;
+                }
+            }
+        }
+        return lowComp;
+    }
+
+    double Rocket::CdbA(const double mach, const double time) const {
+        auto lowStage = getLowestStage();
+        if(lowStage == nullptr) return 0;
+        return lowStage->CdbA(mach, time);
+    }
 }

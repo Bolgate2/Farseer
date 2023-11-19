@@ -72,6 +72,9 @@ namespace Rocket{
 
             virtual double finenessRatio() const override;
             virtual double finenessRatioRocket() const override { return finenessRatio(); };
+
+            Stage* getLowestStage() const;
+            double CdbA(const double mach, const double time) const override;
     };
 }
 
