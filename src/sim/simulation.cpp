@@ -16,7 +16,10 @@ namespace Sim{
         return ss.str();
     }
 
-    Sim::Sim(RocketInterface* rocket, double timeStep){
+    const std::tuple<StateArray, StepData> Sim::defK1arg = {defaultStateVector()*NAN_D, {}};
+
+    Sim::Sim(RocketInterface* rocket, double timeStep, std::filesystem::path destination){
+        saveFile = destination;
         _userStep = timeStep;
         _rocket = rocket;
         _rodLen = 0.1;
@@ -52,30 +55,23 @@ namespace Sim{
         assert( _rotmat*rocketUp == thisUp );
     }
 
-    std::shared_ptr<Sim> Sim::create(RocketInterface* rocket, double timeStep){
+    std::shared_ptr<Sim> Sim::create(RocketInterface* rocket, double timeStep, std::filesystem::path destination){
         auto obj = std::shared_ptr<Sim>(
-            new Sim(rocket, timeStep)
+            new Sim(rocket, timeStep, destination)
         );
         return obj;
     }
 
     std::filesystem::path Sim::outFile() const {
-        const auto initPth = std::filesystem::current_path().append("..").append("results");
-        unsigned int fnum = 0;
-        std::filesystem::path nuPth;
-        while(true){
-            std::filesystem::path basePath = initPth;
-            nuPth = basePath.append( std::to_string(fnum));
-            if(!std::filesystem::exists(nuPth)) break;
-            fnum++;
-        }
-        return nuPth;
+        return saveFile;
     }
 
     StateArray Sim::solve( StateArray initialConditions ){
         _takeoff = false;
         _onRod = true;
         std::vector<StateArray> states = { initialConditions };
+        std::vector<StateArray> diffs = {};
+        std::vector<double> steps = {};
         std::vector<StepData> stepData = { std::get<1>(calculate(0, initialConditions)) };
         std::vector<double> times = { 0 };
         std::vector<int> compTimes = { 0 };
@@ -100,24 +96,29 @@ namespace Sim{
         while(!term){
             // doing calc
             std::tuple<double, StateArray, StepData> timeAndState;
-            //auto timeAndState = eulerIntegrate(time, step, lastState);
+            //timeAndState = eulerIntegrate(time, step, state, lastState);
+            timeAndState = ABRKIntegrate(time, step, &state, &lastState, &diffs, &steps);
+            //timeAndState = ORKIntegrate(time, step, state, lastState);
             //auto timeAndState = adaptiveRKIntegrate(time, step, lastState);
-            timeAndState = RK4Integrate(time, step, state, lastState);
+            //timeAndState = RK4Integrate(time, step, state, lastState);
+
             newState = std::get<1>(timeAndState);
             auto thisStep = std::get<0>(timeAndState) - time;
+
+            StateArray diff = (newState-state)/thisStep;
             step = thisStep;
-            //step = thisStep;
             newState = (std::numeric_limits<double>::epsilon() < newState.abs()).select(newState, 0);
+
             // adjusting for takeoff
-            if(!_takeoff){
+            if(!takeoff()){
                 if(newState[Zv] > 0){
-                    _takeoff = true;
+                    setTakeoff(true);
                 }
             }
             // adjusting for rod
             if(_onRod){
-                if( Eigen::Vector3d{newState[Xp], newState[Yp], newState[Zp]}.norm() >  rodLen()){
-                    _onRod = false;
+                if( stateArrayPosition(newState).norm() > rodLen()){
+                    setOnRod(false);
                     fmt::print("off rod at step {}\n", counter);
                 }
             }
@@ -132,18 +133,20 @@ namespace Sim{
             if( counter >= maxSteps ){
                 term = true;
             }
+
             // incrementing time
             counter++;
             time += thisStep;
             //fmt::print("t={:<8.4f} {} [{}]\n", time+thisStep, thisStep, toString(state.transpose()));
             // storing data
+
             times.push_back(time);
+            steps.push_back(thisStep);
             states.push_back(newState);
-            if(stepData.empty()){
-                stepData.push_back(std::get<2>(timeAndState)); // duplicating first elem so that arrays are same size
-            }
+            diffs.push_back(diff);
             stepData.push_back(std::get<2>(timeAndState));
-            // reallocating array
+
+            // reallocating arrays
             lastState = state;
             state = newState;
             // store timer val
@@ -153,6 +156,7 @@ namespace Sim{
             compTimes.push_back(cTime);
             lastCalc = thisCalc;
         }
+        
         // getting apogee to print
         double apogee = 0;
         double apogeeTime = 0;
@@ -200,14 +204,16 @@ namespace Sim{
 
         return *(states.rbegin());
     }
-
-    /*
-    std::tuple<double, StateArray> Sim::eulerIntegrate( const double time, const double step, const StateArray state){
-        StateArray k1 = calculate(time, state);
-        StateArray newState = state + k1*step;
-        return { time+step, newState };
+    
+    std::tuple<double, StateArray, StepData> Sim::eulerIntegrate( const double time, const double step, const StateArray* state, const StateArray* lastState){
+        std::tuple<StateArray, StepData> k1Dat = calculate(time, *state);
+        StateArray k1 = std::get<0>(k1Dat);
+        auto newStep = selectTimeStep(state, lastState, &k1, step);
+        StateArray newState = (*state) + k1 * step;
+        double newTime = time + step;
+        return { newTime, newState, std::get<1>(k1Dat)};
     }
-    */
+    
 
    /*
     std::tuple<double, StateArray> Sim::adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol, const double atol){
@@ -255,22 +261,103 @@ namespace Sim{
     }
     */
 
-    std::tuple<double, StateArray, StepData> Sim::RK4Integrate( const double time, const double step, const StateArray state, const StateArray lastState){
-        std::tuple<StateArray, StepData> k1Dat = calculate(time, state);
+    std::tuple<double, StateArray, StepData> Sim::ABRKIntegrate(
+        const double time, const double step, const StateArray* state, const StateArray* lastState,
+        const std::vector<StateArray>* diffs, const std::vector<double>* steps
+        ){
+        std::tuple<StateArray, StepData> k1Dat = calculate(time, *state);
+        StateArray k1 = std::get<0>(k1Dat);
+        auto newStep = selectTimeStep(state, lastState, &k1, step);
+
+        if(diffs->size() < 3) // not enough steps to do AB4 integration
+        {
+            return RK4Integrate(time, newStep, state, &k1Dat);
+        }
+        // check if the last 3 steps are the same as the selected one
+        bool stepIsSame = true;
+        auto stepRevIter = steps->crbegin();
+
+        for(int i = 0; i < 3; i++){
+            if( std::abs((*stepRevIter) - newStep) > std::numeric_limits<double>::epsilon() ) // checking if steps are equal accounting for floating point badness
+            //if( (*stepRevIter) != newStep ) // checking if steps are equal accounting for floating point badness
+            {
+                stepIsSame = false;
+                break;
+            }
+            stepRevIter++;
+        }
+
+        std::tuple<double, StateArray, StepData> newdata;
+        if(stepIsSame){
+            newdata = AB4Integrate(time, newStep, state, diffs, &k1Dat);
+        } else {
+            newdata = RK4Integrate(time, newStep, state, &k1Dat);
+        }
+        return newdata;
+    }
+
+    std::tuple<double, StateArray, StepData> Sim::AB4Integrate(
+        const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs, const std::tuple<StateArray, StepData>* inK1Dat
+        ){
+        auto diffSiz = diffs->size();
+        
+        if(diffSiz < 3) // not enough steps to do integration
+        {
+            if(std::get<0>(*inK1Dat).hasNaN()){
+                return RK4Integrate(time, step, state);
+            } else {
+                return RK4Integrate(time, step, state, inK1Dat);
+            }
+            //return eulerIntegrate(time, step, state, lastState);
+        }
+
+        std::tuple<StateArray, StepData> k1Dat;
+        if(std::get<0>(*inK1Dat).hasNaN()){
+            k1Dat = calculate(time, *state);
+        } else {
+            k1Dat = *inK1Dat;
+        }
+
+        StateArray k1 = std::get<0>(k1Dat);
+        StateArray k2 = diffs->at(diffSiz-1);
+        StateArray k3 = diffs->at(diffSiz-1);
+        StateArray k4 = diffs->at(diffSiz-1);
+
+        StateArray newState = (*state) + step*(55.0*k1 - 59.0*k2 + 37.0*k3 - 9.0*k4)/24.0;
+
+        //std::cout << state.transpose() << "\n" << newState.transpose() << "\n";
+
+        return { time+step, newState, std::get<1>(k1Dat)};
+    }
+
+    std::tuple<double, StateArray, StepData> Sim::ORKIntegrate( const double time, const double step, const StateArray* state, const StateArray* lastState){
+        std::tuple<StateArray, StepData> k1Dat = calculate(time, *state);
         StateArray k1 = std::get<0>(k1Dat);
         // determine step size
-        auto newStep = selectTimeStep(state, lastState, k1, step);
+        auto newStep = selectTimeStep(state, lastState, &k1, step);
+        return RK4Integrate( time, newStep, state, &k1Dat);
+    }
+    
+    std::tuple<double, StateArray, StepData> Sim::RK4Integrate( const double time, const double step, const StateArray* state, const std::tuple<StateArray, StepData>* inK1Dat){
+        std::tuple<StateArray, StepData> k1Dat;
+        if( std::get<0>(*inK1Dat).hasNaN() ){
+            k1Dat = calculate(time, *state);
+        } else {
+            k1Dat = *inK1Dat;
+        }
 
-        std::tuple<StateArray, StepData> k2Dat = calculate(time + newStep/2, state + k1*newStep/2);
+        StateArray k1 = std::get<0>(k1Dat);
+
+        std::tuple<StateArray, StepData> k2Dat = calculate(time + step/2, (*state) + k1*step/2);
         StateArray k2 = std::get<0>(k2Dat);
         
-        std::tuple<StateArray, StepData> k3Dat = calculate(time + newStep/2, state + k2*newStep/2);
+        std::tuple<StateArray, StepData> k3Dat = calculate(time + step/2, (*state) + k2*step/2);
         StateArray k3 = std::get<0>(k3Dat);
 
-        std::tuple<StateArray, StepData> k4Dat = calculate(time + newStep, state + k3*newStep);
+        std::tuple<StateArray, StepData> k4Dat = calculate(time + step, (*state) + k3*step);
         StateArray k4 = std::get<0>(k4Dat);
 
-        StateArray newState = state + newStep/6*(k1 + 2*k2 + 2*k3 + k4);
+        StateArray newState = (*state) + step/6*(k1 + 2*k2 + 2*k3 + k4);
 
         StepData stepDatAvg = {}; // weighted total of all step data
         StepData k1St = std::get<1>(k1Dat);
@@ -286,13 +373,14 @@ namespace Sim{
             );
         }
 
-        std::tuple<double, StateArray, StepData> res = {time+newStep, newState, stepDatAvg};
+        std::tuple<double, StateArray, StepData> res = {time+step, newState, stepDatAvg};
         return res;
     }
+    
 
-    double Sim::selectTimeStep(const StateArray state, const StateArray lastState, const StateArray k1, const double currStep) const{
-        if((state == lastState).all()) return userStep();
-        StateArray stDiff = (state-lastState)/currStep;
+    double Sim::selectTimeStep(const StateArray* state, const StateArray* lastState, const StateArray* k1, const double currStep) const{
+        if((*state == *lastState).all()) return userStep();
+        StateArray stDiff = (*state-*lastState)/currStep;
 
         static const double maxAngleStep = 3 * M_PI / 180; // 3 degrees
         static const double maxRollStepAng = 2 * 28.32 * M_PI;
@@ -301,20 +389,21 @@ namespace Sim{
         static const double minTimeStep = 0.001;
 
         Eigen::Array<double, 8, 1> stepCandidates = Eigen::Array<double, 8, 1>::Ones() * std::numeric_limits<double>::max();
-        stepCandidates[0] = std::max(userStep(), minTimeStep); // the current time step, gated to the minimum allowed step
+        stepCandidates[0] = std::max(userStep(), minTimeStep); // the current time step
         //stepCandidates[1] = ; // the maximum allowed time step
-        stepCandidates[2] = std::abs(maxAngleStep/state[dTheta]); // the maximum pitch rate per second (shouldnt this be multiplied by the step size?)
+        stepCandidates[2] = std::abs(maxAngleStep/(*state)[dTheta]); // the maximum pitch rate per second (shouldnt this be multiplied by the step size?)
         // the max roll rate
         // the max roll rate change
         stepCandidates[5] = std::abs( maxPitchStepChange / stDiff[dTheta] );
         if(onRod()){
             stepCandidates[0] /= 5;
-            stepCandidates[6] = (rodLen()/stateArrayPosition(k1).norm())/10;
+            stepCandidates[6] = (rodLen()/stateArrayPosition(*k1).norm())/10;
         }
         stepCandidates[7] = 1.5*currStep;
         assert(!stepCandidates.hasNaN());
-        auto chosenStep = stepCandidates.minCoeff();
+        auto chosenStep = std::max(minTimeStep, stepCandidates.minCoeff()); // gating the current time step to the minimum
         //fmt::print("chosen step {}\n", chosenStep);
+
         return chosenStep;
     }
 

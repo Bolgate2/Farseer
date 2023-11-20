@@ -3,6 +3,7 @@
 #include <memory>
 #include <fmt/core.h>
 #include <Eigen/Dense>
+#include <thread>
 
 #include "components/rocket.hpp"
 #include "components/stage.hpp"
@@ -145,28 +146,6 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
     
     rocket->printComponentTree();
-    //fmt::print("motor inertia\n{}\n", toString(motor->inertia(0)));
-
-    /*
-    for(double i = 0; i < 1.1; i+=0.01){
-        fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "rokkit ", i, rocket->surfaceDistanceTravelled(i));
-    }
-    std::cout << std::endl;
-
-    for(double i = 0; i < 1.1; i+=0.01){
-        fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "nose ", i, nose->surfaceDistanceTravelled(i));
-    }
-    std::cout << std::endl;
-
-    for(double i = 0; i < 1.1; i+=0.01){
-        fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "toob ", i, toob->surfaceDistanceTravelled(i));
-    }
-    std::cout << std::endl;
-
-    for(double i = 0; i < 1.1; i+=0.01){
-        fmt::println("{:<10} {:<5.3f}: {:<8.5f}", "finz ", i, finSet->surfaceDistanceTravelled(i));
-    }
-    */
 
     return rocket;
 }
@@ -252,30 +231,12 @@ void testMotor(){
     fmt::print("motor thrust 0: [{}]\nmotor thrust 1: [{}]\n", toString(motor->thrust(0).transpose()), toString(motor->thrust(1).transpose()));
 }
 
-void testSim(){
-    auto sim = Sim::Sim::create(nullptr, 0.01);
-    auto initialConditions = Sim::defaultStateVector();
-    initialConditions[Sim::StateMappings::Zv] = 10;
-    auto lastStep = sim->solve(initialConditions);
-    fmt::print("last step [{}]\n", toString(lastStep.transpose()));
-}
-
-void simRocket(Rocket::AeroComponent* rocket){
+void simRocket(Rocket::AeroComponent* rocket, std::filesystem::path destination){
     rocket->setAllCaching(true);
-    
-    /*
-    for(int i = 0; i < 10; i++){
-        auto ang = ((double) i)/180*M_PI;
 
-        fmt::print("{} CP {:.5}\n", i, rocket->cp(0.3, ang).x());
-        fmt::print("{} CNa {:.5}\n", i, rocket->c_n_a(0.3, ang));
-        fmt::print("{} inertia\n{}\n", i, toString(rocket->inertia(i)));
-    }
-    */
-    
-    
     auto btime = rocket->calculateBurnoutTime();
-    auto sim = Sim::Sim::create(rocket, 0.01);
+
+    auto sim = Sim::Sim::create(rocket, 0.01, destination);
     auto initialConditions = Sim::defaultStateVector();
     // setting initial conds
     auto initialAzimuth = M_PI/6;
@@ -303,12 +264,20 @@ void testFin(){
     for(double i = 0; i < 3; i+=0.05){
         std::cout << "m " << i << " cpx " << fin->calculateCp(i,0).x() << std::endl;
     }
-
 }
 
 int main(int argc, char** argv){
-    //testFin();
-    auto rocket = createBIGTestRocket();
-    simRocket(rocket.get());
+
+    auto subsonicRocket = createTestRocket();
+    auto supersonicRocket = createBIGTestRocket();
+
+    auto subsonicPath = std::filesystem::current_path().append("..").append("results").append("subsonic");
+    auto supersonicPath = std::filesystem::current_path().append("..").append("results").append("supersonic");
+
+    std::thread supersonicThread (simRocket, supersonicRocket.get(), supersonicPath);
+    std::thread subThread (simRocket, subsonicRocket.get(), subsonicPath);
+    supersonicThread.join();
+    subThread.join();
+
     return 0;
 }

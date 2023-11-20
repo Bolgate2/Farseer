@@ -15,7 +15,6 @@ namespace Rocket{
     //static variables and functions
     const std::string Motor::_defaultName = "Motor";
     std::shared_ptr<Motor> Motor::fromFile( std::filesystem::path fileName, Component* parent, Eigen::Vector3d position, double ignitionTime, double dataReferencePressure, double nozzleExitArea){
-        std::cout << fileName << std::endl;
         std::string line;
         std::ifstream motorFile(fileName);
         // things to be read

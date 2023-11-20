@@ -4,6 +4,7 @@
 #include "rocketInterface.hpp"
 #include "stateArray.hpp"
 #include "RealAtmos.hpp"
+#include "nanValues.hpp"
 #include <memory>
 #include <vector>
 #include <Eigen/Dense>
@@ -24,7 +25,7 @@ namespace Sim{
             double _lRef;
 
             RealAtmos::RealAtmos* _atmos;
-            Sim(RocketInterface* rocket, double timeStep);
+            Sim(RocketInterface* rocket, double timeStep, std::filesystem::path destination);
 
             const Eigen::Array<double, 1, 6> RK_A = {0, 1.0/4, 3.0/8, 12.0/13, 1, 1.0/2 };
             const Eigen::Array<double, 6, 5> RK_B = {
@@ -39,7 +40,8 @@ namespace Sim{
             const Eigen::Array<double, 1, 6> RK_CT = {-1.0/360, 0, 128.0/4275, 2197.0/75240, -1.0/50, -2.0/55};
 
         public:
-            static std::shared_ptr<Sim> create( RocketInterface* rocket, double timeStep);
+            std::filesystem::path saveFile;
+            static std::shared_ptr<Sim> create( RocketInterface* rocket, double timeStep, std::filesystem::path destination);
             // defining up
             inline Eigen::Vector3d thisWayUp() const { return Eigen::Vector3d{0,0,1}; }
 
@@ -104,14 +106,29 @@ namespace Sim{
              * @param state the state at the given time
              * @return std::tuple<double, StateArray> returns the new state and its associated time, any changes to step can be inferred from the returned time
              */
-            //std::tuple<double, StateArray> eulerIntegrate( const double time, const double step, const StateArray state);
+            std::tuple<double, StateArray, StepData> eulerIntegrate( const double time, const double step, const StateArray* state, const StateArray* lastState);
+
+            static const std::tuple<StateArray, StepData> defK1arg;
 
             // using defaults from scipy ode
             //std::tuple<double, StateArray> adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol = 1e-3, const double atol = 1e-6);
+            
 
-            std::tuple<double, StateArray, StepData> RK4Integrate( const double time, const double step, const StateArray state, const StateArray lastState);
+            std::tuple<double, StateArray, StepData> RK4Integrate( const double time, const double step, const StateArray* state, const std::tuple<StateArray, StepData>* inK1Dat = &defK1arg);
 
-            double selectTimeStep(const StateArray state, const StateArray lastState, const StateArray k1, const double currStep) const;
+            double selectTimeStep(const StateArray* state, const StateArray* lastState, const StateArray* k1, const double currStep) const;
+
+            std::tuple<double, StateArray, StepData> AB4Integrate(
+                const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs,
+                const std::tuple<StateArray, StepData>* inK1Dat = &defK1arg
+                );
+
+            std::tuple<double, StateArray, StepData> ORKIntegrate( const double time, const double step, const StateArray* state, const StateArray* lastState);
+
+            std::tuple<double, StateArray, StepData> ABRKIntegrate(
+                const double time, const double step, const StateArray* state, const StateArray* lastState,
+                const std::vector<StateArray>* diffs, const std::vector<double>* steps
+                );
 
             // wind func
             Eigen::Vector3d wind(Eigen::Vector3d position) const;
