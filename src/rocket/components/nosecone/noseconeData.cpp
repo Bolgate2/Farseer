@@ -44,7 +44,7 @@ namespace Rocket {
         {
             auto lowerBound = geqBound--;
             double grad = (geqBound->second-lowerBound->second)/(geqBound->first-lowerBound->first);
-            retVal = lowerBound->second + (geqBound->first - mach)*grad;
+            retVal = lowerBound->second + (mach - lowerBound->first)*grad;
         }
         return retVal;
     }
