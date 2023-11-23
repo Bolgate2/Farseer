@@ -121,7 +121,7 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     // MOTOR PARAMS
     std::filesystem::path motorPath = std::filesystem::current_path().append("..").append("AeroTech_F27R_L.eng");
 
-    auto rocket = Rocket::Rocket::create("Jeff the Rocket");
+    auto rocket = Rocket::Rocket::create("Josh the Rocket");
 
     auto stage1 = Rocket::Stage::create(rocket.get());
     
@@ -145,7 +145,7 @@ std::shared_ptr<Rocket::AeroComponent> createTestRocket(){
     auto fin = std::make_unique<Rocket::Fin>(std::move(finShape), std::move(finMat), std::move(finFinish), "Trapezoidal fin");
     auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
     
-    rocket->printComponentTree();
+    //rocket->printComponentTree();
 
     return rocket;
 }
@@ -179,7 +179,7 @@ std::shared_ptr<Rocket::AeroComponent> createBIGTestRocket(){
     // MOTOR PARAMS
     std::filesystem::path motorPath = std::filesystem::current_path().append("..").append("AeroTech_I600R.eng");
 
-    auto rocket = Rocket::Rocket::create("Jeff the Rocket");
+    auto rocket = Rocket::Rocket::create("Drake the Rocket");
 
     auto stage1 = Rocket::Stage::create(rocket.get());
     
@@ -203,7 +203,7 @@ std::shared_ptr<Rocket::AeroComponent> createBIGTestRocket(){
     auto fin = std::make_unique<Rocket::Fin>(std::move(finShape), std::move(finMat), std::move(finFinish), "Trapezoidal fin");
     auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
     
-    rocket->printComponentTree();
+    //rocket->printComponentTree();
 
     /*
     std::cout << finSet->fin()->referenceArea() << std::endl;
@@ -271,13 +271,13 @@ int main(int argc, char** argv){
     auto subsonicRocket = createTestRocket();
     auto supersonicRocket = createBIGTestRocket();
 
-    auto subsonicPath = std::filesystem::current_path().append("..").append("results").append("subsonic");
-    auto supersonicPath = std::filesystem::current_path().append("..").append("results").append("supersonic");
+    auto subsonicPath = std::filesystem::current_path().append("..").append("results").append("subsonic_rkab44");
+    auto supersonicPath = std::filesystem::current_path().append("..").append("results").append("supersonic_rkab44");
 
     std::thread supersonicThread (simRocket, supersonicRocket.get(), supersonicPath);
-    std::thread subThread (simRocket, subsonicRocket.get(), subsonicPath);
+    //std::thread subThread (simRocket, subsonicRocket.get(), subsonicPath);
     supersonicThread.join();
-    subThread.join();
+    //subThread.join();
 
     return 0;
 }

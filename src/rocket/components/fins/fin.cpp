@@ -94,9 +94,7 @@ namespace Rocket{
         return cna;
     }
 
-    // cna for below 0.5
     double Fin::calculateC_n_a( double mach, double alpha, double gamma) const {
-        // INTERPOLATE
         double cna;
         if(mach <= 0.9)
         {
@@ -109,11 +107,6 @@ namespace Rocket{
         else
         {
             cna = supersonicCNa(mach, alpha, gamma);
-        }
-
-        if(cna > 100){
-            std::cout << cna << " " << name << " M = " << mach << " alpha " << alpha;
-            assert(cna < 100);
         }
         
         return cna;
@@ -226,7 +219,7 @@ namespace Rocket{
     double Fin::cDotStag(const double mach) const {
         double qstagonq; 
         if(mach <= 1){
-            qstagonq = 1 + std::pow(mach,2)/4 + std::pow(mach,4)/40;
+            qstagonq = 1 + std::pow(mach,2.0)/4 + std::pow(mach,4.0)/40;
         } else {
             qstagonq = 1.84 - 0.76/std::pow(mach,2) + 0.166/std::pow(mach,4) + 0.035/std::pow(mach,6);
         }

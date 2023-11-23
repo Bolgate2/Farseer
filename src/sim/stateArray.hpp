@@ -5,6 +5,7 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include <unordered_map>
 
 namespace Sim{
     enum StateMappings {
@@ -21,8 +22,8 @@ namespace Sim{
     const Eigen::Vector3d stateArrayPosition(StateArray state);
     const Eigen::Vector3d stateArrayAngVelocity(StateArray state);
     const Eigen::Vector3d stateArrayOrientation(StateArray state);
-
-    using StepData = std::vector<std::pair<std::string, double>>;
+    
+    using StepData = std::unordered_map<std::string, double>;
 }
 
 #endif

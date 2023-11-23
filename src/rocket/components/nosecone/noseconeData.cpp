@@ -20,7 +20,7 @@ namespace Rocket {
         if(geqBound == map.end()){ // mach is higher than the highest data point, just use existing highest value
             retVal = map.rbegin()->second;
         }
-        else if(geqBound->first == mach)// mach is exactly equal to a data point yay
+        else if(std::abs(geqBound->first - mach) < std::numeric_limits<double>::epsilon() )// mach is exactly equal to a data point yay
         {
             retVal = geqBound->second;
         }

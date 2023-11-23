@@ -7,6 +7,7 @@
 #include <fmt/core.h>
 #include <chrono>
 #include <cassert>
+#include <cmath>
 
 namespace Sim{
 
@@ -73,8 +74,7 @@ namespace Sim{
         std::vector<StateArray> diffs = {};
         std::vector<double> steps = {};
         std::vector<StepData> stepData = { std::get<1>(calculate(0, initialConditions)) };
-        std::vector<double> times = { 0 };
-        std::vector<int> compTimes = { 0 };
+        stepData[0]["t"] = 0; stepData[0]["ctime"] = 0;
 
         std::chrono::high_resolution_clock clock;
         std::srand( 69 );
@@ -97,8 +97,9 @@ namespace Sim{
             // doing calc
             std::tuple<double, StateArray, StepData> timeAndState;
             //timeAndState = eulerIntegrate(time, step, state, lastState);
-            timeAndState = ABRKIntegrate(time, step, &state, &lastState, &diffs, &steps);
-            //timeAndState = ORKIntegrate(time, step, state, lastState);
+            timeAndState = ABRKIntegrate(time, step, &state, &lastState, &diffs, &stepData, &steps);
+
+            //timeAndState = ORKIntegrate(time, step, &state, &lastState);
             //auto timeAndState = adaptiveRKIntegrate(time, step, lastState);
             //timeAndState = RK4Integrate(time, step, state, lastState);
 
@@ -116,7 +117,7 @@ namespace Sim{
                 }
             }
             // adjusting for rod
-            if(_onRod){
+            if(onRod()){
                 if( stateArrayPosition(newState).norm() > rodLen()){
                     setOnRod(false);
                     fmt::print("off rod at step {}\n", counter);
@@ -137,14 +138,6 @@ namespace Sim{
             // incrementing time
             counter++;
             time += thisStep;
-            //fmt::print("t={:<8.4f} {} [{}]\n", time+thisStep, thisStep, toString(state.transpose()));
-            // storing data
-
-            times.push_back(time);
-            steps.push_back(thisStep);
-            states.push_back(newState);
-            diffs.push_back(diff);
-            stepData.push_back(std::get<2>(timeAndState));
 
             // reallocating arrays
             lastState = state;
@@ -153,8 +146,17 @@ namespace Sim{
             auto thisCalc = clock.now();
             std::chrono::duration<int64_t, std::nano> calcTimeDur {thisCalc - lastCalc};
             int cTime = std::chrono::nanoseconds(calcTimeDur).count()/1e3;
-            compTimes.push_back(cTime);
             lastCalc = thisCalc;
+
+            // storing data
+            auto stepDat = std::get<2>(timeAndState);
+            stepDat["t"] = time;
+            stepDat["ctime"] = cTime;
+
+            steps.push_back(thisStep);
+            states.push_back(newState);
+            diffs.push_back(diff);
+            stepData.push_back(stepDat);
         }
         
         // getting apogee to print
@@ -162,42 +164,47 @@ namespace Sim{
         double apogeeTime = 0;
         for(long long unsigned int i = 0; i < states.size(); i++){
             StateArray st = states[i];
-            double t = times[i];
+            StepData dat = stepData[i];
             if( st[Zp] > apogee ){
                 apogee = st[Zp];
-                apogeeTime = t;
+                apogeeTime = dat["t"];
             }
         }
         fmt::print("{:.10f} m apogee at t = {:.10f}\n", apogee, apogeeTime);
+
         // summing comp times
         int totalTime = 0;
-        for(long long unsigned int i = 0; i < compTimes.size(); i++) totalTime += compTimes[i];
+        for(auto elem = stepData.begin(); elem != stepData.end(); elem++){
+            totalTime += (*elem)["ctime"];
+        }
         fmt::print("comp time {} s, final step {} s num steps {}\n", totalTime/1e6, step, counter);
-        //fmt::print("final state\n[{}]\n", toString(newState));
-        // just returning the final state
+
         // writing to file
         auto fname = outFile();
         const Eigen::IOFormat CSVFormat(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", "\n");
         std::ofstream resFile;
         resFile.open(fname, std::ios::out | std::ios::trunc);
-        resFile << fmt::format("t, ctime, Xp, Xv, Yp, Yv, Zp, Zv, Phi, dPhi, Theta, dTheta, Psi, dPsi"); //dont need to include LAST
+        resFile << fmt::format("Xp, Xv, Yp, Yv, Zp, Zv, Phi, dPhi, Theta, dTheta, Psi, dPsi"); //dont need to include LAST
         // writing custom data headers
+        std::vector<std::string> keys = {}; //getting keys in a specific order
         for(auto el = stepData[0].begin(); el != stepData[0].end(); el++){
             resFile << ", " << el->first;
+            keys.push_back(el->first);
         }
         resFile << "\n";
+        // writing results
         fmt::print("writing results to file \"{}\"\n", fname.string());
         auto defaultPrecision = resFile.precision();
+        // writing 
         resFile << std::setprecision(std::numeric_limits<double>::digits10 + 1); // 17
-        for(int i = 0; i < times.size(); i++){
-            resFile << fmt::format("{}, ", times[i]);
-            resFile << fmt::format("{}, ", compTimes[i]);
+        for(int i = 0; i < states.size(); i++){
             resFile << states[i].transpose().format(CSVFormat);
-            for(auto el = stepData[i].begin(); el != stepData[i].end(); el++){
-                resFile << ", " << el->second;
+            for(auto k = keys.begin(); k != keys.end(); k++){
+                resFile << ", " << stepData[i].at(*k);
             }
             resFile << "\n";
         }
+
         resFile << std::setprecision(defaultPrecision);
 
         resFile.close();
@@ -208,7 +215,7 @@ namespace Sim{
     std::tuple<double, StateArray, StepData> Sim::eulerIntegrate( const double time, const double step, const StateArray* state, const StateArray* lastState){
         std::tuple<StateArray, StepData> k1Dat = calculate(time, *state);
         StateArray k1 = std::get<0>(k1Dat);
-        auto newStep = selectTimeStep(state, lastState, &k1, step);
+        auto newStep = selectTimeStep(state, &k1, step);
         StateArray newState = (*state) + k1 * step;
         double newTime = time + step;
         return { newTime, newState, std::get<1>(k1Dat)};
@@ -263,13 +270,13 @@ namespace Sim{
 
     std::tuple<double, StateArray, StepData> Sim::ABRKIntegrate(
         const double time, const double step, const StateArray* state, const StateArray* lastState,
-        const std::vector<StateArray>* diffs, const std::vector<double>* steps
+        const std::vector<StateArray>* diffs, const std::vector<StepData>* stepData, const std::vector<double>* steps
         ){
         std::tuple<StateArray, StepData> k1Dat = calculate(time, *state);
         StateArray k1 = std::get<0>(k1Dat);
-        auto newStep = selectTimeStep(state, lastState, &k1, step);
+        auto newStep = selectTimeStep(state, &k1, step);
 
-        if(diffs->size() < 3) // not enough steps to do AB4 integration
+        if(diffs->size() < 8) // not enough steps to do AB4 integration
         {
             return RK4Integrate(time, newStep, state, &k1Dat);
         }
@@ -277,9 +284,8 @@ namespace Sim{
         bool stepIsSame = true;
         auto stepRevIter = steps->crbegin();
 
-        for(int i = 0; i < 3; i++){
+        for(int i = 0; i < 8; i++){
             if( std::abs((*stepRevIter) - newStep) > std::numeric_limits<double>::epsilon() ) // checking if steps are equal accounting for floating point badness
-            //if( (*stepRevIter) != newStep ) // checking if steps are equal accounting for floating point badness
             {
                 stepIsSame = false;
                 break;
@@ -289,19 +295,21 @@ namespace Sim{
 
         std::tuple<double, StateArray, StepData> newdata;
         if(stepIsSame){
-            newdata = AB4Integrate(time, newStep, state, diffs, &k1Dat);
+            newdata = AB44Integrate(time, newStep, state, diffs, stepData, &k1Dat);
         } else {
             newdata = RK4Integrate(time, newStep, state, &k1Dat);
         }
+
         return newdata;
     }
 
     std::tuple<double, StateArray, StepData> Sim::AB4Integrate(
-        const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs, const std::tuple<StateArray, StepData>* inK1Dat
+        const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs,
+        const std::vector<StepData>* stepData, const std::tuple<StateArray, StepData>* inK1Dat
         ){
         auto diffSiz = diffs->size();
         
-        if(diffSiz < 3) // not enough steps to do integration
+        if(diffSiz < 5) // not enough steps to do integration
         {
             if(std::get<0>(*inK1Dat).hasNaN()){
                 return RK4Integrate(time, step, state);
@@ -320,21 +328,142 @@ namespace Sim{
 
         StateArray k1 = std::get<0>(k1Dat);
         StateArray k2 = diffs->at(diffSiz-1);
-        StateArray k3 = diffs->at(diffSiz-1);
-        StateArray k4 = diffs->at(diffSiz-1);
+        StateArray k3 = diffs->at(diffSiz-2);
+        StateArray k4 = diffs->at(diffSiz-3);
+        StateArray k5 = diffs->at(diffSiz-4);
 
-        StateArray newState = (*state) + step*(55.0*k1 - 59.0*k2 + 37.0*k3 - 9.0*k4)/24.0;
-
-        //std::cout << state.transpose() << "\n" << newState.transpose() << "\n";
+        //StateArray newState = (*state) + step*(55.0*k1 - 59.0*k2 + 37.0*k3 - 9.0*k4)/24.0;
+        StateArray newState = (*state) + step*((1901.0*k1 - 2774.0*k2 + 2616.0*k3 - 1274.0*k4 + 251.0*k5)/720);
 
         return { time+step, newState, std::get<1>(k1Dat)};
+    }
+
+    std::tuple<double, StateArray, StepData> Sim::AB22Integrate(
+        const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs,
+        const std::vector<StepData>* stepData, const std::tuple<StateArray, StepData>* inK1Dat
+        ){
+        auto diffSiz = diffs->size();
+        
+        if(diffSiz < 4) // not enough steps to do integration
+        {
+            if(std::get<0>(*inK1Dat).hasNaN()){
+                return RK4Integrate(time, step, state);
+            } else {
+                return RK4Integrate(time, step, state, inK1Dat);
+            }
+            //return eulerIntegrate(time, step, state, lastState);
+        }
+
+        std::tuple<StateArray, StepData> k1Dat;
+        if(std::get<0>(*inK1Dat).hasNaN()){
+            k1Dat = calculate(time, *state);
+        } else {
+            k1Dat = *inK1Dat;
+        }
+
+
+        // getting derivatives
+        StateArray zn3o = std::get<0>(k1Dat); // this will end up replaced, and is used to get the derivative
+        StateArray zn2o = diffs->at(diffSiz-1);
+        StateArray zn1 = diffs->at(diffSiz-2);
+        StateArray zn = diffs->at(diffSiz-3);
+        // getting second derivatives
+        StateArray znp = (zn1-zn)/step;
+        StateArray zn1p = (zn2o-zn1)/step;
+        StateArray zn2p = (zn3o-zn2o)/step;
+
+        // forming new derivatives
+        StateArray zn2 = zn1 + step/2*(3*zn1p - znp);
+        StateArray zn3 = zn2 + step/2*(3*zn2p - zn1p);
+
+        // getting new difference
+        StateArray diff = step/2*(3*zn3 - zn2);
+
+        StateArray newState = (*state) + diff;// + dvdt*step;
+
+        return { time+step, newState, std::get<1>(k1Dat)};
+    }
+
+    std::tuple<double, StateArray, StepData> Sim::AB44Integrate(
+        const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs,
+        const std::vector<StepData>* stepData, const std::tuple<StateArray, StepData>* inK1Dat
+        ){
+        auto diffSiz = diffs->size();
+        
+        if(diffSiz < 8) // not enough steps to do integration
+        {
+            if(std::get<0>(*inK1Dat).hasNaN()){
+                return RK4Integrate(time, step, state);
+            } else {
+                return RK4Integrate(time, step, state, inK1Dat);
+            }
+            //return eulerIntegrate(time, step, state, lastState);
+        }
+
+        std::tuple<StateArray, StepData> k1Dat;
+        if(std::get<0>(*inK1Dat).hasNaN()){
+            k1Dat = calculate(time, *state);
+        } else {
+            k1Dat = *inK1Dat;
+        }
+
+
+        // getting derivatives
+        StateArray zn7o = std::get<0>(k1Dat); // this will end up replaced, and is used to get the derivative
+        StateArray zn6o = diffs->at(diffSiz-1);
+        StateArray zn5o = diffs->at(diffSiz-2);
+        StateArray zn4o = diffs->at(diffSiz-3);
+        StateArray zn3 = diffs->at(diffSiz-4);
+        StateArray zn2 = diffs->at(diffSiz-5);
+        StateArray zn1 = diffs->at(diffSiz-6);
+        StateArray zn = diffs->at(diffSiz-7);
+        // getting second derivatives
+        StateArray znp = (zn1-zn)/(step);
+        StateArray zn1p = (zn2-zn1)/(step);
+        StateArray zn2p = (zn3-zn2)/(step);
+        StateArray zn3p = (zn4o-zn3)/(step);
+        StateArray zn4p = (zn5o-zn4o)/(step);
+        StateArray zn5p = (zn6o-zn5o)/(step);
+        StateArray zn6p = (zn7o-zn6o)/(step);
+        // forming new derivatives
+
+        StateArray zn4 = zn3 + step/24*(55*zn3p - 59*zn2p + 37*zn1p - 9*znp);
+        StateArray zn5 = zn4 + step/24*(55*zn4p - 59*zn3p + 37*zn2p - 9*zn1p);
+        StateArray zn6 = zn5 + step/24*(55*zn5p - 59*zn4p + 37*zn3p - 9*zn2p);
+        StateArray zn7 = zn6 + step/24*(55*zn6p - 59*zn5p + 37*zn4p - 9*zn3p);
+        // getting new difference
+        StateArray diff = step/24*(55*zn7 - 59*zn6 + 37*zn5 - 9*zn4);
+
+        StateArray newState = (*state) + diff;// + dvdt*step;
+
+        StepData avgDat = {};
+        
+        auto zn7dat = std::get<1>(k1Dat);
+        /*
+        auto zn6dat = stepData->at(diffSiz-1);
+        auto zn5dat = stepData->at(diffSiz-2);
+        auto zn4dat = stepData->at(diffSiz-3);
+        for(auto i = zn7dat.begin(); i != zn7dat.end(); i++){
+            auto k = i->first;
+            double avg = 55.0/24*zn7dat[k] - 59.0/24*zn6dat[k] + 37.0/24*zn5dat[k] - 9.0/24 * zn4dat[k];
+            avgDat[k] = avg;
+        }
+        */
+
+        auto correctorData = calculate(time+step, newState);
+
+        StateArray corrctorState = std::get<0>(correctorData);
+
+        StateArray finalState = (*state) + step/24*(9*corrctorState + 19*zn7o - 5*zn6o + zn5o);
+
+        return { time+step, finalState, zn7dat};
     }
 
     std::tuple<double, StateArray, StepData> Sim::ORKIntegrate( const double time, const double step, const StateArray* state, const StateArray* lastState){
         std::tuple<StateArray, StepData> k1Dat = calculate(time, *state);
         StateArray k1 = std::get<0>(k1Dat);
         // determine step size
-        auto newStep = selectTimeStep(state, lastState, &k1, step);
+        auto newStep = selectTimeStep(state, &k1, step);
         return RK4Integrate( time, newStep, state, &k1Dat);
     }
     
@@ -359,18 +488,16 @@ namespace Sim{
 
         StateArray newState = (*state) + step/6*(k1 + 2*k2 + 2*k3 + k4);
 
-        StepData stepDatAvg = {}; // weighted total of all step data
+        StepData stepDatAvg = {}; // weighted avg of all step data
         StepData k1St = std::get<1>(k1Dat);
         StepData k2St = std::get<1>(k2Dat);
         StepData k3St = std::get<1>(k3Dat);
         StepData k4St = std::get<1>(k4Dat);
-        for(int i = 0; i < k1St.size(); i++){
-            stepDatAvg.push_back(
-                std::pair<std::string, double>{
-                    k1St[i].first,
-                    (k1St[i].second + 2*k2St[i].second + 2*k3St[i].second + k4St[i].second)/6
-                }
-            );
+
+        for(auto el = k1St.begin(); el != k1St.end(); el++){
+            auto key = el->first;
+            auto avg = (k1St[key] + 2*k2St[key] + 2*k3St[key] + k4St[key])/6;
+            stepDatAvg[key] = avg;
         }
 
         std::tuple<double, StateArray, StepData> res = {time+step, newState, stepDatAvg};
@@ -378,9 +505,7 @@ namespace Sim{
     }
     
 
-    double Sim::selectTimeStep(const StateArray* state, const StateArray* lastState, const StateArray* k1, const double currStep) const{
-        if((*state == *lastState).all()) return userStep();
-        StateArray stDiff = (*state-*lastState)/currStep;
+    double Sim::selectTimeStep(const StateArray* state, const StateArray* k1, const double currStep) const{
 
         static const double maxAngleStep = 3 * M_PI / 180; // 3 degrees
         static const double maxRollStepAng = 2 * 28.32 * M_PI;
@@ -391,17 +516,17 @@ namespace Sim{
         Eigen::Array<double, 8, 1> stepCandidates = Eigen::Array<double, 8, 1>::Ones() * std::numeric_limits<double>::max();
         stepCandidates[0] = std::max(userStep(), minTimeStep); // the current time step
         //stepCandidates[1] = ; // the maximum allowed time step
-        stepCandidates[2] = std::abs(maxAngleStep/(*state)[dTheta]); // the maximum pitch rate per second (shouldnt this be multiplied by the step size?)
+        stepCandidates[2] = std::abs(maxAngleStep/ std::sqrt(std::pow((*k1)[Theta],2) + std::pow((*k1)[Psi],2) )); // the maximum pitch rate per second
         // the max roll rate
         // the max roll rate change
-        stepCandidates[5] = std::abs( maxPitchStepChange / stDiff[dTheta] );
+        stepCandidates[5] = std::abs(maxPitchStepChange/ std::sqrt(std::pow((*k1)[dTheta],2) + std::pow((*k1)[dPsi],2)) );
         if(onRod()){
             stepCandidates[0] /= 5;
             stepCandidates[6] = (rodLen()/stateArrayPosition(*k1).norm())/10;
         }
         stepCandidates[7] = 1.5*currStep;
         assert(!stepCandidates.hasNaN());
-        auto chosenStep = std::max(minTimeStep, stepCandidates.minCoeff()); // gating the current time step to the minimum
+        auto chosenStep = stepCandidates.minCoeff();
         //fmt::print("chosen step {}\n", chosenStep);
 
         return chosenStep;
@@ -481,7 +606,7 @@ namespace Sim{
             fmt::print("MACH IS NAN vel.norm = [{}], csound = {}\n", velocity.norm(), cSound);
             assert(!std::isnan(mach));
         }
-        const auto dynamicPressure = atmDens*std::pow(relativeSpeed,2)/2;
+        const double dynamicPressure = atmDens*std::pow(relativeSpeed,2)/2;
 
         // getting rocket properties
         double angleOfAttack;
@@ -585,13 +710,20 @@ namespace Sim{
         assert(!std::isnan(cdf));
         assert(!std::isnan(cdp));
         assert(!std::isnan(cdb));
+        if(cdf < -0.001 || cdp < -0.001 || cdb < -0.001){
+            fmt::println("Drag is less than zero Cdf = {:<.8f}, Cdp = {:<.8f}, Cdb = {:<.8f}", cdf, cdp, cdf);
+            fmt::println("TIME {}, STATE AT FAILURE [{}]\nm = {}, AoA= {}", time, toString(state.transpose()), mach, angleOfAttack);
+            assert(cdp >= 0);
+            assert(cdb >= 0);
+            assert(cdf >= 0);
+        }
 
         Eigen::Vector3d dragForce = dragMag*dragDir;
         assert(!dragForce.hasNaN());
         forces += dragForce;
         //fmt::print("TIME {}, DRAG [{}]\n", time, toString(dragForce.transpose()));
 
-        Eigen::Vector3d dragMoments = (rocketRotationMat.transpose()*dragForce).cross(rockCM - rockCP);
+        Eigen::Vector3d dragMoments = (rocketRotationMat.transpose()*dragForce).cross(rockCP - rockCM);
         //moments += dragMoments;
 
         /*
@@ -632,6 +764,17 @@ namespace Sim{
             angAcceleration = Eigen::Vector3d::Zero();
             acceleration = acceleration.norm()*rodVec();
         }
+
+        /*
+        if((angAcceleration.cwiseGreater(100)).any()){
+            fmt::println("Abnormally large ang acceleration [{}]",toString(angAcceleration.transpose()));
+            fmt::println("TIME {}, STATE AT FAILURE [{}]\nm = {}, AoA = {} cn = {} Cdf = {:<.8f}, Cdp = {:<.8f}, Cdb = {:<.8f}", time, toString(state.transpose()), mach, angleOfAttack, cn, cdf, cdp, cdf);
+            fmt::println("rho = {}, dragDir = [{}], normdir = [{}], pitchDampingC = {}, yawDampingC = {}", atmDens, toString(dragDir.transpose()), toString(normForceDirection.transpose()), pitchDampingCoeff, yawDampingCoeff);
+            fmt::println("norm moments = [{}], norm accs = [{}], dynPres = {}", toString(normMoments.transpose()), toString((inertia.inverse()*normMoments).transpose() ), dynamicPressure);
+            fmt::println("velocity = [{}], relative_velocity = [{}]", toString(velocity.transpose()), toString(relativeVelocity.transpose()));
+            assert(false);
+        }
+        */
 
         // adding final acceleration vector
         res[Xv] = acceleration.x();

@@ -116,18 +116,28 @@ namespace Sim{
 
             std::tuple<double, StateArray, StepData> RK4Integrate( const double time, const double step, const StateArray* state, const std::tuple<StateArray, StepData>* inK1Dat = &defK1arg);
 
-            double selectTimeStep(const StateArray* state, const StateArray* lastState, const StateArray* k1, const double currStep) const;
+            double selectTimeStep(const StateArray* state, const StateArray* k1, const double currStep) const;
 
             std::tuple<double, StateArray, StepData> AB4Integrate(
-                const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs,
+                const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs, const std::vector<StepData>* stepData,
                 const std::tuple<StateArray, StepData>* inK1Dat = &defK1arg
+                );
+            
+            std::tuple<double, StateArray, StepData> AB22Integrate(
+                const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs,
+                const std::vector<StepData>* stepData, const std::tuple<StateArray, StepData>* inK1Dat = &defK1arg
+                );
+            
+            std::tuple<double, StateArray, StepData> AB44Integrate(
+                const double time, const double step, const StateArray* state, const std::vector<StateArray>* diffs,
+                const std::vector<StepData>* stepData, const std::tuple<StateArray, StepData>* inK1Dat = &defK1arg
                 );
 
             std::tuple<double, StateArray, StepData> ORKIntegrate( const double time, const double step, const StateArray* state, const StateArray* lastState);
 
             std::tuple<double, StateArray, StepData> ABRKIntegrate(
                 const double time, const double step, const StateArray* state, const StateArray* lastState,
-                const std::vector<StateArray>* diffs, const std::vector<double>* steps
+                const std::vector<StateArray>* diffs, const std::vector<StepData>* stepData, const std::vector<double>* steps
                 );
 
             // wind func

@@ -37,22 +37,24 @@ def plot_mass_data(times:NDArray, orkMasses:NDArray, farMasses:NDArray, massDiff
 
 def plot_time_data_with_diffs(ork_times:NDArray, far_times:NDArray, ork_data:NDArray, far_data:NDArray, yname:str, xname:str="Time (s)"):
     times, orkDataDense, farDataDense, dataDiffs = same_shape_data(ork_times, far_times, ork_data, far_data)
-    dataPercent = dataDiffs/orkDataDense*100
-    dataPercent[np.isnan(dataPercent)] = 0.0
-    fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+    #dataPercent = dataDiffs/orkDataDense*100
+    #dataPercent[np.isnan(dataPercent)] = 0.0
+    # fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+    fig, (ax1, ax2) = plt.subplots(2, sharex=True)
     ax1.plot(times, orkDataDense)
     ax1.plot(times, farDataDense)
     ax2.plot(times, dataDiffs)
-    ax3.plot(times, dataPercent)
+    # ax3.plot(times, dataPercent)
     fig.legend(["ork data", "Farseer data"])
     
     ax1.set_ylabel(fr"{yname}")
     ax2.set_ylabel(fr"$\Delta${yname}")
-    ax3.set_ylabel(fr"% Err")
-    ax3.set_xlabel(xname)
+    # ax3.set_ylabel(fr"% Err")
+    # ax3.set_xlabel(xname)
+    ax2.set_xlabel(xname)
     ax1.grid(True)
     ax2.grid(True)
-    ax3.grid(True)
+    # ax3.grid(True)
     fig.tight_layout()
     plt.show()
     
@@ -120,11 +122,15 @@ farIxx = data["Ixx"]
 farIyy = data["Iyy"]
 farIzz = data["Izz"]
 
+orkCGx = orkData["CG location (cm)"]/100
+farCGx = data["CGx"]
+
 #plot_time_data_with_diffs(orkTimes, farTimes, orkLongInert, farIxx, "Long Inert")
 #plot_time_data_with_diffs(orkTimes, farTimes, orkRotInert, farIzz, "Rot Inert")
 #plot_time_data_with_diffs(orkTimes, farTimes, orkMasses, farMasses, "Mass (kg)")
-plot_time_data_with_diffs(orkTimes, farTimes, orkThrusts, farThrusts, "Thrust (N)")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkThrusts, farThrusts, "Thrust (N)")
 #plot_time_data_with_diffs(orkAlts, farAlts, orkGs, farGs, r"g (m/s$^2$)", "Altitude (m)")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkCGx, farCGx, r"$CG_{x}$ (m)")
 
 # ATMOSPHERIC CONDITIONS
 orkTemps = orkData["Air temperature (Â°C)"]
@@ -145,20 +151,18 @@ farAoAs = data["AoA"]
 farMachs = data["M"]
 farCNs = data["CN"]
 
-plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
-plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
-plot_time_data_with_diffs(orkTimes, farTimes, orkCNs, farCNs, r"$C_N$")
 
 orkCPx = orkData["CP location (cm)"]/100
 farCPx = data["CPx"]
-orkCGx = orkData["CG location (cm)"]/100
-farCGx = data["CGx"]
 
+plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
+plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkCNs, farCNs, r"$C_N$")
 #plot_time_data_with_diffs(orkTimes, farTimes, orkCPx, farCPx, r"$CP_{x}$ (m)")
-#plot_time_data_with_diffs(orkTimes, farTimes, orkCGx, farCGx, r"$CG_{x}$ (m)")
 
 #plot_Cn_data(orkAoAs, orkMachs, orkCPx, farAoAs, farMachs, farCPx)
-plot_Cn_data(orkAoAs, orkMachs, orkCNs, farAoAs, farMachs, farCNs)
+
+#plot_Cn_data(orkAoAs, orkMachs, orkCNs, farAoAs, farMachs, farCNs)
 
 orkVelTotal = orkData["Total velocity (m/s)"]
 farVelTotal = data["vtot"]
@@ -169,6 +173,8 @@ orkReynL = orkReyn/0.79 # total length of the rocket
 
 orkKinViscInv = orkReynL/orkVelTotal # i/kinematicViscosity
 farKinViscInv = farReynL/farVelTotal
+
+
 '''
 fig, ax1 = plt.subplots()
 ax1.plot(orkAlts, orkReynU, )
@@ -190,9 +196,11 @@ orkCdp = orkData["Pressure drag coefficient (â€‹)"]
 farCdb = data["Cdb"]
 orkCdb = orkData["Base drag coefficient (â€‹)"]
 farCd = data["Cd"]
-plot_time_data_with_diffs(orkTimes, farTimes, orkCdf, farCdf, r"$C_{D_f}$")
-plot_time_data_with_diffs(orkTimes, farTimes, orkCdp, farCdp, r"$C_{D_P}$")
-plot_time_data_with_diffs(orkTimes, farTimes, orkCdb, farCdb, r"$C_{D_B}$")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkCdf, farCdf, r"$C_{D_f}$")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkCdp, farCdp, r"$C_{D_P}$")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkCdb, farCdb, r"$C_{D_B}$")
+
+
 '''
 fig, ax1 = plt.subplots()
 ax1.plot(orkReynL, orkCdf, )
@@ -206,7 +214,7 @@ fig.legend(["ork data", "Farseer data"])
 fig.tight_layout()
 '''
 
-'''
+
 fig, ax1 = plt.subplots()
 ax1.plot(orkMachs, orkCdp, )
 ax1.plot(farMachs, farCdp, )
@@ -216,15 +224,29 @@ ax1.set_ylabel(r" $C_{D_p}$")
 ax1.set_xlabel(r"$M$")
 fig.legend(["ork data", "Farseer data"])
 fig.tight_layout()
-'''
 
-#plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
+
+fig, ax1 = plt.subplots()
+ax1.plot(orkMachs, orkCdb, )
+ax1.plot(farMachs, farCdb, )
+ax1.grid(True)
+
+ax1.set_ylabel(r" $C_{D_B}$")
+ax1.set_xlabel(r"$M$")
+fig.legend(["ork data", "Farseer data"])
+fig.tight_layout()
+
+
+plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
 
 #plt.plot(data["t"][1:], np.diff(data["t"]))
 #print(min(np.diff(data["t"])))
 #plt.show()
-'''
+
+plot_kinematics(orkTimes, orkAlts, orkData["Vertical velocity (m/s)"], orkData['Vertical acceleration (m/sÂ²)'], r"{z_{ork}}")
 plot_kinematics(data["t"], data["Zp"], data["Zv"], data["Za"], "z")
+
+
 plot_kinematics(data["t"], data["Yp"], data["Yv"], data["Ya"], "y")
 plot_kinematics(data["t"], data["Xp"], data["Xv"], data["Xa"], "x")
 
@@ -233,7 +255,7 @@ plot_kinematics(data["t"], data["Theta"], data["dTheta"], data["ddTheta"], "thet
 plot_kinematics(data["t"], data["Phi"], data["dPhi"], data["ddPhi"], "phi")
 
 plot_kinematics(data["t"], data["ptot"], data["vtot"], data["atot"], "total")
-'''
+
 
 plt.show()
 

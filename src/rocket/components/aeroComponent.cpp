@@ -325,6 +325,8 @@ namespace Rocket{
         double cd;
         double adjFac;
         double absAlpha = std::abs(alpha);
+        if(alpha > M_PI/2) absAlpha = M_PI/2 - absAlpha;
+
         if(absAlpha <= 17*M_PI/180){
             adjFac = -22.9706*std::pow(absAlpha,3) + 10.2233*std::pow(absAlpha,2) + 1;
         } else {
@@ -472,6 +474,6 @@ namespace Rocket{
 
     double AeroComponent::Cdotb(const double mach) const {
         // https://www.w3schools.com/cpp/cpp_conditions_shorthand.asp
-        return (mach <= 1) ? 0.12+0.13*std::pow(mach,2) : 0.25/mach;
+        return (mach <= 1.0) ? 0.12+0.13*std::pow(mach,2) : 0.25/mach;
     }
 }

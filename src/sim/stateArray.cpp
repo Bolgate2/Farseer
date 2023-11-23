@@ -6,8 +6,8 @@ namespace Sim
         return StateArray::Zero();
     } // this is a function so that it returns a new instance each time it is called
 
+    // automatically shifts derivative quantities to the left, and sets their cells to 0;
     StateArray defaultDeriv(StateArray state){
-        // automatically shifts derivative quantities to the left, and sets their cells to 0;
         return StateArray{state[Xv], 0, state[Yv], 0, state[Zv], 0, state[dPhi], 0, state[dTheta], 0, state[dPsi], 0};
     }
 

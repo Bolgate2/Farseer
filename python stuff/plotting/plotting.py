@@ -80,9 +80,12 @@ def plot_kinematics(times:NDArray, position:NDArray, velocity:NDArray, accelerat
     
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    ax1.plot(times, position, color='green')
     ax1.plot(times, velocity, color='blue')
+    ax1.plot(times, position, color='green')
     ax2.plot(times, acceleration, color='red')
+    ax1.set_zorder(2)
+    ax2.set_zorder(1)
+    ax1.patch.set_visible(False)
     fig.legend(
         [fr'${name}$', fr'$v_{{ {name} }}$', fr'$a_{{ {name} }}$'],
         loc='upper center',
@@ -91,29 +94,6 @@ def plot_kinematics(times:NDArray, position:NDArray, velocity:NDArray, accelerat
         bbox_to_anchor=(0.5, 1),
     )
     ax1.grid(True)
-    '''
-    x_lim = [-0.5,np.round(np.max(times))+0.5]
-    ax1.set_xlim(x_lim)
-    
-    ax_1_lim, ax_1_ticks = get_lims_and_ticks(x_concat)
-    ax1.set_ylim(ax_1_lim)
-    # doing the limits like this aligns the zeroes on both axes
-    if np.max(x_concat) != 0:
-        ratio = np.max(np.abs(acceleration))/np.max(np.abs(x_concat))
-        ax_2_lim = ax_1_lim*ratio
-        _, ax_2_ticks = get_lims_and_ticks(acceleration)
-    else:
-        ax_2_lim, ax_2_ticks = get_lims_and_ticks(acceleration)
-    
-    ax2.set_ylim(ax_2_lim)
-    
-    ax1.set_yticks(ax_1_ticks)
-    ax2.set_yticks(ax_2_ticks)
-    
-    x_tick_space = 2
-    x_ticks = np.arange(0, x_lim[1], x_tick_space)
-    ax1.set_xticks(x_ticks)
-    '''
     ax1.set_xlabel(r'Time (s)')
     ax1.set_ylabel(fr'${name}$ (m)$\quad$$v_{name}$ (m/s)')
     ax2.set_ylabel(fr'$a_{name}$ (m/s$^2$)')
