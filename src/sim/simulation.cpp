@@ -97,10 +97,11 @@ namespace Sim{
             // doing calc
             std::tuple<double, StateArray, StepData> timeAndState;
             //timeAndState = eulerIntegrate(time, step, state, lastState);
-            timeAndState = ABRKIntegrate(time, step, &state, &lastState, &diffs, &stepData, &steps);
-
+            //timeAndState = ABRKIntegrate(time, step, &state, &lastState, &diffs, &stepData, &steps);
             //timeAndState = ORKIntegrate(time, step, &state, &lastState);
-            //auto timeAndState = adaptiveRKIntegrate(time, step, lastState);
+
+            timeAndState = adaptiveRKIntegrate(time, step, state);
+
             //timeAndState = RK4Integrate(time, step, state, lastState);
 
             newState = std::get<1>(timeAndState);
@@ -220,14 +221,14 @@ namespace Sim{
         double newTime = time + step;
         return { newTime, newState, std::get<1>(k1Dat)};
     }
-    
-
-   /*
-    std::tuple<double, StateArray> Sim::adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol, const double atol){
+   
+    std::tuple<double, StateArray, StepData> Sim::adaptiveRKIntegrate( const double time, const double step, const StateArray state, const double rtol, const double atol){
         bool errPass = false;
         
         double newStep = step;
+        double usedStep = step;
         StateArray newState;
+        StepData stateData;
 
         while(!errPass){
             // initializing new state and k vector
@@ -238,35 +239,38 @@ namespace Sim{
                 double xVal = time + newStep*RK_A[i];
                 // adding weighted sum of previous ks to y value
                 StateArray yVal = state;
-                for(long long unsigned int j = 0; j < ks.size(); j++){
+                for(int j = 0; j < ks.size(); j++){
                     yVal += RK_B(i,j)*ks[j];
                 }
                 // calculating this k value
-                StateArray thisK = calculate(xVal, yVal);
+                auto thisKdat = calculate(xVal, yVal);
+                auto thisK = std::get<0>(thisKdat);
+                stateData = std::get<1>(thisKdat);
                 thisK *= newStep;
                 ks.push_back(thisK);
             }
+            usedStep = newStep;
             // calculating the final output and output error
             StateArray err = StateArray::Zero();
-            for(long long unsigned int i = 0; i < ks.size(); i++){
+            //std::cout << ks.size() << "\n";
+            for(int i = 0; i < ks.size(); i++){
                 newState += RK_CH[i]*ks[i];
                 err += RK_CT[i]*ks[i];
             }
-            double eps = ((newState.abs()*rtol) + atol).minCoeff();
-            // use the smallest eps/err for the step value
-            double errVal = Eigen::VectorXd(err).norm();
+            double eps = ((newState.abs()*rtol) + atol).sum();
 
-            newStep = 0.9 * newStep * std::pow(eps/errVal, 0.2);
-            if( eps > errVal ){
+            //std::cout << "new step " << newStep << "\neps " << eps << "\nerr " << err << "\n";
+            newStep = (0.9 * newStep * std::pow(eps/err.sum(),0.2));
+            if( err.sum() <= eps ){
                 errPass = true;
             } else {
                 errPass = false;
             }
         }
         //fmt::print("t = {:<8.3}, step {:<8.3} new state [{}]\n", time, newStep, toString(newState.transpose()));
-        return {time+newStep, newState};
+        return {time+usedStep, newState, stateData};
     }
-    */
+    
 
     std::tuple<double, StateArray, StepData> Sim::ABRKIntegrate(
         const double time, const double step, const StateArray* state, const StateArray* lastState,
