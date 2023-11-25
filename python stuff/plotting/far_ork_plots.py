@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 import numpy as np
-from utils.utils import ORKDat, FARDat, data_to_splines, spline_max
-from matplotlib import cm
-import tqdm
+from utils.utils import ORKDat, FARDat, data_to_splines, spline_max, cd_to_cda_mul
+from matplotlib.ticker import LinearLocator, MaxNLocator
+import matplotlib.patheffects as pe
+from scipy.interpolate import CubicSpline
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["mathtext.fontset"] = "dejavuserif"
@@ -163,9 +164,13 @@ def plot_both_3d(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[Ax
     ax.set_ylabel("Position North of Launch, $y$ (m)")
     ax.set_zlabel("Altitude, $z$ (m)")
     ax.set_aspect("equal")
-    ax.view_init(azim=camera_azm, elev=20)
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0), ncols=2, fancybox=False)
-    fig.tight_layout()
+    elevang = np.rad2deg(np.arctan2( ax.get_zlim()[1]/2, np.hypot(ax.get_ylim()[1], ax.get_xlim()[1]) ))
+    ax.view_init(azim=camera_azm, elev=elevang)
+    
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1), fancybox=False, ncols=2)
+    ax.yaxis.set_major_locator(MaxNLocator(5))
+    ax.xaxis.set_major_locator(MaxNLocator(5))
+    fig.tight_layout(rect=[0,0.2,1,1])
     
     return fig, ax
 
@@ -384,7 +389,7 @@ def plot_alpha(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.
     txt_x = 0.05
     leg_y = 0.1
     note_lab = axs[0].text(0.95, 0.98, "Note: the remainder of the flight is stable\nwith only \'noise\' in $\\alpha$", ha="right", va="top",transform=axs[0].transAxes)
-    x_lab = fig.text(txt_x, 0.5, "$\\alpha$ (rad)", ha="right", va="center", rotation="vertical")
+    x_lab = fig.text(txt_x, 0.5, "$\\alpha$ ($^\\circ$)", ha="right", va="center", rotation="vertical")
     x_lab.set_in_layout(False)
     leg = fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1-leg_y), ncols=3, fancybox=False)
     leg.set_in_layout(False)
@@ -512,7 +517,7 @@ def plot_cp(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.Axe
     
     txt_x = 0.05
     leg_y = 0.1
-    note_lab = axs[0].text(0.95, 0.98, "Note: the remainder of the flight is stable\nwith only \'noise\' in CP$_x$", ha="right", va="top",transform=axs[0].transAxes)
+    note_lab = axs[0].text(0.95, 0.02, "Note: the remainder of the flight is \n stable with only \'noise\' in CP$_x$", ha="right", va="bottom",transform=axs[0].transAxes)
     x_lab = fig.text(txt_x, 0.5, "CP$_x$ (m)", ha="right", va="center", rotation="vertical")
     x_lab.set_in_layout(False)
     leg = fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1-leg_y), ncols=3, fancybox=False)
@@ -527,34 +532,362 @@ def plot_cn_m_alpha(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple
     
     ork_cn_dat = ork_data["Normal_force_coefficient"]
     ork_mach_dat = ork_data["Mach_number"]
-    ork_alpha_dat = ork_data["Angle_of_attack"]
+    ork_alpha_dat = ork_data["Angle_of_attack"] % 90
     
     far_cn_dat = far_data["CN"]
     far_mach_dat = far_data["M"]
     far_alpha_dat = far_data["AoA"]
     
-    ork_mach_grid, ork_alpha_grid = np.meshgrid(ork_cn_dat, ork_alpha_dat, sparse=True)
-    cn_grid = np.empty((ork_mach_grid.shape[1], ork_alpha_grid.shape[0]))
+    # 3D plot
+    # adding a border to the line so it stands out from the background more
+    ax.plot3D(far_alpha_dat, far_mach_dat, far_cn_dat, zorder=2.5, label="FAR", **farStyle, path_effects=[pe.Stroke(linewidth=3, foreground='black'), pe.Normal()])
+    ax.plot3D(ork_alpha_dat, ork_mach_dat, ork_cn_dat, zorder=2.5, label="ORK", **orkStyle)
     
-    # this takes ages
-    '''
-    print("generating grid")
-    for i in tqdm.tqdm(range(cn_grid.shape[0]),position=0):
-        for j in tqdm.tqdm(range(cn_grid.shape[1]),position=1, leave=False):
-            cn_grid[i,j] = float("nan")
-            for k in tqdm.tqdm(range(len(ork_cn_dat)),position=2, leave=False):
-                if ork_mach_dat[k] == ork_mach_grid[0,i] and ork_alpha_dat[k] == ork_alpha_grid[j,0]:
-                    cn_grid[i,j] = ork_cn_dat[k]
-    ax.plot_surface(ork_mach_grid, ork_alpha_grid, cn_grid)
-    '''
+    # plot lims
+    x_lim = (max( max(far_alpha_dat), max(ork_alpha_dat) ))*1.1
+    y_lim = (max( max(far_mach_dat), max(ork_mach_dat) ))*1.1
+    # univariate plots
+    # cn vs alpha
+    sm = 0
+    l = 0.5
+    ax.plot(ork_alpha_dat, y_lim*np.ones_like(ork_mach_dat), ork_cn_dat, zorder=1.5, color='red', linestyle="--", linewidth=1)
+    ax.plot(far_alpha_dat, y_lim*np.ones_like(far_mach_dat), far_cn_dat, zorder=1.5, color='blue', linestyle=":", linewidth=1)
+    # cn vs mach
+    ax.plot(x_lim*np.ones_like(ork_mach_dat), ork_mach_dat, ork_cn_dat, zorder=1.5, color='red', linestyle="--", linewidth=1)
+    ax.plot(x_lim*np.ones_like(far_mach_dat), far_mach_dat, far_cn_dat, zorder=1.5, color='blue', linestyle=":", linewidth=1)
     
-    ax.plot3D(ork_alpha_dat, ork_mach_dat, ork_cn_dat)
-    ax.plot3D(far_alpha_dat, far_mach_dat, far_cn_dat)
-    
-    ax.set_xlabel("$\alpha$ (rad)")
+    ax.set_xlabel("$\\alpha$ ($^\\circ$)")
     ax.set_ylabel("Mach Number")
-    ax.set_zlabel("")
+    ax.set_zlabel("$C_{N}$")
+    
+    ax.set_xlim(0,x_lim)
+    ax.set_ylim(0,y_lim)
+    
+    ax.xaxis.set_major_locator(MaxNLocator(5))
+    ax.yaxis.set_major_locator(MaxNLocator(5))
     
     #ax.plot_surface(ork_alpha_dat, ork_mach_dat, ork_cn_dat)
+    ax.view_init(azim=-145, elev=20)
+    
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0), ncols=2, fancybox=False)
+    fig.tight_layout()
     
     return fig, ax
+
+def plot_cp_m_alpha(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.Axes]]:
+    fig = plt.figure()
+    ax:Axes3D = plt.subplot(111,projection="3d")
+    
+    ork_cn_dat = ork_data["CP_location"]/100
+    ork_mach_dat = ork_data["Mach_number"]
+    ork_alpha_dat = ork_data["Angle_of_attack"] % 90
+    
+    far_cn_dat = far_data["CPx"]
+    far_mach_dat = far_data["M"]
+    far_alpha_dat = far_data["AoA"]
+    
+    # 3D plot
+    # adding a border to the line so it stands out from the background more
+    ax.plot3D(far_alpha_dat, far_mach_dat, far_cn_dat, zorder=2.5, label="FAR", **farStyle, path_effects=[pe.Stroke(linewidth=3, foreground='black'), pe.Normal()])
+    ax.plot3D(ork_alpha_dat, ork_mach_dat, ork_cn_dat, zorder=2.5, label="ORK", **orkStyle)
+    
+    # plot lims
+    x_lim = (max( max(far_alpha_dat), max(ork_alpha_dat) ))*1.1
+    y_lim = (max( max(far_mach_dat), max(ork_mach_dat) ))*1.1
+    # univariate plots
+    # cn vs alpha
+    sm = 0
+    l = 0.5
+    ax.plot(ork_alpha_dat, y_lim*np.ones_like(ork_mach_dat), ork_cn_dat, zorder=1.5, color='red', linestyle="--", linewidth=1)
+    ax.plot(far_alpha_dat, y_lim*np.ones_like(far_mach_dat), far_cn_dat, zorder=1.5, color='blue', linestyle=":", linewidth=1)
+    # cn vs mach
+    ax.plot(x_lim*np.ones_like(ork_mach_dat), ork_mach_dat, ork_cn_dat, zorder=1.5, color='red', linestyle="--", linewidth=1)
+    ax.plot(x_lim*np.ones_like(far_mach_dat), far_mach_dat, far_cn_dat, zorder=1.5, color='blue', linestyle=":", linewidth=1)
+    
+    ax.set_xlabel("$\\alpha$ ($^\\circ$)")
+    ax.set_ylabel("Mach Number")
+    ax.set_zlabel("CP$_x$")
+    
+    ax.set_xlim(0,x_lim)
+    ax.set_ylim(0,y_lim)
+    
+    ax.set_zlim( np.flip(ax.get_zlim()) ) # flipping the z axis
+    
+    ax.xaxis.set_major_locator(MaxNLocator(5))
+    ax.yaxis.set_major_locator(MaxNLocator(5))
+    
+    #ax.plot_surface(ork_alpha_dat, ork_mach_dat, ork_cn_dat)
+    ax.view_init(azim=-145, elev=30)
+    
+    ax.legend(loc='upper left', bbox_to_anchor=(0, 0), ncols=2, fancybox=False, title="Note: Inverted Z axis")
+    #ax.text(0,0,0,"Note: Inverted Z axis", ha="right", va="top",transform=ax.transAxes)
+    fig.tight_layout()
+    
+    return fig, ax
+
+def plot_cdf_vs_re_m(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.Axes]]:
+    fig = plt.figure()
+    ax:Axes3D = plt.subplot(111,projection="3d")
+    
+    ork_fric_dat = ork_data["Friction_drag_coefficient"]
+    ork_mach_dat = ork_data["Mach_number"]
+    ork_reyn_num = np.log10(ork_data["Reynolds_number"])
+    
+    far_fric_dat = far_data["Cdf"]
+    far_mach_dat = far_data["M"]
+    far_reyn_num = np.log10(far_data["ReL"])
+    
+    # 3D plot
+    # adding a border to the line so it stands out from the background more
+    ax.plot3D(far_reyn_num, far_mach_dat, far_fric_dat, zorder=2.5, label="FAR", **farStyle, path_effects=[pe.Stroke(linewidth=3, foreground='black'), pe.Normal()])
+    ax.plot3D(ork_reyn_num, ork_mach_dat, ork_fric_dat, zorder=2.5, label="ORK", **orkStyle)
+    
+    # plot lims
+    x_lim = (max( max(far_reyn_num), max(ork_reyn_num) ))*1.1
+    y_lim = (max( max(far_mach_dat), max(ork_mach_dat) ))*1.1
+    # univariate plots
+    # cn vs alpha
+    sm = 0
+    l = 0.5
+    ax.plot(ork_reyn_num, y_lim*np.ones_like(ork_mach_dat), ork_fric_dat, zorder=1.5, color='red', linestyle="--", linewidth=1)
+    ax.plot(far_reyn_num, y_lim*np.ones_like(far_mach_dat), far_fric_dat, zorder=1.5, color='blue', linestyle=":", linewidth=1)
+    # cn vs mach
+    ax.plot(x_lim*np.ones_like(ork_mach_dat), ork_mach_dat, ork_fric_dat, zorder=1.5, color='red', linestyle="--", linewidth=1)
+    ax.plot(x_lim*np.ones_like(far_mach_dat), far_mach_dat, far_fric_dat, zorder=1.5, color='blue', linestyle=":", linewidth=1)
+    
+    ax.set_xlabel("log$_{10}$(Re)")
+    ax.set_ylabel("Mach Number")
+    ax.set_zlabel("$C_{D_f}$")
+    
+    #ax.set_xlim(0,x_lim)
+    ax.set_ylim(0,y_lim)
+    
+    #ax.xaxis.set_major_locator(MaxNLocator(5))
+    #ax.yaxis.set_major_locator(MaxNLocator(5))
+    
+    #ax.plot_surface(ork_alpha_dat, ork_mach_dat, ork_cn_dat)
+    ax.view_init(azim=-145, elev=30)
+    
+    ax.legend(loc='upper left', bbox_to_anchor=(0, 0), ncols=2, fancybox=False)
+    #ax.text(0,0,0,"Note: Inverted Z axis", ha="right", va="top",transform=ax.transAxes)
+    fig.tight_layout()
+    
+    return fig, ax
+
+def plot_cdf(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.Axes]]:
+    fig, axs = plt.subplots(2, sharex=True)
+    axs : tuple[plt.Axes] = axs # type hinting
+
+    _tdata = np.concatenate([ ork_data["Time"], far_data["t"] ])
+    t_min = min(_tdata)
+    t_max = max(_tdata)
+    times = np.linspace(t_min, t_max, 10000)
+    
+    ork_th_spl, far_th_spl = data_to_splines(ork_data, far_data, "Friction_drag_coefficient", "Cdf")
+    
+    far_al = axs[0].plot(times, far_th_spl(times), label="FAR", **farStyle)
+    ork_al = axs[0].plot(times, ork_th_spl(times), label="ORK", **orkStyle)
+    diffys = far_th_spl(times)-ork_th_spl(times)
+    diff = axs[1].plot(times, diffys, color='green', label="$\Delta C_{D_f}$")
+    
+    axs[1].set_xlabel("Time (s)")
+    
+    # settings to apply to both axes
+    for a in axs:
+        a.set_xlim(t_min,t_max/10)
+        a.grid(True)
+    
+    txt_x = 0.05
+    leg_y = 0.1
+    x_lab = fig.text(txt_x, 0.5, "$C_{D_f}$", ha="right", va="center", rotation="vertical")
+    x_lab.set_in_layout(False)
+    leg = fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1-leg_y), ncols=3, fancybox=False)
+    note_lab = axs[0].text(0.95, 0.98, "Note: $C_{D_f}$ changes little for the\nrest of the flight", ha="right", va="top",transform=axs[0].transAxes)
+    leg.set_in_layout(False)
+    fig.tight_layout(rect=[txt_x,0,1,1-leg_y*2/3])
+    return fig, axs
+
+
+def plot_cdp(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.Axes]]:
+    fig, axs = plt.subplots(2, sharex=True)
+    axs : tuple[plt.Axes] = axs # type hinting
+
+    _tdata = np.concatenate([ ork_data["Time"], far_data["t"] ])
+    t_min = min(_tdata)
+    t_max = max(_tdata)
+    times = np.linspace(t_min, t_max, 10000)
+    
+    ork_th_spl, far_th_spl = data_to_splines(ork_data, far_data, "Pressure_drag_coefficient", "Cdp")
+    _, far_aoa_spl = data_to_splines(ork_data, far_data, "Angle_of_attack", "AoA")
+    
+    drag_adj = cd_to_cda_mul(far_aoa_spl(times))
+    
+    far_al = axs[0].plot(times, far_th_spl(times)/drag_adj, label="FAR", **farStyle)
+    ork_al = axs[0].plot(times, ork_th_spl(times), label="ORK", **orkStyle)
+    diffys = far_th_spl(times)-ork_th_spl(times)
+    diff = axs[1].plot(times, diffys, color='green', label="$\Delta C_{D_P}$")
+    
+    axs[1].set_xlabel("Time (s)")
+    
+    # settings to apply to both axes
+    for a in axs:
+        a.set_xlim(t_min,t_max/10)
+        a.grid(True)
+    
+    txt_x = 0.05
+    leg_y = 0.1
+    x_lab = fig.text(txt_x, 0.5, "$C_{D_P}$", ha="right", va="center", rotation="vertical")
+    x_lab.set_in_layout(False)
+    leg = fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1-leg_y), ncols=3, fancybox=False)
+    note_lab = axs[0].text(0.95, 0.98, "Note: $C_{D_P}$ changes little for\nthe rest of the flight", ha="right", va="top",transform=axs[0].transAxes)
+    leg.set_in_layout(False)
+    fig.tight_layout(rect=[txt_x,0,1,1-leg_y*2/3])
+    return fig, axs
+
+
+def plot_cdb(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.Axes]]:
+    fig, axs = plt.subplots(1, sharex=True)
+    fig.set_size_inches( ( fig.get_figwidth(), fig.get_figheight()/2 ) )
+    axs : plt.Axes = axs # type hinting
+
+    _tdata = np.concatenate([ ork_data["Time"], far_data["t"] ])
+    t_min = min(_tdata)
+    t_max = max(_tdata)
+    times = np.linspace(t_min, t_max, 10000)
+    
+    ork_cdb_spl, _ = data_to_splines(ork_data, far_data, "Base_drag_coefficient", "Cdb")
+    _, far_aoa_spl = data_to_splines(ork_data, far_data, "Angle_of_attack", "AoA")
+    
+    _, far_th_spl = data_to_splines(ork_data, far_data, "Thrust", "Thrust")
+    burnout = min([x for x in far_th_spl.roots() if x > 1])
+    
+    
+    
+    far_t_1 = np.array(far_data["t"])[ np.array(far_data["t"]) < burnout ]
+    far_d_1 = np.array(far_data["Cdb"])[ np.array(far_data["t"]) < burnout ]
+    far_t_2 = np.array(far_data["t"])[ np.array(far_data["t"]) >= burnout ]
+    far_d_2 = np.array(far_data["Cdb"])[ np.array(far_data["t"]) >= burnout ]
+    
+    far_cdb_spl_1 = CubicSpline(far_t_1, far_d_1, bc_type=('clamped', 'not-a-knot'))
+    far_cdb_spl_2 = CubicSpline(far_t_2, far_d_2)
+    
+    t_1 = np.linspace(t_min, burnout-0.02, 3000)
+    t_2 = np.linspace(burnout, t_max, 7000)
+    drag_adj1 = cd_to_cda_mul(far_aoa_spl(t_1))
+    drag_adj2 = cd_to_cda_mul(far_aoa_spl(t_2))
+    
+    # spline doesn't really work well with discontinuity here
+    far_al = axs.plot(t_1, far_cdb_spl_1(t_1)/drag_adj1, label="FAR", **farStyle)
+    far_al2 = axs.plot(t_2, far_cdb_spl_2(t_2)/drag_adj2, **farStyle)
+    ork_al = axs.plot(times, ork_cdb_spl(times), label="ORK", **orkStyle)
+    
+    axs.set_xlabel("Time (s)")
+    axs.set_ylabel("$C_{D_B}$")
+    
+    # settings to apply to both axes
+    axs.set_xlim(t_min,t_max/3)
+    axs.grid(True)
+    
+    txt_x = 0.05
+    leg_y = 0.2
+    #x_lab = fig.text(txt_x, 0.5, "$C_{D_B}$", ha="right", va="center", rotation="vertical")
+    #x_lab.set_in_layout(False)
+    leg = fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1-leg_y), ncols=3, fancybox=False)
+    note_lab = axs.text(0.95, 0.98, "Note: $C_{D_B}$ changes little for\nthe rest of the flight", ha="right", va="top",transform=axs.transAxes)
+    leg.set_in_layout(False)
+    fig.tight_layout(rect=[0,0,1,1-leg_y*1/3])
+    return fig, axs
+
+
+def plot_cdb_mach(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.Axes]]:
+    fig, axs = plt.subplots(1, sharex=True)
+    fig.set_size_inches( ( fig.get_figwidth(), fig.get_figheight()/2 ) )
+    axs : plt.Axes = axs # type hinting
+
+    _tdata = np.concatenate([ ork_data["Time"], far_data["t"] ])
+    t_min = min(_tdata)
+    t_max = max(_tdata)
+    times = np.linspace(t_min, t_max, 10000)
+    
+    ork_cdb_spl, _ = data_to_splines(ork_data, far_data, "Base_drag_coefficient", "Cdb")
+    ork_m_spl, far_m_spl = data_to_splines(ork_data, far_data, "Mach_number", "M")
+    _, far_aoa_spl = data_to_splines(ork_data, far_data, "Angle_of_attack", "AoA")
+    
+    _, far_th_spl = data_to_splines(ork_data, far_data, "Thrust", "Thrust")
+    burnout = min([x for x in far_th_spl.roots() if x > 1])
+    
+    
+    far_t_1 = np.array(far_data["t"])[ np.array(far_data["t"]) < burnout ]
+    far_d_1 = np.array(far_data["Cdb"])[ np.array(far_data["t"]) < burnout ]
+    far_t_2 = np.array(far_data["t"])[ np.array(far_data["t"]) >= burnout ]
+    far_d_2 = np.array(far_data["Cdb"])[ np.array(far_data["t"]) >= burnout ]
+    
+    far_cdb_spl_1 = CubicSpline(far_t_1, far_d_1, bc_type=('clamped', 'not-a-knot'))
+    far_cdb_spl_2 = CubicSpline(far_t_2, far_d_2)
+    
+    t_1 = np.linspace(t_min, burnout-0.02, 3000)
+    t_2 = np.linspace(burnout, t_max, 7000)
+    drag_adj1 = cd_to_cda_mul(far_aoa_spl(t_1))
+    drag_adj2 = cd_to_cda_mul(far_aoa_spl(t_2))
+    
+    nuOrkStl = orkStyle.copy()
+    nuOrkStl["linestyle"] = ":"
+    
+    # spline doesn't really work well with discontinuity here
+    far_al = axs.plot(far_m_spl(t_1), far_cdb_spl_1(t_1)/drag_adj1, label="FAR", **farStyle)
+    far_al2 = axs.plot(far_m_spl(t_2), far_cdb_spl_2(t_2)/drag_adj2, **farStyle)
+    ork_al = axs.plot(ork_m_spl(times), ork_cdb_spl(times), label="ORK", **nuOrkStl)
+    
+    axs.set_xlabel("Mach Number")
+    axs.set_ylabel("$C_{D_B}$")
+    
+    max_mach = max(max(far_m_spl(times)), max(ork_m_spl(times)))
+    
+    # settings to apply to both axes
+    axs.set_xlim(0, max_mach)
+    axs.grid(True)
+    
+    leg_y = 0.2
+    leg = fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1-leg_y), ncols=3, fancybox=False)
+    leg.set_in_layout(False)
+    fig.tight_layout(rect=[0,0,1,1-leg_y*1/3])
+    return fig, axs
+
+
+def plot_cdp_mach(ork_data:ORKDat, far_data:FARDat) -> tuple[plt.Figure, tuple[plt.Axes]]:
+    fig, axs = plt.subplots(1)
+    fig.set_size_inches( ( fig.get_figwidth(), fig.get_figheight()/2 ) )
+    axs : plt.Axes = axs # type hinting
+
+    _tdata = np.concatenate([ ork_data["Time"], far_data["t"] ])
+    t_min = min(_tdata)
+    t_max = max(_tdata)
+    times = np.linspace(t_min, t_max, 10000)
+    
+    ork_th_spl, far_th_spl = data_to_splines(ork_data, far_data, "Pressure_drag_coefficient", "Cdp")
+    _, far_aoa_spl = data_to_splines(ork_data, far_data, "Angle_of_attack", "AoA")
+    ork_m_spl, far_m_spl = data_to_splines(ork_data, far_data, "Mach_number", "M")
+    
+    drag_adj = cd_to_cda_mul(far_aoa_spl(times))
+    
+    max_mach = max(max(far_m_spl(times)), max(ork_m_spl(times)))
+    
+    nuOrkStl = orkStyle.copy()
+    nuOrkStl["linestyle"] = ":"
+    
+    far_al = axs.plot(far_m_spl(times), far_th_spl(times)/drag_adj, label="FAR", **farStyle)
+    ork_al = axs.plot(ork_m_spl(times), ork_th_spl(times), label="ORK", **nuOrkStl)
+    
+    axs.set_xlabel("Mach Number")
+    axs.set_ylabel("$C_{D_P}$")
+    
+    # settings to apply to both axes
+    axs.set_xlim(0, max_mach)
+    axs.grid(True)
+    
+    leg_y = 0.2
+    leg = fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1-leg_y), ncols=3, fancybox=False)
+    # note_lab = axs.text(0.95, 0.98, "Note: $C_{D_P}$ changes little for\nthe rest of the flight", ha="right", va="top",transform=axs[0].transAxes)
+    leg.set_in_layout(False)
+    fig.tight_layout(rect=[0,0,1,1-leg_y*1/3])
+    return fig, axs

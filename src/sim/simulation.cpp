@@ -702,7 +702,7 @@ namespace Sim{
         double cdf = _rocket->Cdf(mach, reynL, angleOfAttack);
         double cdp = _rocket->Cdp(mach, angleOfAttack);
         double cdb = _rocket->Cdb(mach, time, angleOfAttack);
-        double cd = 0.0;// cdf + cdp + cdb;
+        double cd = cdf + cdp + cdb;
         double dragMag = cd*referenceArea()*dynamicPressure;
 
         assert(!std::isnan(cdf));
@@ -718,11 +718,11 @@ namespace Sim{
 
         Eigen::Vector3d dragForce = dragMag*dragDir;
         assert(!dragForce.hasNaN());
-        //forces += dragForce;
+        forces += dragForce;
         //fmt::print("TIME {}, DRAG [{}]\n", time, toString(dragForce.transpose()));
 
         Eigen::Vector3d dragMoments = (rocketRotationMat.transpose()*dragForce).cross(rockCP - rockCM);
-        //moments += dragMoments;
+        moments += dragMoments;
 
         /*
         --------------------------------

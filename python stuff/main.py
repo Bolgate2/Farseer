@@ -9,7 +9,7 @@ import sys
 from plotting.plotting import plot3dTrajectory, plot_kinematics
 
 
-from utils.utils import load_data
+from utils.utils import load_data, cd_to_cda_mul
 
 def same_shape_data(ork_times:NDArray, far_times:NDArray, ork_data:NDArray, far_data:NDArray) -> tuple[NDArray, NDArray, NDArray, NDArray]:
     time_concat = np.concatenate([far_times, ork_times])
@@ -149,8 +149,8 @@ farCNs = data["CN"]
 orkCPx = orkData["CP location (cm)"]/100
 farCPx = data["CPx"]
 
-plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
-plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkAoAs, farAoAs, r"$\alpha (^\circ$)")
+#plot_time_data_with_diffs(orkTimes, farTimes, orkMachs, farMachs, r"M")
 #plot_time_data_with_diffs(orkTimes, farTimes, orkCNs, farCNs, r"$C_N$")
 #plot_time_data_with_diffs(orkTimes, farTimes, orkCPx, farCPx, r"$CP_{x}$ (m)")
 
@@ -169,7 +169,7 @@ orkKinViscInv = orkReynL/orkVelTotal # i/kinematicViscosity
 farKinViscInv = farReynL/farVelTotal
 
 
-'''
+
 fig, ax1 = plt.subplots()
 ax1.plot(orkAlts, orkReynU, )
 ax1.plot(farAlts, farReynU, )
@@ -180,7 +180,7 @@ ax1.set_ylabel(r" $\frac{\text{Re}}{L.u}$ ")
 ax1.set_xlabel(r"altitude")
 fig.legend(["ork data", "Farseer data"])
 fig.tight_layout()
-'''
+
 
 
 farCdf = data["Cdf"]
@@ -190,9 +190,10 @@ orkCdp = orkData["Pressure drag coefficient (â€‹)"]
 farCdb = data["Cdb"]
 orkCdb = orkData["Base drag coefficient (â€‹)"]
 farCd = data["Cd"]
-#plot_time_data_with_diffs(orkTimes, farTimes, orkCdf, farCdf, r"$C_{D_f}$")
-#plot_time_data_with_diffs(orkTimes, farTimes, orkCdp, farCdp, r"$C_{D_P}$")
-#plot_time_data_with_diffs(orkTimes, farTimes, orkCdb, farCdb, r"$C_{D_B}$")
+muls = cd_to_cda_mul(farAoAs)
+plot_time_data_with_diffs(orkTimes, farTimes, orkCdf, farCdf/muls, r"$C_{D_f}$")
+plot_time_data_with_diffs(orkTimes, farTimes, orkCdp, farCdp/muls, r"$C_{D_P}$")
+plot_time_data_with_diffs(orkTimes, farTimes, orkCdb, farCdb/muls, r"$C_{D_B}$")
 
 
 '''
@@ -211,7 +212,7 @@ fig.tight_layout()
 
 fig, ax1 = plt.subplots()
 ax1.plot(orkMachs, orkCdp, )
-ax1.plot(farMachs, farCdp, )
+ax1.plot(farMachs[:-1], (farCdp/muls)[:-1], )
 ax1.grid(True)
 
 ax1.set_ylabel(r" $C_{D_p}$")
@@ -222,7 +223,7 @@ fig.tight_layout()
 
 fig, ax1 = plt.subplots()
 ax1.plot(orkMachs, orkCdb, )
-ax1.plot(farMachs, farCdb, )
+ax1.plot(farMachs, farCdb/muls, )
 ax1.grid(True)
 
 ax1.set_ylabel(r" $C_{D_B}$")
@@ -231,24 +232,24 @@ fig.legend(["ork data", "Farseer data"])
 fig.tight_layout()
 
 
-plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
+#plot3dTrajectory(data["Xp"], data["Yp"], data["Zp"])
 
 #plt.plot(data["t"][1:], np.diff(data["t"]))
 #print(min(np.diff(data["t"])))
 #plt.show()
 
-plot_kinematics(orkTimes, orkAlts, orkData["Vertical velocity (m/s)"], orkData['Vertical acceleration (m/sÂ²)'], r"{z_{ork}}")
-plot_kinematics(data["t"], data["Zp"], data["Zv"], data["Za"], "z")
+#plot_kinematics(orkTimes, orkAlts, orkData["Vertical velocity (m/s)"], orkData['Vertical acceleration (m/sÂ²)'], r"{z_{ork}}")
+#plot_kinematics(data["t"], data["Zp"], data["Zv"], data["Za"], "z")
 
 
-plot_kinematics(data["t"], data["Yp"], data["Yv"], data["Ya"], "y")
-plot_kinematics(data["t"], data["Xp"], data["Xv"], data["Xa"], "x")
+#plot_kinematics(data["t"], data["Yp"], data["Yv"], data["Ya"], "y")
+#plot_kinematics(data["t"], data["Xp"], data["Xv"], data["Xa"], "x")
 
-plot_kinematics(data["t"], data["Psi"], data["dPsi"], data["ddPsi"], "psi")
-plot_kinematics(data["t"], data["Theta"], data["dTheta"], data["ddTheta"], "theta")
-plot_kinematics(data["t"], data["Phi"], data["dPhi"], data["ddPhi"], "phi")
+#plot_kinematics(data["t"], data["Psi"], data["dPsi"], data["ddPsi"], "psi")
+#plot_kinematics(data["t"], data["Theta"], data["dTheta"], data["ddTheta"], "theta")
+#plot_kinematics(data["t"], data["Phi"], data["dPhi"], data["ddPhi"], "phi")
 
-plot_kinematics(data["t"], data["ptot"], data["vtot"], data["atot"], "total")
+#plot_kinematics(data["t"], data["ptot"], data["vtot"], data["atot"], "total")
 
 
 plt.show()

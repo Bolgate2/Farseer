@@ -338,11 +338,11 @@ int main(int argc, char** argv){
     auto subsonicRocket = createTestRocket();
     auto supersonicRocket = createBIGTestRocket();
 
-    auto subsonicPath = std::filesystem::current_path().append("..").append("results").append("6030sub");
-    auto supersonicPath = std::filesystem::current_path().append("..").append("results").append("norm6030super");
+    auto subsonicPath = std::filesystem::current_path().append("..").append("results").append("basetest");
+    auto supersonicPath = std::filesystem::current_path().append("..").append("results").append("basetestsuper");
 
-    simRocket(slowerSupersonicRocket.get(), supersonicPath);
-    return 0;
+    //simRocket(slowerSupersonicRocket.get(), supersonicPath);
+    //return 0;
 
     bool combined = true;
 

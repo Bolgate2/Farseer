@@ -8,7 +8,8 @@ import os
 from utils.utils import load_ork_data, offset_fil_path, load_far_data, ORKDat, FARDat
 from plotting.far_ork_plots import (
     plot_altitudes, plot_lat_motion, plot_both_3d, plot_thrusts, plot_masses, plot_rot_inert, plot_long_inert, plot_g,
-    plot_alpha, plot_dens, plot_cn, plot_cp, plot_cn_m_alpha
+    plot_alpha, plot_dens, plot_cn, plot_cp, plot_cn_m_alpha, plot_cp_m_alpha,
+    plot_cdf_vs_re_m, plot_cdf, plot_cdp, plot_cdb, plot_cdb_mach, plot_cdp_mach
     )
 
 
@@ -18,9 +19,12 @@ except KeyError as e:
     print("Please define the folder you wish to save plots in, in your environment variables as with the key \"FARPLOTRES\"")
     raise e
 
-def save_fig(fig : plt.Figure, path : PathLike, **kwargs):
+def save_fig(fig : plt.Figure, path : PathLike, overwrite=False, **kwargs):
     alt_pth = Path(res_fol, path)
-    res_pth = offset_fil_path(alt_pth)
+    if overwrite:
+        res_pth = alt_pth
+    else:
+        res_pth = offset_fil_path(alt_pth)
     fig.savefig(res_pth, dpi=450,**kwargs)
     print(f"Saved figure to {res_pth.as_posix()}")
 
@@ -83,27 +87,49 @@ def plot_norm(orksubdat:ORKDat, farsubdat:FARDat, orksuperdat:ORKDat, farsuperda
         #("CN", plot_cn),
         #("CP", plot_cp),
         ("cn_m_alpha", plot_cn_m_alpha),
+        ("cn_m_cp", plot_cp_m_alpha),
         }
     
     fol = "Norm"
     
     for name, func in plots:
-        if name == "cn_m_alpha":
-            pass
-        else:
-            for dat, tag in zip([[orksubdat, farsubdat], [orksuperdat, farsuperdat]], ["sub", "super"]):
-                alt_fig, alt_sub_axs = func(*dat)
-                alt_path = Path(fol, f"{name}_{tag}.png")
-                save_fig(alt_fig, alt_path)
+        for dat, tag in zip([[orksubdat, farsubdat], [orksuperdat, farsuperdat]], ["sub", "super"]):
+            alt_fig, alt_sub_axs = func(*dat)
+            alt_path = Path(fol, f"{name}_{tag}.png")
+            save_fig(alt_fig, alt_path)
     
+def plot_drag(orksubdat:ORKDat, farsubdat:FARDat, orksuperdat:ORKDat, farsuperdat:ORKDat):
+    plots:set[tuple[str,callable]] = {
+        #("altitude", plot_altitudes),
+        #("3d_flight", plot_both_3d),
+        #("alpha", plot_alpha),
+        #("dens", plot_dens),
+        #("CN", plot_cn),
+        #("CP", plot_cp),
+        #("cn_m_alpha", plot_cn_m_alpha),
+        #("cn_m_cp", plot_cp_m_alpha),
+        #("cf_m_re", plot_cdf_vs_re_m)
+        ("cdf", plot_cdf),
+        #("cdp", plot_cdp),
+        ("cdb", plot_cdb),
+        ("cdb_m", plot_cdb_mach),
+        ("cdp_m", plot_cdp_mach)
+        }
+    overwrite = True
+    fol = "Drag"
     
+    for name, func in plots:
+        for dat, tag in zip([[orksubdat, farsubdat], [orksuperdat, farsuperdat]], ["sub", "super"]):
+            alt_fig, alt_sub_axs = func(*dat)
+            alt_path = Path(fol, f"{name}_{tag}.png")
+            save_fig(alt_fig, alt_path, overwrite=overwrite)
 
 def main():
-    p = Path(Path(__file__).parent.parent, "results/norm6030sub")
-    psuper = Path(Path(__file__).parent.parent, "results/norm6030super")
+    p = Path(Path(__file__).parent.parent, "results/6030sub")
+    psuper = Path(Path(__file__).parent.parent, "results/6030super")
     
-    op = Path(p.parent, "ork6030resNorm.csv")
-    opsuper = Path(p.parent, "ork6030resBIGNorm.csv")
+    op = Path(p.parent, "ork6030res.csv")
+    opsuper = Path(p.parent, "ork6030resBIG.csv")
     print("loading far data")
     fardat = load_far_data(p)
     farsuperdat = load_far_data(psuper)
@@ -111,10 +137,14 @@ def main():
     orkdat = load_ork_data(op)
     orksuperdat = load_ork_data(opsuper)
     
+    fardat["ReL"] *= 0.79
+    farsuperdat["ReL"] *= 0.48
     
     # plot_proj(orkdat, fardat)
     
-    plot_norm(orkdat, fardat, orksuperdat, farsuperdat)
+    # plot_norm(orkdat, fardat, orksuperdat, farsuperdat)
+    
+    plot_drag(orkdat, fardat, orksuperdat, farsuperdat)
 
     plt.show()
 

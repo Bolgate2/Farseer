@@ -121,7 +121,6 @@ def load_ork_data(dataPath:PathLike) -> ORKDat:
         data2[newK] = v
     dat = ORKDat(**data2)
     
-    
     orkTemps = dat["Air_temperature"]
     orkTempsK = orkTemps + 273.15
     orkPres = dat["Air_pressure"]
@@ -129,6 +128,7 @@ def load_ork_data(dataPath:PathLike) -> ORKDat:
     orkDens = orkPresPa/(287.053*orkTempsK)
     dat["Density"] = orkDens
     return dat
+
 
 def load_far_data(dataPath:PathLike) -> FARDat:
     heads = np.genfromtxt(dataPath, str, max_rows=1, delimiter=',') # loading headers
@@ -168,8 +168,19 @@ def data_to_splines(ork_data:ORKDat, far_data:FARDat, ork_key, far_key) -> tuple
     Returns:
         tuple[CubicSpline, CubicSpline]: (ork spline, far spline)
     """
-    xspl_ork = CubicSpline(ork_data["Time"], ork_data[ork_key])
-    xspl_far = CubicSpline(far_data["t"], far_data[far_key])
+    ork_times = np.array(ork_data["Time"])
+    ork_dat = np.array(ork_data[ork_key])
+    ork_times = ork_times[ np.isnan(ork_dat) == False ]
+    ork_dat = ork_dat[ np.isnan(ork_dat) == False ]
+    
+    if ork_key == "Angle_of_attack":
+        xspl_ork = CubicSpline(ork_times, ork_dat % 90)
+    else:
+        xspl_ork = CubicSpline(ork_times, ork_dat)
+    if far_key == "AoA":
+        xspl_far = CubicSpline(far_data["t"], far_data[far_key] % 90)
+    else:
+        xspl_far = CubicSpline(far_data["t"], far_data[far_key])
     return xspl_ork, xspl_far
 
 def spline_max(spl:CubicSpline) -> tuple[float, float]:
@@ -205,3 +216,11 @@ def offset_fil_path(path:PathLike):
             filname = filspl[0] + "_" + str(count) + "." + filspl[-1]
             p = Path(basename.parent, filname)
     return p
+
+def cd_to_cda_mul(alphas:NDArray):
+    a = np.deg2rad(alphas)
+    out_mul = np.where(alphas <= 17,
+                       -22.971*np.power(a,3) + 10.223*np.power(a,2) + 1,
+                       -1.4800*np.power(a,4) + 6.7849*np.power(a,3) - 10.063*np.power(a,2) + 4.3340*a + 0.7342
+                       )
+    return out_mul
