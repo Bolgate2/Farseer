@@ -101,3 +101,4 @@ def plot_kinematics(times:NDArray, position:NDArray, velocity:NDArray, accelerat
     fig.tight_layout()
     fig.subplots_adjust(top=0.94)
     return fig, ax1, ax2
+

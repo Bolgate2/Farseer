@@ -96,11 +96,10 @@ namespace Sim{
         while(!term){
             // doing calc
             std::tuple<double, StateArray, StepData> timeAndState;
-            //timeAndState = eulerIntegrate(time, step, state, lastState);
+            //timeAndState = eulerIntegrate(time, step, &state, &lastState);
             //timeAndState = ABRKIntegrate(time, step, &state, &lastState, &diffs, &stepData, &steps);
-            //timeAndState = ORKIntegrate(time, step, &state, &lastState);
-
-            timeAndState = adaptiveRKIntegrate(time, step, state);
+            timeAndState = ORKIntegrate(time, step, &state, &lastState);
+            //timeAndState = adaptiveRKIntegrate(time, step, state);
 
             //timeAndState = RK4Integrate(time, step, state, lastState);
 
@@ -217,8 +216,8 @@ namespace Sim{
         std::tuple<StateArray, StepData> k1Dat = calculate(time, *state);
         StateArray k1 = std::get<0>(k1Dat);
         auto newStep = selectTimeStep(state, &k1, step);
-        StateArray newState = (*state) + k1 * step;
-        double newTime = time + step;
+        StateArray newState = (*state) + k1 * newStep;
+        double newTime = time + newStep;
         return { newTime, newState, std::get<1>(k1Dat)};
     }
    
@@ -303,7 +302,6 @@ namespace Sim{
         } else {
             newdata = RK4Integrate(time, newStep, state, &k1Dat);
         }
-
         return newdata;
     }
 
@@ -652,10 +650,6 @@ namespace Sim{
         forces += normForce;
         //fmt::print("TIME {}, NORM [{}]\n", time, toString(normForce.transpose()));
         assert(!normForce.hasNaN());
-        if(cn > 1000){
-            fmt::print("TIME {}, STATE AT FAILURE [{}], mach {} cn {}\n", time, toString(state.transpose()), mach, cn);
-            assert(cn < 1000);
-        }
 
         //fmt::print("TIME {}, STATE AT FAILURE [{}]}\n", time, toString(state.transpose()));
         //fmt::print("t={:<8.4f} aoa {}\n", time, angleOfAttack);
@@ -708,7 +702,7 @@ namespace Sim{
         double cdf = _rocket->Cdf(mach, reynL, angleOfAttack);
         double cdp = _rocket->Cdp(mach, angleOfAttack);
         double cdb = _rocket->Cdb(mach, time, angleOfAttack);
-        double cd = cdf + cdp + cdb;
+        double cd = 0.0;// cdf + cdp + cdb;
         double dragMag = cd*referenceArea()*dynamicPressure;
 
         assert(!std::isnan(cdf));
@@ -724,7 +718,7 @@ namespace Sim{
 
         Eigen::Vector3d dragForce = dragMag*dragDir;
         assert(!dragForce.hasNaN());
-        forces += dragForce;
+        //forces += dragForce;
         //fmt::print("TIME {}, DRAG [{}]\n", time, toString(dragForce.transpose()));
 
         Eigen::Vector3d dragMoments = (rocketRotationMat.transpose()*dragForce).cross(rockCP - rockCM);

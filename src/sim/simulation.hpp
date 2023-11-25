@@ -12,6 +12,12 @@
 
 namespace Sim{
 
+    enum IntegrationStrats{
+        EULER,
+        RK4,
+        AB
+    };
+
     class Sim{
         private:
             double _userStep;
@@ -40,7 +46,6 @@ namespace Sim{
             };
             */
             
-            
             const Eigen::Array<double, 7, 6> RK_B = {
                 {0,             0,              0,              0,              0,              0},
                 {1.0/5,         0,              0,              0,              0,              0},
@@ -50,6 +55,7 @@ namespace Sim{
                 {9017.0/3168,   -355.0/33,      46732.0/5247,   49.0/176,       -5103.0/18656,  0},
                 {35.0/384,      0,              500.0/1113,     125.0/192,      -2187.0/6784,   11.0/84}
             };
+            
             
             //const Eigen::Array<double, 1, 6> RK_CH = {16.0/135, 0, 6656.0/12825, 28561.0/56430, -9.0/50, 2.0/55};
             const Eigen::Array<double, 1, 7> RK_CH = {35.0/384, 0,  500.0/1113, 125.0/192,  -2187.0/6784,   11.0/84, 0.0};

@@ -8,14 +8,8 @@ import sys
 
 from plotting.plotting import plot3dTrajectory, plot_kinematics
 
-def load_data(dataPath:PathLike) -> dict[str, NDArray]:
-    heads = np.genfromtxt(dataPath, str, max_rows=1, delimiter=',') # loading headers
-    res = np.genfromtxt(dataPath, float, skip_header=1, delimiter=',') # loading data
-    heads = [ x.strip() for x in heads ]  # stripping white space
-    data = {}
-    for i,name in enumerate(heads):
-        data[name] = res[:,i]
-    return data
+
+from utils.utils import load_data
 
 def same_shape_data(ork_times:NDArray, far_times:NDArray, ork_data:NDArray, far_data:NDArray) -> tuple[NDArray, NDArray, NDArray, NDArray]:
     time_concat = np.concatenate([far_times, ork_times])

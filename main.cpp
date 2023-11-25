@@ -215,6 +215,71 @@ std::shared_ptr<Rocket::AeroComponent> createBIGTestRocket(){
     return rocket;
 }
 
+std::shared_ptr<Rocket::AeroComponent> createMEDTestRocket(){
+    // TOOB PARAMS
+    auto toobMat = std::make_unique<Rocket::Material>("Cardboard", 680);
+    auto toobFinish = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
+    auto rocketRadius = 0.0632/2;
+    auto toobLength = 0.35;
+    auto toobThick = 0.0016;
+
+    // NOSE PARAMS
+    auto noseConeLength = 0.13;
+    auto noseConeThickness = 0.003;
+    auto noseConeShape = Shapes::NoseconeShapeTypes::HAACK;
+    double noseConeShapeParam = 0;
+    auto noseConeMat = std::make_unique<Rocket::Material>("3D PLA", 1250);
+    auto noseConeFinish = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
+
+    // FIN PARAMS
+    auto finRootChord = 0.1;
+    auto finTipChord = 0.03;
+    auto finSweepLength = 0.06;
+    auto finHeight = 0.06;
+    auto finThickness = 0.003;
+    auto finMat = std::make_unique<Rocket::Material>("Plywood", 630);
+    auto finFinish = std::make_unique<Rocket::Finish>("Regular Paint", 60/(std::pow(10,6)));
+    auto numFins = 4;
+
+    // MOTOR PARAMS
+    std::filesystem::path motorPath = std::filesystem::current_path().append("..").append("Cesaroni_282H399-12A.eng");
+
+    auto rocket = Rocket::Rocket::create("Drake the Rocket");
+
+    auto stage1 = Rocket::Stage::create(rocket.get());
+    
+    auto toob = Rocket::BodyTube::create(
+        rocketRadius, toobLength, toobThick, std::move(toobMat), std::move(toobFinish), stage1.get(), "toob", Eigen::Vector3d{noseConeLength,0,0}
+        );
+    
+    auto nose = Rocket::Nosecone::create(
+        noseConeShape, rocketRadius, noseConeLength, noseConeThickness, noseConeShapeParam, std::move(noseConeMat), std::move(noseConeFinish), stage1.get()
+        );
+
+    auto motor = Rocket::Motor::fromFile(motorPath, toob.get());
+    auto motorX = noseConeLength+toobLength-motor->shape()->length();
+    motor->setPosition({motorX, 0, 0});
+    
+    auto alpha = 0;
+    auto mach = 0.3;
+
+    
+    auto finShape = std::make_unique<Shapes::TrapezoidalFinShape>(finRootChord, finTipChord, finHeight, finSweepLength, finThickness);
+    auto fin = std::make_unique<Rocket::Fin>(std::move(finShape), std::move(finMat), std::move(finFinish), "Trapezoidal fin");
+    auto finSet = Rocket::FinSet::create(std::move(fin), numFins, toob.get(), "Fin Set", Eigen::Vector3d{ noseConeLength+toobLength-finRootChord, 0, 0 });
+    
+    //rocket->printComponentTree();
+
+    /*
+    std::cout << finSet->fin()->referenceArea() << std::endl;
+    for(float i = 0; i < 2; i+= 0.01){
+        std::cout << finSet->fin()->c_n_a(i, 0, 1.4) << ", ";
+    }
+    std::cout << std::endl;
+    */
+    return rocket;
+}
+
 void testInertia(){
     Eigen::Matrix3d inert1 = Eigen::Matrix3d::Identity();
     fmt::print("Inert 1\n{}\n", toString(inert1));
@@ -268,16 +333,28 @@ void testFin(){
 
 int main(int argc, char** argv){
 
+    auto slowerSupersonicRocket = createMEDTestRocket();
+
     auto subsonicRocket = createTestRocket();
     auto supersonicRocket = createBIGTestRocket();
 
-    auto subsonicPath = std::filesystem::current_path().append("..").append("results").append("subsonic_rkab44");
-    auto supersonicPath = std::filesystem::current_path().append("..").append("results").append("supersonic_rkab44");
+    auto subsonicPath = std::filesystem::current_path().append("..").append("results").append("6030sub");
+    auto supersonicPath = std::filesystem::current_path().append("..").append("results").append("norm6030super");
 
-    std::thread supersonicThread (simRocket, supersonicRocket.get(), supersonicPath);
-    //std::thread subThread (simRocket, subsonicRocket.get(), subsonicPath);
-    supersonicThread.join();
-    //subThread.join();
+    simRocket(slowerSupersonicRocket.get(), supersonicPath);
+    return 0;
+
+    bool combined = true;
+
+    if(combined){
+        std::thread supersonicThread (simRocket, supersonicRocket.get(), supersonicPath);
+        std::thread subThread (simRocket, subsonicRocket.get(), subsonicPath);
+        supersonicThread.join();
+        subThread.join();
+    } else {
+        simRocket(supersonicRocket.get(), supersonicPath);
+        simRocket(subsonicRocket.get(), subsonicPath);
+    }
 
     return 0;
 }
