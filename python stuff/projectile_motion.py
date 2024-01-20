@@ -140,6 +140,10 @@ def main():
     fardat["ReL"] *= 0.79
     farsuperdat["ReL"] *= 0.48
     
+    print(max(fardat["Xp"]), max(orkdat["Position_East_of_launch"]))
+    print(max(farsuperdat["Xp"]), max(orksuperdat["Position_East_of_launch"]))
+    exit()
+    
     # plot_proj(orkdat, fardat)
     
     # plot_norm(orkdat, fardat, orksuperdat, farsuperdat)
