@@ -5,4 +5,5 @@ target_sources(rocket
         hollowCylinder.hpp
         hollowCylinder.cpp
         aeroCalc.cpp
+        kinCalc.cpp
 )

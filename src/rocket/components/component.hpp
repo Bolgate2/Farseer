@@ -34,9 +34,9 @@ class AbstractComponent : public std::enable_shared_from_this<AbstractComponent>
 
         virtual void setAeroCalc( std::unique_ptr<AbstractAerodynamicCalculator> aerodynamicCalculator ) = 0;
 
-        virtual KinematicCalculator* getKinCalc() = 0;
+        virtual AbstractKinematicCalculator* getKinCalc() = 0;
 
-        virtual void setKinCalc( std::unique_ptr<KinematicCalculator> kinematicCalculator ) = 0;
+        virtual void setKinCalc( std::unique_ptr<AbstractKinematicCalculator> kinematicCalculator ) = 0;
 
         // protected constructor so it isn't usable, create function must be used
         //virtual void init(AbstractComponent* comp) = 0;
@@ -100,8 +100,8 @@ class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
         }
 
 
-        virtual KinematicCalculator* getKinCalc() override{ return kinCalc.get(); }
-        virtual void setKinCalc( std::unique_ptr<KinematicCalculator> kinematicCalculator ) override {
+        virtual AbstractKinematicCalculator* getKinCalc() override{ return kinCalc.get(); }
+        virtual void setKinCalc( std::unique_ptr<AbstractKinematicCalculator> kinematicCalculator ) override {
             // getting the pointer to the object
             auto kinCalcPtr = kinematicCalculator.get();
             // checking the type of the object
@@ -170,7 +170,7 @@ T* create(Args... args){
         );
 }
 
-using DefaultComponent = Component<std::tuple<>,AerodynamicCalculator<AbstractComponent>,KinematicCalculator>;
+using DefaultComponent = Component<std::tuple<>,AerodynamicCalculator<AbstractComponent>,KinematicCalculator<AbstractComponent>>;
 
 
 // not sure why this doesnt work like above

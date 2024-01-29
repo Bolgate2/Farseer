@@ -2,7 +2,7 @@ target_sources(rocket
     PUBLIC
         component.hpp
         aerodynamicCalculator.hpp
-        kinematicCalculator.cpp
+        kinematicCalculator.hpp
 )
 
 add_subdirectory(bodyTube)

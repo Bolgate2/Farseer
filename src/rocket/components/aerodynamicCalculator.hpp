@@ -4,8 +4,6 @@
 
 namespace Rocket{
 
-class AbstractComponent;
-
 class AbstractAerodynamicCalculator{
     public:
         virtual double CnAlpha(double mach, double alpha) = 0;

@@ -6,11 +6,8 @@ namespace Rocket{
 
 BodyTube::BodyTube(std::unique_ptr<HollowCylinder> cyl)
 {
+    name = "toob";
     _shape = std::move(cyl);
 }
-
-BodyTubeKinematicCalculator::BodyTubeKinematicCalculator(AbstractComponent* comp):
-KinematicCalculator(comp)
-{}
 
 }

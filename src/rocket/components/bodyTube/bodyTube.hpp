@@ -23,9 +23,10 @@ class BodyTubeAerodynamicCalculator : public AerodynamicCalculator<BodyTube>{
         virtual double CnAlpha(double mach, double alpha) override;
 };
 
-class BodyTubeKinematicCalculator : public KinematicCalculator{
+class BodyTubeKinematicCalculator : public KinematicCalculator<BodyTube>{
     public:
-        BodyTubeKinematicCalculator(AbstractComponent* comp);
+        BodyTubeKinematicCalculator(BodyTube* comp);
+        virtual double mass(double time) override;
 };
 
 

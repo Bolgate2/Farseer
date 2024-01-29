@@ -13,5 +13,7 @@ int main(int argc, char **argv){
 
     std::cout << comp->name << " " << comp->CnAlpha(0,0) << std::endl;
     std::cout << toob->name << " " << toob->CnAlpha(0,0) << std::endl;
+    std::cout << comp->name << " " << comp->mass(0) << std::endl;
+    std::cout << toob->name << " " << toob->mass(0) << std::endl;
     return 0;
 }
