@@ -12,10 +12,21 @@
 
 namespace Rocket{
 
+// thread safe method of generating a UUID
+// UUID generation needs to be made thread safe so that the ID's are guaranteed to be unique
+static std::mutex compUUIDLock = std::mutex();
+static UUIDv4::UUIDGenerator<std::mt19937_64> compUUIDGenerator;
+
 // purely virtual class
 class AbstractComponent : public std::enable_shared_from_this<AbstractComponent>{
     private:
-        static UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
+        std::string _id;
+        std::string generateId(){
+            compUUIDLock.lock();
+            auto uuid = compUUIDGenerator.getUUID();
+            compUUIDLock.unlock();
+            return uuid.str();
+        }
 
     protected:
         // getters and setters
@@ -29,9 +40,13 @@ class AbstractComponent : public std::enable_shared_from_this<AbstractComponent>
 
         // protected constructor so it isn't usable, create function must be used
         virtual void init() = 0;
+
+        AbstractComponent(){ _id = generateId(); }
+
     public:
         std::string name = "jeff";
 
+        std::string id(){ return _id; }
         // tree functions
         /*
         virtual std::shared_ptr<AbstractComponent> parent() = 0;
