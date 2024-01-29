@@ -4,7 +4,7 @@
 
 namespace Rocket{
 
-BodyTube::BodyTube(std::unique_ptr<HollowCylinder> cyl)
+BodyTube::BodyTube(HollowCylinder cyl)
 {
     name = "toob";
     _shape = std::move(cyl);

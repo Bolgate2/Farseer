@@ -4,25 +4,22 @@
 
 namespace Rocket{
 
-class AbstractKinematicCalculator{
-    public:
-        virtual double mass(double time) = 0;
-};
-
 template<class T>
-class KinematicCalculator : public AbstractKinematicCalculator{
+class KinematicCalculator{
     private:
         T* component;
     protected:
         T* getComponent(){ return component; }
     public:
-        KinematicCalculator(T* comp){
-            component = comp;
+        template<class C>
+        KinematicCalculator(C* comp){
+            component = static_cast<T*>(comp);
         }
+
         std::map<double, std::map<double, double>> CnAlphaCache = std::map<double, std::map<double, double>>();
-        virtual double mass(double time) { return 0; }
+        double mass(double time);
 };
 
-template<class T> concept IsKinCalc = std::is_base_of<AbstractKinematicCalculator, T>::value && std::is_class<T>::value;
+//template<class T> concept IsKinCalc = std::is_base_of<AbstractKinematicCalculator, T>::value && std::is_class<T>::value;
 
 }

@@ -70,8 +70,8 @@ class Component : public AbstractComponent{};
 template<typename... Children, class AC, class KC>
 class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
     private:
-        AC aeroCalc = AC(nullptr);
-        KC kinCalc = KC(nullptr);
+        AC aeroCalc = AC(this);
+        KC kinCalc = KC(this);
 
     protected:
         AC getAeroCalc() {return aeroCalc;}
@@ -96,9 +96,10 @@ class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
             return getKinCalc().mass(time);
         }
 
-        friend class ComponentConstructor;
+        //friend class ComponentConstructor;
 };
 
+/*
 class ComponentConstructor{
     public:
         template<IsComponent T, typename... Args>
@@ -106,7 +107,7 @@ class ComponentConstructor{
             T comp = T(
                     std::move(args)...
                 );
-            comp.init(&comp);
+            //comp.init(&comp);
             return comp;
         }
 };
@@ -118,6 +119,7 @@ T create(Args... args){
             std::move(args)...
         );
 }
+*/
 
 using DefaultComponent = Component<std::tuple<>,AerodynamicCalculator<AbstractComponent>,KinematicCalculator<AbstractComponent>>;
 

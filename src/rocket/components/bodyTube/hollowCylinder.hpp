@@ -9,6 +9,7 @@ class HollowCylinder{
         double _thickness;
         bool _filled;
     public:
+        HollowCylinder();
         HollowCylinder(double radius, double height, double thickness, bool filled = false);
         // getters and setters
         double radius();

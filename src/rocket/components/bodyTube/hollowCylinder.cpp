@@ -3,6 +3,13 @@
 
 namespace Rocket{
 
+HollowCylinder::HollowCylinder(){
+    setRadius(0);
+    setHeight(0);
+    setThickness(0);
+    setFilled(false);
+}
+
 HollowCylinder::HollowCylinder(double radius, double height, double thickness, bool filled){
     setRadius(radius);
     setHeight(height);
