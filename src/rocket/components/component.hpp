@@ -12,33 +12,13 @@
 
 namespace Rocket{
 
-// thread safe method of generating a UUID
-// UUID generation needs to be made thread safe so that the ID's are guaranteed to be unique
-static std::mutex compUUIDLock = std::mutex();
-static UUIDv4::UUIDGenerator<std::mt19937_64> compUUIDGenerator;
-
 // purely virtual class
 class AbstractComponent : public std::enable_shared_from_this<AbstractComponent>{
-    private:
-        std::string _id;
-        std::string generateId(){
-            compUUIDLock.lock();
-            auto uuid = compUUIDGenerator.getUUID();
-            compUUIDLock.unlock();
-            return uuid.str();
-        }
-
-    protected:
-
-        // protected constructor so it isn't usable, create function must be used
-        //virtual void init(AbstractComponent* comp) = 0;
-
-        AbstractComponent(){ _id = generateId(); }
-
     public:
-        std::string name = "jeff";
+        virtual std::string name() = 0;
+        virtual void setName(std::string name) = 0;
 
-        std::string id(){ return _id; }
+        virtual std::string id() = 0;
         // tree functions
         /*
         virtual std::shared_ptr<AbstractComponent> parent() = 0;
@@ -60,6 +40,12 @@ class AbstractComponent : public std::enable_shared_from_this<AbstractComponent>
 // checks that the class is a subclass of AbstractComponent
 template<class T> concept IsComponent = std::is_base_of<AbstractComponent, T>::value && std::is_class<T>::value;
 
+
+// thread safe method of generating a UUID
+// UUID generation needs to be made thread safe so that the ID's are guaranteed to be unique
+static std::mutex compUUIDLock = std::mutex();
+static UUIDv4::UUIDGenerator<std::mt19937_64> compUUIDGenerator;
+
 // generic template setup for components
 // this allows for partial specializations with organized args
 // this allows further extensibility and for multiple parameter packs
@@ -68,8 +54,18 @@ class Component : public AbstractComponent{};
 
 // implementation of component template
 template<typename... Children, class AC, class KC>
-class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
+class Component<std::tuple<Children...>, AC, KC> : virtual AbstractComponent {
     private:
+
+        std::string _name = "Default";
+        std::string _id;
+        std::string generateId(){
+            compUUIDLock.lock();
+            auto uuid = compUUIDGenerator.getUUID();
+            compUUIDLock.unlock();
+            return uuid.str();
+        }
+
         AC aeroCalc = AC(this);
         KC kinCalc = KC(this);
 
@@ -79,6 +75,14 @@ class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
         KC getKinCalc() { return kinCalc; }
 
     public:
+        Component(){
+            _id = generateId();
+        }
+        std::string id(){ return _id; }
+
+        std::string name() override { return _name; }
+        void setName(std::string name) { _name = name; }
+
         // tree functions
 
         // aero functions

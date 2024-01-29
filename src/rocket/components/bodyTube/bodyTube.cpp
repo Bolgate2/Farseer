@@ -6,7 +6,7 @@ namespace Rocket{
 
 BodyTube::BodyTube(HollowCylinder cyl)
 {
-    name = "toob";
+    setName("toob");
     _shape = std::move(cyl);
 }
 
