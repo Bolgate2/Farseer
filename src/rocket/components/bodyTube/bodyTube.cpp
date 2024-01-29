@@ -5,17 +5,20 @@
 namespace Rocket{
 
 HollowCylinder::HollowCylinder(double radius, double height, double thickness, bool filled){
-    this->radius = radius;
-    this->height = height;
-    this->thickness = thickness;
-    this->filled = filled;
+    setRadius(radius);
+    setHeight(height);
+    setThickness(thickness);
+    setFilled(filled);
 }
 
 double HollowCylinder::volume(){
-    if(filled){
-        return height * std::numbers::pi * std::pow(radius, 2);
+    double vol = 0;
+    if(filled() == true){
+        vol = height() * std::numbers::pi * std::pow(radius(), 2);
+    } else {
+        vol = height() * std::numbers::pi * (2*radius()*thickness() - std::pow(thickness(),2));
     }
-    return height * std::numbers::pi * (2*radius*thickness - std::pow(thickness,2));
+    return vol;
 }
 
 BodyTube::BodyTube(std::unique_ptr<HollowCylinder> cyl)
