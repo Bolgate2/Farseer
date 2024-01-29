@@ -20,7 +20,7 @@ class AerodynamicCalculator : public AbstractAerodynamicCalculator{
             component = comp;
         }
         std::map<double, std::map<double, double>> CnAlphaCache = std::map<double, std::map<double, double>>();
-        virtual double CnAlpha(double mach, double alpha){ return 0;}
+        virtual double CnAlpha(double mach, double alpha) override { return 0;}
 };
 
 

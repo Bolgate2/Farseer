@@ -4,18 +4,7 @@
 
 namespace Rocket{
 
-class BodyTubeAerodynamicCalculator;
-class BodyTubeKinematicCalculator;
-
-class BodyTube : public Component<std::tuple<>,BodyTubeAerodynamicCalculator, BodyTubeKinematicCalculator>{
-    private:
-        std::unique_ptr<HollowCylinder> _shape = nullptr;
-    protected:
-        BodyTube(std::unique_ptr<HollowCylinder> cyl);
-    public:
-        HollowCylinder* shape(){ return _shape.get(); }
-        friend class ComponentConstructor;
-};
+class BodyTube;
 
 class BodyTubeAerodynamicCalculator : public AerodynamicCalculator<BodyTube>{
     public:
@@ -28,6 +17,18 @@ class BodyTubeKinematicCalculator : public KinematicCalculator<BodyTube>{
         BodyTubeKinematicCalculator(BodyTube* comp);
         virtual double mass(double time) override;
 };
+
+class BodyTube : public Component<std::tuple<>,BodyTubeAerodynamicCalculator, BodyTubeKinematicCalculator>{
+    private:
+        std::unique_ptr<HollowCylinder> _shape = nullptr;
+    protected:
+        BodyTube(std::unique_ptr<HollowCylinder> cyl);
+    public:
+        HollowCylinder* shape(){ return _shape.get(); }
+        friend class ComponentConstructor;
+};
+
+
 
 
 
