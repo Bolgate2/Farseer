@@ -17,8 +17,6 @@ class BodyTube : public Component<std::tuple<>,BodyTubeAerodynamicCalculator, Bo
         friend class ComponentConstructor;
 };
 
-
-
 class BodyTubeAerodynamicCalculator : public AerodynamicCalculator<BodyTube>{
     public:
         BodyTubeAerodynamicCalculator(BodyTube* comp);
