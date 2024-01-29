@@ -19,7 +19,6 @@ class AerodynamicCalculator : public AbstractAerodynamicCalculator{
         AerodynamicCalculator(T* comp){
             component = comp;
         }
-        std::map<double, std::map<double, double>> CnAlphaCache = std::map<double, std::map<double, double>>();
         virtual double CnAlpha(double mach, double alpha) override { return 0;}
 };
 
