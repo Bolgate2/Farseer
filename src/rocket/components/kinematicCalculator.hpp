@@ -3,18 +3,7 @@
 #include <map>
 
 namespace Rocket{
-/*
-class AbstractComponent;
 
-class KinematicCalculator{
-    private:
-        std::weak_ptr<AbstractComponent> component;
-    public:
-        // probably change this to use a sharedptr
-        KinematicCalculator(AbstractComponent* comp);
-        virtual double mass(double time);
-};
-*/
 class AbstractKinematicCalculator{
     public:
         virtual double mass(double time) = 0;
