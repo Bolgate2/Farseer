@@ -1,7 +1,7 @@
 target_sources(rocket
     PUBLIC
         component.hpp
-        aerodynamicCalculator.cpp
+        aerodynamicCalculator.hpp
         kinematicCalculator.cpp
 )
 

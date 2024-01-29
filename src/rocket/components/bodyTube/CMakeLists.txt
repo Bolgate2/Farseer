@@ -2,4 +2,7 @@ target_sources(rocket
     PUBLIC
         bodyTube.cpp
         bodyTube.hpp
+        hollowCylinder.hpp
+        hollowCylinder.cpp
+        aeroCalc.cpp
 )
