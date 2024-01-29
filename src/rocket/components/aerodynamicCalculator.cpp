@@ -2,7 +2,7 @@
 #include "component.hpp"
 
 namespace Rocket{
-
+/*
 AerodynamicCalculator::AerodynamicCalculator(AbstractComponent* comp){
     component = comp->weak_from_this();
 }
@@ -10,5 +10,5 @@ AerodynamicCalculator::AerodynamicCalculator(AbstractComponent* comp){
 double AerodynamicCalculator::CnAlpha(double mach, double alpha){
     return 0;
 }
-
+*/
 }

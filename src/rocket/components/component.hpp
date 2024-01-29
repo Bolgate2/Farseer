@@ -30,16 +30,16 @@ class AbstractComponent : public std::enable_shared_from_this<AbstractComponent>
 
     protected:
         // getters and setters
-        virtual AerodynamicCalculator* getAeroCalc() = 0;
+        virtual AbstractAerodynamicCalculator* getAeroCalc() = 0;
 
-        virtual void setAeroCalc( std::unique_ptr<AerodynamicCalculator> aerodynamicCalculator ) = 0;
+        virtual void setAeroCalc( std::unique_ptr<AbstractAerodynamicCalculator> aerodynamicCalculator ) = 0;
 
         virtual KinematicCalculator* getKinCalc() = 0;
 
         virtual void setKinCalc( std::unique_ptr<KinematicCalculator> kinematicCalculator ) = 0;
 
         // protected constructor so it isn't usable, create function must be used
-        virtual void init() = 0;
+        //virtual void init(AbstractComponent* comp) = 0;
 
         AbstractComponent(){ _id = generateId(); }
 
@@ -81,8 +81,8 @@ class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
         std::unique_ptr<KC> kinCalc = nullptr;
 
     protected:
-        virtual AerodynamicCalculator* getAeroCalc() override {return aeroCalc.get();}
-        virtual void setAeroCalc( std::unique_ptr<AerodynamicCalculator> aerodynamicCalculator ) override {
+        virtual AbstractAerodynamicCalculator* getAeroCalc() override {return aeroCalc.get();}
+        virtual void setAeroCalc( std::unique_ptr<AbstractAerodynamicCalculator> aerodynamicCalculator ) override {
             // getting the pointer to the object
             auto aeroCalcPtr = aerodynamicCalculator.get();
             // checking the type of the object
@@ -120,11 +120,12 @@ class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
 
         Component(){};
 
-        virtual void init() override {
+        template<class T>
+        void init(T* comp) {
             // creating the aero calc
-            setAeroCalc(std::move( std::make_unique<AC>(this) ));
+            setAeroCalc(std::move( std::make_unique<AC>(comp) ));
             // creating the kinematic calculator
-            setKinCalc(std::move( std::make_unique<KC>(this) ));
+            setKinCalc(std::move( std::make_unique<KC>(comp) ));
         }
     public:
         // tree functions
@@ -156,7 +157,7 @@ class ComponentConstructor{
             T* comp = new T(
                     std::move(args)...
                 );
-            comp->init();
+            comp->init(comp);
             return comp;
         }
 };
@@ -169,7 +170,7 @@ T* create(Args... args){
         );
 }
 
-using DefaultComponent = Component<std::tuple<>,AerodynamicCalculator,KinematicCalculator>;
+using DefaultComponent = Component<std::tuple<>,AerodynamicCalculator<AbstractComponent>,KinematicCalculator>;
 
 
 // not sure why this doesnt work like above
