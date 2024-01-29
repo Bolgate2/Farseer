@@ -54,7 +54,7 @@ class Component : public AbstractComponent{};
 
 // implementation of component template
 template<typename... Children, class AC, class KC>
-class Component<std::tuple<Children...>, AC, KC> : virtual AbstractComponent {
+class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
     private:
 
         std::string _name = "Default";
