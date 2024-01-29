@@ -5,7 +5,7 @@
 #include <vector>
 #include <tuple>
 
-#include "uuid_v4"
+#include "uuid_v4/uuid_v4.h"
 
 #include "aerodynamicCalculator.hpp"
 #include "kinematicCalculator.hpp"
@@ -15,7 +15,7 @@ namespace Rocket{
 // purely virtual class
 class AbstractComponent : public std::enable_shared_from_this<AbstractComponent>{
     private:
-        //static UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
+        static UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
 
     protected:
         // getters and setters
