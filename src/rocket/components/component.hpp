@@ -78,11 +78,6 @@ class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
 
         KC getKinCalc() { return kinCalc; }
 
-        template<class T>
-        void init(T* comp) {
-            aeroCalc = AC(comp);
-            kinCalc = KC(comp);
-        }
     public:
         // tree functions
 
@@ -95,31 +90,7 @@ class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
         virtual double mass(double time) override {
             return getKinCalc().mass(time);
         }
-
-        //friend class ComponentConstructor;
 };
-
-/*
-class ComponentConstructor{
-    public:
-        template<IsComponent T, typename... Args>
-        T create(Args... args){
-            T comp = T(
-                    std::move(args)...
-                );
-            //comp.init(&comp);
-            return comp;
-        }
-};
-
-template<IsComponent T, typename... Args>
-T create(Args... args){
-    auto constructor = ComponentConstructor();
-    return constructor.create<T>(
-            std::move(args)...
-        );
-}
-*/
 
 using DefaultComponent = Component<std::tuple<>,AerodynamicCalculator<AbstractComponent>,KinematicCalculator<AbstractComponent>>;
 

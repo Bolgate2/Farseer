@@ -11,7 +11,6 @@ class BodyTube : public Component<std::tuple<>,AerodynamicCalculator<BodyTube>, 
     public:
         BodyTube(HollowCylinder cyl);
         HollowCylinder shape(){ return _shape; }
-        //friend class ComponentConstructor;
 };
 
 }
