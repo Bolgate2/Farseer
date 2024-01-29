@@ -1,163 +1,166 @@
-#ifndef COMPONENT_H_
-#define COMPONENT_H_
-#include <string>
-#include <unordered_map>
+#pragma once
 #include <memory>
+#include <string>
+#include <map>
 #include <vector>
-#include <Eigen/Dense>
-#include "uuid_v4.h"
-#include "overrideFlags.hpp"
+#include <tuple>
+
+#include "uuid_v4"
+
+#include "aerodynamicCalculator.hpp"
+#include "kinematicCalculator.hpp"
 
 namespace Rocket{
 
-    using Utils::OverrideFlags;
-    class Motor; // predeclaring motor for motors function
+// purely virtual class
+class AbstractComponent : public std::enable_shared_from_this<AbstractComponent>{
+    private:
+        //static UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
 
-    // this class template defines the bare minimum of what a component should do
-    // the base class of allowed child and parent types can be defined here
-    class Component : public std::enable_shared_from_this<Component>{
-        protected:
-            static std::string defaultName;
-            // all components use the same UUID generator to ensure uniqueness
-            static UUIDv4::UUIDGenerator<std::mt19937_64> _uuidGenerator;
-            std::string _id;
-            std::weak_ptr<Component> _parent = std::shared_ptr<Component>(nullptr);
+    protected:
+        // getters and setters
+        virtual AerodynamicCalculator* getAeroCalc() = 0;
 
-            // a component must have a physical location
-            Eigen::Vector3d _position;
-            
-            // all overrides are false by default
-            // a component must have a mass more than or equal to zero and the ability to manually set that mass
-            double _mass = 0;
-            OverrideFlags _massOverride = OverrideFlags::NONE; // flags
+        virtual void setAeroCalc( std::unique_ptr<AerodynamicCalculator> aerodynamicCalculator ) = 0;
 
-            // because a component has mass, its center of mass must be defined (same as position for a point mass) and be able to be overridden
-            Eigen::Vector3d _cm = Eigen::Vector3d::Zero();
-            OverrideFlags _cmOverride = OverrideFlags::NONE; // flags
+        virtual KinematicCalculator* getKinCalc() = 0;
 
-            // because a component has mass and a position, it must have inertia as well and the ability to override it
-            Eigen::Matrix3d _inertia = Eigen::Matrix3d::Zero();
-            OverrideFlags _inertiaOverride = OverrideFlags::NONE; // flags
+        virtual void setKinCalc( std::unique_ptr<KinematicCalculator> kinematicCalculator ) = 0;
 
-            bool _caching = false;
-            
-            virtual std::string componentTreeRepr( std::string prefix, std::string childPrefix, int treeHeight) const;
-            // string formatting variables
-            static int _indentLen;
-            static int _maxNameLen;
-            static int _massLen;
-            static int _massPrecision;
-        protected:
-            virtual void clearCaches();
-            double _burnoutTime;
+        // protected constructor so it isn't usable, create function must be used
+        virtual void init() = 0;
+    public:
+        std::string name = "jeff";
 
-            
-            // mass
-            virtual double calculateMass(double time) const;
-            virtual double calculateMassWithComponents(double time) const;
-            mutable std::unordered_map<double,double> _massCache = {};
+        // tree functions
+        /*
+        virtual std::shared_ptr<AbstractComponent> parent() = 0;
+        virtual std::vector<std::shared_ptr<AbstractComponent>> children() = 0;
 
-            /**
-             * @brief Calculates the inertia of this object about (0,0,0)
-             * 
-             * @param time Flight time in seconds
-             * @return Eigen::Matrix3d The inertia tensor in SI units
-             */
-            virtual Eigen::Matrix3d calculateInertia(double time) const;
-            virtual Eigen::Matrix3d calculateInertiaWithComponents(double time) const;
-            mutable std::unordered_map<double,Eigen::Matrix3d> _inertiaCache = {};
+        virtual void setParent(std::shared_ptr<AbstractComponent> comp) = 0;
+        virtual void addChild(std::shared_ptr<AbstractComponent> comp) = 0;
 
-            /**
-             * @brief Calculates the individual components center of mass in global coordinates
-             * 
-             * @param time 
-             * @return Eigen::Vector3d 
-             */
-            virtual Eigen::Vector3d calculateCm(double time) const;
-            virtual Eigen::Vector3d calculateCmWithComponents(double time) const;
-            std::unordered_map<double,Eigen::Vector3d> _cmCache = {};
+        virtual void findChild(std::shared_ptr<AbstractComponent> comp) = 0;
+        virtual void findChild(std::string id) = 0;
+        */
+        // aero functions
+        virtual double CnAlpha(double mach, double alpha) = 0;
 
-            virtual Eigen::Vector3d calculateThrust(double time) const;
-            virtual Eigen::Vector3d calculateThrustWithComponents(double time) const;
-            mutable std::unordered_map<double,Eigen::Vector3d> _thrustCache = {};
+        // kinematic functions
+        virtual double mass(double time) = 0;
+};
 
-            virtual Eigen::Vector3d calculateThrustPosition(double time) const;
-            virtual Eigen::Vector3d calculateThrustPositionWithComponents(double time) const;
-            std::unordered_map<double,Eigen::Vector3d> _thrustPositionCache = {};
+// checks that the class is a subclass of AbstractComponent
+template<class T> concept IsComponent = std::is_base_of<AbstractComponent, T>::value && std::is_class<T>::value;
 
-            // default constructor
-            // constructor is protected. It isn't private so that subclasses can access it. It isn't public as a factory is defined
-            Component(std::string name, Eigen::Vector3d position);
-        public:
-            // a component must have a name, this is publically accessible as it's not integral to any functions
-            std::string name;
-            virtual double calculateBurnoutTime();
+// generic template setup for components
+// this allows for partial specializations with organized args
+// this allows further extensibility and for multiple parameter packs
+template<typename ... >
+class Component : public AbstractComponent{};
 
-            // id
-            virtual std::string id() const;
+template<typename... Children, class AC, class KC>
+class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
+    private:
+        std::unique_ptr<AC> aeroCalc = nullptr;
+        std::unique_ptr<KC> kinCalc = nullptr;
 
-            // parent
-            virtual Component* parent() const;
-            virtual void setParent( Component* parent );
-            // returns the root of this component tree
-            virtual std::shared_ptr<Component> root();
-            virtual int height() const;
+    protected:
+        virtual AerodynamicCalculator* getAeroCalc() override {return aeroCalc.get();}
+        virtual void setAeroCalc( std::unique_ptr<AerodynamicCalculator> aerodynamicCalculator ) override {
+            // getting the pointer to the object
+            auto aeroCalcPtr = aerodynamicCalculator.get();
+            // checking the type of the object
+            auto castedPtr = dynamic_cast<AC*>(aeroCalcPtr);
+            if(castedPtr != nullptr){
+                // type is correct
+                aeroCalc = std::unique_ptr<AC>(
+                    dynamic_cast<AC*>(aerodynamicCalculator.release())
+                );
+            } else {
+                // type is incorrect do some error logging
+            }
+            // returning the original unique ptr object, if the set was successful it will contain a null pointer, otherwise it will remain unchanged
+            // return std::move(aerodynamicCalculator);
+        }
 
-            // components
-            // these functions are pure virtual as the component vectors are not defined here
-            virtual std::vector< std::shared_ptr<Component> > components() const = 0; // VIRTUAL
-            virtual std::shared_ptr<Component> findComponent(std::string id) const = 0; // VIRTUAL
-            virtual void addComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
-            virtual void removeComponent(Component* component) = 0; // THIS MUST CLEAR CACHES, VIRTUAL
 
-            virtual std::vector< std::shared_ptr<const Motor> > motors() const;
+        virtual KinematicCalculator* getKinCalc() override{ return kinCalc.get(); }
+        virtual void setKinCalc( std::unique_ptr<KinematicCalculator> kinematicCalculator ) override {
+            // getting the pointer to the object
+            auto kinCalcPtr = kinematicCalculator.get();
+            // checking the type of the object
+            auto castedPtr = dynamic_cast<KC*>(kinCalcPtr);
+            if(castedPtr != nullptr){
+                // type is correct
+                kinCalc = std::unique_ptr<KC>(
+                    dynamic_cast<KC*>(kinematicCalculator.release())
+                );
+            } else {
+                // type is incorrect do some error logging
+            }
+            // returning the original unique ptr object, if the set was successful it will contain a null pointer
+            // return std::move(kinematicCalculator);
+        }
 
-            virtual void removeComponent( std::string id );
+        Component(){};
 
-            // position
-            virtual Eigen::Vector3d position() const;
-            // this is not pure virtual as it has a default implementation that can be changed
-            virtual void setPosition(Eigen::Vector3d pos); // THIS MUST CLEAR CACHES
-            // these are not virtual as they are essentially convenience wrappers
-            virtual void setPosition(double pos[3]);
-            virtual void setPosition(double x, double y, double z);
+        virtual void init() override {
+            // creating the aero calc
+            setAeroCalc(std::move( std::make_unique<AC>(this) ));
+            // creating the kinematic calculator
+            setKinCalc(std::move( std::make_unique<KC>(this) ));
+        }
+    public:
+        // tree functions
 
-            // override functions are not virtual as they are not overridden
-            virtual double mass(double time) const; // wrapper for calculateMass that first handles overrides
-            virtual void overrideMass(OverrideFlags flags); // THIS MUST CLEAR CACHES
-            virtual void overrideMass(OverrideFlags flags, double value); // THIS MUST CLEAR CACHES
-            virtual OverrideFlags massOverriden();
-            virtual void setMass(double mass); // THIS MUST CLEAR CACHES
-            
-            // inertia
-            // returns inertia about 0/0
-            virtual Eigen::Matrix3d inertia(double time) const;
-            virtual void overrideInertia(OverrideFlags flags); // THIS MUST CLEAR CACHES
-            virtual void overrideInertia(OverrideFlags flags, Eigen::Matrix3d value); // THIS MUST CLEAR CACHES
-            virtual OverrideFlags inertiaOverriden();
-            virtual void setInertia(Eigen::Matrix3d inertia); // THIS MUST CLEAR CACHES
+        // aero functions
+        virtual double CnAlpha(double mach, double alpha) override {
+            return getAeroCalc()->CnAlpha(mach, alpha);
+        }
 
-            // cm, center of mass
-            virtual Eigen::Vector3d cm(double time) const;
-            virtual void overrideCm(OverrideFlags flags); // THIS MUST CLEAR CACHES
-            virtual void overrideCm(OverrideFlags flags, Eigen::Vector3d value); // THIS MUST CLEAR CACHES
-            virtual OverrideFlags cmOverriden();
-            virtual void setCm(Eigen::Vector3d cm); // THIS MUST CLEAR CACHES
+        // kinematic functions
+        virtual double mass(double time) override {
+            return getKinCalc()->mass(time);
+        }
 
-            // thrust position
-            virtual Eigen::Vector3d thrustPosition(double time) const;
-            // thrust
-            virtual Eigen::Vector3d thrust(double time) const;
+        friend class ComponentConstructor;
+};
 
-            //getter and setter for caching
-            virtual bool caching() const;
-            virtual void setCaching( bool toCache );
-            virtual void setAllCaching( bool toCache );
+// checks that args are the same as the constructor args of class T
+// this is buggy with unique pointers and probs will be with other data structures
+/*
+template <class T, class ... args>
+concept constructargs = requires (T a, args... b){a(b...);};
+*/
 
-            // show trees in console
-            virtual std::string componentTreeRepr(bool header=true) const;
-            virtual void printComponentTree(bool header=true) const;
-    };
+class ComponentConstructor{
+    public:
+        template<IsComponent T, typename... Args>
+        T* create(Args... args){
+            T* comp = new T(
+                    std::move(args)...
+                );
+            comp->init();
+            return comp;
+        }
+};
+
+template<IsComponent T, typename... Args>
+T* create(Args... args){
+    auto constructor = ComponentConstructor();
+    return constructor.create<T>(
+            std::move(args)...
+        );
 }
 
-#endif
+using DefaultComponent = Component<std::tuple<>,AerodynamicCalculator,KinematicCalculator>;
+
+
+// not sure why this doesnt work like above
+/*
+template <class T, class C>
+concept aeroCalcCompType = requires (T a, C b){a(b);};
+*/
+
+}

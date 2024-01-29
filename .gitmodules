@@ -1,9 +1,0 @@
-[submodule "lib/fmt"]
-	path = lib/fmt
-	url = https://github.com/fmtlib/fmt.git
-[submodule "lib/uuid_v4"]
-	path = lib/uuid_v4
-	url = https://github.com/crashoz/uuid_v4.git
-[submodule "lib/eigen"]
-	path = lib/eigen
-	url = https://gitlab.com/libeigen/eigen.git

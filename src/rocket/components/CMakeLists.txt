@@ -1,24 +1,8 @@
-add_subdirectory(bodyTube)
-add_subdirectory(nosecone)
-add_subdirectory(fins)
-add_subdirectory(motor)
-
 target_sources(rocket
-    PRIVATE
-        rocket.cpp
-        rocket.hpp
-        stage.cpp
-        stage.hpp
-        component.cpp
+    PUBLIC
         component.hpp
-        internalComponent.cpp
-        internalComponent.hpp
-        shapedInternalComponent.hpp
-        shapedInternalComponent.cpp
-        aeroComponent.cpp
-        aeroComponent.hpp
-        externalComponent.cpp
-        externalComponent.hpp
-        bodyComponent.cpp
-        bodyComponent.hpp
+        aerodynamicCalculator.cpp
+        kinematicCalculator.cpp
 )
+
+add_subdirectory(bodyTube)

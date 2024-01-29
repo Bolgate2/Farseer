@@ -1,63 +1,14 @@
-cmake_minimum_required(VERSION 3.13)
-project(Farseer VERSION 0.1.0 LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.16)
 
-include(CTest)
-enable_testing()
-# setting up and linking dependencies
+project(Farseer VERSION 1.0.0 LANGUAGES CXX)
 
-# THIS MUST COME BEFORE ADDING SUBDIRECTORIES
-# need at least these 3 options enabled for uuid to compile
-# https://github.com/crashoz/uuid_v4/issues/14
-# only actually need mavx2, not the other 2 commands
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-add_compile_options(-mavx2)
-add_compile_options(-std=c++17)
-add_compile_options(-D_USE_MATH_DEFINES)
 
-# creating libraries
-add_library(sim "")
-add_library(rocket "")
-add_library(utils "")
-
-# adding src folder
-add_subdirectory(src)
-add_subdirectory(lib)
-
-# defining exe
-add_executable(Farseer main.cpp)
-
-add_dependencies(utils eigen)
-target_link_libraries(utils eigen)
-
-add_dependencies(sim utils eigen fmt uuid_v4)
-target_link_libraries(sim utils eigen fmt uuid_v4)
-target_include_directories(sim PUBLIC
-    "${PROJECT_SOURCE_DIR}/src/utils"
-    )
-
-add_dependencies(rocket sim utils eigen fmt uuid_v4)
-target_link_libraries(rocket sim utils eigen fmt uuid_v4)
-target_include_directories(rocket PUBLIC
-    "${PROJECT_SOURCE_DIR}/src/sim"
-    "${PROJECT_SOURCE_DIR}/src/utils"
-    )
-
-# linking src libraties to exe
-target_link_libraries(Farseer eigen)
-target_link_libraries(Farseer rocket)
-
-target_include_directories(Farseer PUBLIC
-    "${PROJECT_BINARY_DIR}"
-    "${PROJECT_SOURCE_DIR}/src/rocket"
-    "${PROJECT_SOURCE_DIR}/src/sim"
-)
-
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+# qt dir
+add_subdirectory(src/app)
+# eigen
+add_subdirectory(src/eigen_test)
+# rocket
+add_subdirectory(src/rocket)

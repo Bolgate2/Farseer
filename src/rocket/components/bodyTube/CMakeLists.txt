@@ -1,5 +1,5 @@
 target_sources(rocket
-    PRIVATE
-        bodyTube.hpp
+    PUBLIC
         bodyTube.cpp
+        bodyTube.hpp
 )
