@@ -74,6 +74,7 @@ template<class T> concept IsComponent = std::is_base_of<AbstractComponent, T>::v
 template<typename ... >
 class Component : public AbstractComponent{};
 
+// implementation of component template
 template<typename... Children, class AC, class KC>
 class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
     private:
