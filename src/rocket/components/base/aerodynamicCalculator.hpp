@@ -1,11 +1,17 @@
 #pragma once
 #include <memory>
 #include <map>
+#include <concepts>
 
 namespace Rocket{
 
+class AbstractAerodynamicCalculator{
+    public:
+        virtual double CnAlpha(double mach, double alpha) = 0;
+};
+
 template<class T>
-class AerodynamicCalculator{
+class AerodynamicCalculator : public AbstractAerodynamicCalculator{
     private:
         T* component;
     protected:
@@ -19,7 +25,6 @@ class AerodynamicCalculator{
         double CnAlpha(double mach, double alpha);
 };
 
-
-//template<class T> concept IsAeroCalc = std::is_base_of<AbstractAerodynamicCalculator, T>::value && std::is_class<T>::value;
+template<class T> concept IsAeroCalc = std::derived_from<T,AbstractAerodynamicCalculator>;
 
 }

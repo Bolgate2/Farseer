@@ -1,5 +1,5 @@
 #pragma once
-#include "../component.hpp"
+#include "../base/component.hpp"
 #include "hollowCylinder.hpp"
 
 namespace Rocket{

@@ -4,8 +4,13 @@
 
 namespace Rocket{
 
+class AbstractKinematicCalculator{
+    public:
+        virtual double mass(double time) = 0;
+};
+
 template<class T>
-class KinematicCalculator{
+class KinematicCalculator : public AbstractKinematicCalculator{
     private:
         T* component;
     protected:
@@ -20,6 +25,5 @@ class KinematicCalculator{
         double mass(double time);
 };
 
-//template<class T> concept IsKinCalc = std::is_base_of<AbstractKinematicCalculator, T>::value && std::is_class<T>::value;
-
+template<class T> concept IsKinCalc = std::derived_from<T,AbstractKinematicCalculator>;
 }

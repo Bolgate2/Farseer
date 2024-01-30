@@ -1,5 +1,5 @@
 #include <iostream>
-#include "components/component.hpp"
+#include "components/base/component.hpp"
 #include "components/bodyTube/bodyTube.hpp"
 
 int main(int argc, char **argv){

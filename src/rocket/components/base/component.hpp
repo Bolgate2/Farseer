@@ -53,8 +53,9 @@ template<typename ... >
 class Component : public AbstractComponent{};
 
 // implementation of component template
-template<typename... Children, class AC, class KC>
+template<typename... Children, IsAeroCalc AC, IsKinCalc KC>
 class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
+    static_assert(std::derived_from<AC,AbstractAerodynamicCalculator>);
     private:
 
         std::string _name = "Default";
@@ -76,12 +77,12 @@ class Component<std::tuple<Children...>, AC, KC> : public AbstractComponent {
 
     public:
         Component(){
-            _id = generateId();
+            _id = generateId(); // all components must have an ID
         }
         std::string id(){ return _id; }
 
         std::string name() override { return _name; }
-        void setName(std::string name) { _name = name; }
+        void setName(std::string name) override { _name = name; }
 
         // tree functions
 
