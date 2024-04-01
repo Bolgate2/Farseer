@@ -31,11 +31,16 @@ int main(int argc, char **argv)
     UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
     UUIDv4::UUID uuid = uuidGenerator.getUUID();
     std::string uuidStr = uuid.str();
-    
+
     // json
     nlohmann::json jason = {
         {"name", "jeff"},
-        {"jump street", 22}
+        {"jump street", 22},
+        {"actors" ,{
+            {"Jenko", "Channing Tatum"},
+            {"Schmidt", "Jonah Hill"},
+            {"Captain Dickson", "Ice Cube"}
+        }}
     };
     std::string jsonStr = jason.dump(2);
 
