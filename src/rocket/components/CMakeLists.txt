@@ -1,3 +1,5 @@
 
-add_subdirectory(bodyTube)
-add_subdirectory(base)
+target_sources(rocket
+    PUBLIC
+        temp.cpp
+)
