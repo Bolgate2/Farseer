@@ -1,0 +1,9 @@
+[submodule "include/eigen"]
+	path = include/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "include/json"]
+	path = include/json
+	url = https://github.com/nlohmann/json.git
+[submodule "include/uuid_v4"]
+	path = include/uuid_v4
+	url = https://github.com/crashoz/uuid_v4.git
