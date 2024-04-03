@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #include <Eigen/Dense>
 #include <uuid_v4/uuid_v4.h>
@@ -30,15 +31,19 @@ class Component : std::enable_shared_from_this<Component>{
         std::weak_ptr<Component> _parent = std::weak_ptr<Component>{};
 
         Eigen::Vector3d _position;
-    
+    protected:
+        virtual json propertiesToJson() = 0;
+        // this will also go about creating sub-components
+        virtual void jsonToProperties(json j) = 0;
+
     public:
+        std::string name;
+
         // constructors
         // NO JSON CONSTRUCTOR AS THE JSON PROPERTIES METHOD IS VIRTUAL
         // NO CONSTRUCTOR WITH PARENT AS THE ADD CHILD METHOD RELIES ON VIRTUAL FUNCTIONS
         // to construct using virtual methods, create an empty object, then apply stuff to it
         Component(std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero());
-
-        std::string name;
 
         std::string id(){ return _id; };
 
@@ -64,9 +69,85 @@ class Component : std::enable_shared_from_this<Component>{
         // applies the properties in a JSON to this component
         void fromJson(json j);
         json toJson();
-        virtual json propertiesToJson() = 0;
-        // this will also go about creating components
-        virtual void jsonToProperties(json j) = 0;
+};
+
+class BodyTube : public Component{
+    private:
+        double _height = 0;
+        double _diameter = 0;
+        double _thickness = 0;
+        bool _filled = false;
+    
+    protected:
+        virtual json propertiesToJson() override;
+        // this will also go about creating sub-components
+        virtual void jsonToProperties(json j) override;
+    
+    public:
+        BodyTube(std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero());
+        BodyTube(double height, double diameter, double thickness, bool filled = false, std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero());
+
+        double getHeight(){ return _height; };
+        void setheight(double height) { _height = std::max(0.0,height); };
+        double getDiameter(){ return _diameter; };
+        void setDiameter(double diameter) { _diameter = std::max(0.0,diameter); };
+        double getThickness(){ return _thickness; };
+        void setThickness(double thickness) { _thickness = std::max(0.0,thickness); };
+        bool getFilled(){ return _filled; };
+        void setFilled(bool filled) { filled = _filled; };
+
+        virtual COMPONENT_TYPE type() override { return COMPONENT_TYPE::BODY_TUBE; };
+        virtual std::vector<COMPONENT_TYPE> allowedChildren() override {
+            return std::vector<COMPONENT_TYPE>{
+                COMPONENT_TYPE::MOTOR,
+                COMPONENT_TYPE::FIN_SET
+            };
+        };
+};
+
+template<typename T, typename... args>
+std::shared_ptr<Component> create(args...){
+    std::shared_ptr<Component> comp = std::make_shared<T>(args...);
+    return comp;
+};
+
+// if a component is supplied as the first argument, it will be considered the intended parent
+template<typename T, typename... args>
+std::shared_ptr<Component> create(std::shared_ptr<Component> parent, args...){
+    std::shared_ptr<Component> comp = std::make_shared<T>(args...);
+    comp->setParent(parent);
+    return comp;
+};
+
+// creating from a json where a type is specified, may not be neccecary tbh
+template<typename T>
+std::shared_ptr<Component> create(json j){
+    std::shared_ptr<Component> comp = std::make_shared<T>();
+    comp->fromJson(j);
+    return comp;
+};
+
+// creating from a json, type will be inferred from json
+std::shared_ptr<Component> create(json j){
+    COMPONENT_TYPE type = j.at("component_type");
+    std::shared_ptr<Component> comp = nullptr;
+
+    switch (type){
+        case BODY_TUBE:
+            comp = std::make_shared<BodyTube>();
+            break;
+        default:
+            comp = nullptr;
+            break;
+    }
+
+    if(comp.get() == nullptr){
+        // TODO: ERROR LOGGING
+        return nullptr;
+    }
+    comp->fromJson(j);
+
+    return comp;
 };
 
 }
