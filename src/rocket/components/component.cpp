@@ -83,5 +83,31 @@ bool Component::removeComponent( std::string uuid ){
     return removeComponent(comp.get());
 }
 
+json Component::toJson(){
+
+    auto comps = components();
+    std::vector<json> subcomp_jsons {};
+    for(auto c = comps.begin(); c != comps.end(); c++){
+        subcomp_jsons.push_back(
+            c->get()->toJson()
+        );
+    }
+
+    json comp_json = {
+        {"name", name},
+        {"component_type", type()},
+        {"components", subcomp_jsons},
+        {"properties", propertiesToJson()}
+    };
+    return comp_json;
+}
+
+void Component::fromJson(json j){
+    name = j.at("name");
+    jsonToProperties(j);
+    // TODO component creation
+}
+
+
 
 }

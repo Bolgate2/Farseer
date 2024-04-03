@@ -46,7 +46,7 @@ class Component : std::enable_shared_from_this<Component>{
         std::string name;
 
         Eigen::Vector3d getPosition(){ return _position; };
-        Eigen::Vector3d setPosition(Eigen::Vector3d position){ _position = position; };
+        void setPosition(Eigen::Vector3d position){ _position = position; };
 
         std::string id(){ return _id; };
 
@@ -108,28 +108,21 @@ class BodyTube : public Component{
 };
 
 template<typename T, typename... args>
-std::shared_ptr<Component> create(args...){
-    std::shared_ptr<Component> comp = std::make_shared<T>(args...);
+std::shared_ptr<Component> create(args... a){
+    std::shared_ptr<Component> comp = std::make_shared<T>(a...);
     return comp;
 };
 
 // if a component is supplied as the first argument, it will be considered the intended parent
 template<typename T, typename... args>
-std::shared_ptr<Component> create(std::shared_ptr<Component> parent, args...){
-    std::shared_ptr<Component> comp = std::make_shared<T>(args...);
-    comp->setParent(parent);
-    return comp;
-};
-
-// creating from a json where a type is specified, may not be neccecary tbh
-template<typename T>
-std::shared_ptr<Component> create(json j){
-    std::shared_ptr<Component> comp = std::make_shared<T>();
-    comp->fromJson(j);
+std::shared_ptr<Component> create(Component* parent, args... a){
+    std::shared_ptr<Component> comp = std::make_shared<T>(a...);
+    parent->addComponent(comp.get());
     return comp;
 };
 
 // creating from a json, type will be inferred from json
+template<typename T, typename... args>
 std::shared_ptr<Component> create(json j){
     COMPONENT_TYPE type = j.at("component_type");
     std::shared_ptr<Component> comp = nullptr;
