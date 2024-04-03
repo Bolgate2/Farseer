@@ -59,6 +59,7 @@ class Component : std::enable_shared_from_this<Component>{
         // sub component methods
         std::vector<std::shared_ptr<Component>> components() { return _components; };
         Component* parent() { return _parent.lock().get(); }
+        // sets parent directly, DO NOT DO THIS USE THE ADD AND REMOVE CHILD FUNCTIONS
         bool setParent( Component* parent );
 
         bool addComponent( Component* comp );
