@@ -37,33 +37,34 @@ class Component : std::enable_shared_from_this<Component>{
         virtual void jsonToProperties(json j) = 0;
 
     public:
-        std::string name;
-
         // constructors
         // NO JSON CONSTRUCTOR AS THE JSON PROPERTIES METHOD IS VIRTUAL
         // NO CONSTRUCTOR WITH PARENT AS THE ADD CHILD METHOD RELIES ON VIRTUAL FUNCTIONS
         // to construct using virtual methods, create an empty object, then apply stuff to it
         Component(std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero());
 
+        std::string name;
+
+        Eigen::Vector3d getPosition(){ return _position; };
+        Eigen::Vector3d setPosition(Eigen::Vector3d position){ _position = position; };
+
         std::string id(){ return _id; };
 
         // Component Typing
         // this method says what type of component this is in the central register and must be implemented for any non-virtual components
         virtual COMPONENT_TYPE type() = 0;
-        // this method dictates what types of component can be added as children, used in addChild
-        virtual std::vector<COMPONENT_TYPE> allowedChildren() = 0;
+        // this method dictates what types of component can be added as children, used in addComponent
+        virtual std::vector<COMPONENT_TYPE> allowedComponents() = 0;
 
         // sub component methods
         std::vector<std::shared_ptr<Component>> components() { return _components; };
-        std::weak_ptr<Component> parent() { return _parent; }
+        Component* parent() { return _parent.lock().get(); }
+        bool setParent( Component* parent );
 
-        bool addChild( std::shared_ptr<Component> comp );
-        std::shared_ptr<Component> findChild( std::string uuid );
-
-        bool removeChild( std::shared_ptr<Component> comp );
-        bool removeChild( std::string uuid );
-
-        bool setParent( std::shared_ptr<Component> parent );
+        bool addComponent( Component* comp );
+        std::shared_ptr<Component> findComponent( std::string uuid );
+        bool removeComponent( Component* comp );
+        bool removeComponent( std::string uuid );
 
         // JSON methods
         // applies the properties in a JSON to this component
@@ -97,7 +98,7 @@ class BodyTube : public Component{
         void setFilled(bool filled) { filled = _filled; };
 
         virtual COMPONENT_TYPE type() override { return COMPONENT_TYPE::BODY_TUBE; };
-        virtual std::vector<COMPONENT_TYPE> allowedChildren() override {
+        virtual std::vector<COMPONENT_TYPE> allowedComponents() override {
             return std::vector<COMPONENT_TYPE>{
                 COMPONENT_TYPE::MOTOR,
                 COMPONENT_TYPE::FIN_SET
