@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 
+#include <Eigen/Dense>
 #include <uuid_v4/uuid_v4.h>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -27,14 +28,15 @@ class Component : std::enable_shared_from_this<Component>{
 
         std::vector<std::shared_ptr<Component>> _components = std::vector<std::shared_ptr<Component>>{};
         std::weak_ptr<Component> _parent = std::weak_ptr<Component>{};
+
+        Eigen::Vector3d _position;
     
     public:
         // constructors
         // NO JSON CONSTRUCTOR AS THE JSON PROPERTIES METHOD IS VIRTUAL
         // NO CONSTRUCTOR WITH PARENT AS THE ADD CHILD METHOD RELIES ON VIRTUAL FUNCTIONS
-        // to construct using virtual methods, create an empty object, then 
-        Component();
-        Component(std::string name);
+        // to construct using virtual methods, create an empty object, then apply stuff to it
+        Component(std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero());
 
         std::string name;
 
