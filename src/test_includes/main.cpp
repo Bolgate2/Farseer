@@ -33,14 +33,16 @@ int main(int argc, char **argv)
     std::string uuidStr = uuid.str();
 
     // json
+    nlohmann::json nest = {
+        {"Jenko", "Channing Tatum"},
+        {"Schmidt", "Jonah Hill"},
+        {"Captain Dickson", "Ice Cube"}
+    };
+
     nlohmann::json jason = {
         {"name", "jeff"},
         {"jump street", 22},
-        {"actors" ,{
-            {"Jenko", "Channing Tatum"},
-            {"Schmidt", "Jonah Hill"},
-            {"Captain Dickson", "Ice Cube"}
-        }}
+        {"actors", nest}
     };
     std::string jsonStr = jason.dump(2);
 
