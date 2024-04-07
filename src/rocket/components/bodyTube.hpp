@@ -3,7 +3,7 @@
 
 namespace Rocket{
 
-REGISTER_COMPONENT(BodyTube, Body_Tube){
+class BodyTube : public Component{
     private:
         double _height = 0;
         double _diameter = 0;
@@ -28,11 +28,12 @@ REGISTER_COMPONENT(BodyTube, Body_Tube){
         bool getFilled(){ return _filled; };
         void setFilled(bool filled) { _filled = filled; };
 
-        virtual COMPONENT_TYPE type() override { return COMPONENT_TYPE::BODY_TUBE; };
-        virtual std::vector<COMPONENT_TYPE> allowedComponents() override {
-            return std::vector<COMPONENT_TYPE>{
-                COMPONENT_TYPE::MOTOR,
-                COMPONENT_TYPE::FIN_SET
+        virtual std::string type() override { return COMPONENT_NAMES::BODY_TUBE; };
+        virtual std::vector<std::string> allowedComponents() override {
+            return std::vector<std::string>{
+                COMPONENT_NAMES::MOTOR,
+                COMPONENT_NAMES::FIN_SET,
+                COMPONENT_NAMES::BODY_TUBE // for testing
             };
         };
 };

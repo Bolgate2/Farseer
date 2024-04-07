@@ -2,8 +2,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include <unordered_map>
-#include <unordered_set>
+#include <string>
 
 #include <Eigen/Dense>
 #include <uuid_v4/uuid_v4.h>
@@ -13,24 +12,18 @@ using json = nlohmann::json;
 
 namespace Rocket {
 
-enum COMPONENT_TYPE{
-    INVALID = -1,
-    ROCKET,
-    STAGE,
-    BODY_TUBE,
-    NOSE_CONE,
-    FIN_SET,
-    MOTOR
-};
+// index of component names, THESE MUST BE UNIQUE
+// this is basically an enum of strings which is nice  
+namespace COMPONENT_NAMES{
+    constexpr char const * BODY_TUBE = "Body Tube";
+    constexpr char const * NOSECONE = "Nosecone";
+    constexpr char const * ROCKET = "Rocket";
+    constexpr char const * STAGE = "Stage";
+    constexpr char const * MOTOR = "Motor";
+    constexpr char const * FIN_SET = "Fin Set";
+}
 
-// THESE NAMES MUST BE UNIQUE
-// std::unordered_set<std::string> COMPONENT_TYPE_NAMES;
-
-// use hash define to create macro for registering components by name in a set
-// this define will check if the name is unique
-
-
-class Component : std::enable_shared_from_this<Component>{
+class Component : public std::enable_shared_from_this<Component>{
     private:
         static UUIDv4::UUIDGenerator<std::mt19937_64> _uuidGenerator;
         std::string _id;
@@ -59,11 +52,10 @@ class Component : std::enable_shared_from_this<Component>{
         std::string id(){ return _id; };
 
         // Component Typing
-        // this method says what type of component this is in the central register and must be implemented for any non-virtual components
-        virtual COMPONENT_TYPE type() = 0;
-        virtual std::string typeName() = 0;
+        // this method says what type of component this is in COMPONENT_NAMES and must be implemented for any non-virtual components
+        virtual std::string type() = 0;
         // this method dictates what types of component can be added as children, used in addComponent
-        virtual std::vector<COMPONENT_TYPE> allowedComponents() = 0;
+        virtual std::vector<std::string> allowedComponents() = 0;
 
         // sub component methods
         std::vector<std::shared_ptr<Component>> components() { return _components; };
@@ -78,75 +70,10 @@ class Component : std::enable_shared_from_this<Component>{
 
         // JSON methods
         // applies the properties in a JSON to this component
-        void fromJson(json j);
+        void applyJson(json j);
         json toJson();
 };
 
-template<class T>
-class DerivedComponent : public Component{
-    protected:
-        DerivedComponent(std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero()):
-        Component(name, position) {};
-    public:
+std::shared_ptr<Component> componentFromJson(json j);
 
-        template<typename... args>
-        static std::shared_ptr<T> create(args... a){
-            return std::make_shared<T>(a...);
-        }
-
-        static std::shared_ptr<T> create(json a){
-            std::shared_ptr<T> comp = std::make_shared<T>();
-            comp->fromJson(a);
-            return comp;
-        }
-};
-
-#define REGISTER_COMPONENT(CLASS_NAME, NAME) \
-    static_assert( true ); \
-    class CLASS_NAME; \
-    class __ ## CLASS_NAME ## _INTERIM : public DerivedComponent<CLASS_NAME>{ \
-        public: \
-            virtual std::string typeName() override { return #NAME; }; \
-    }; \
-    class CLASS_NAME : public __ ## CLASS_NAME ## _INTERIM
-
-/*
-template<typename T, typename... args>
-std::shared_ptr<Component> create(args... a){
-    std::shared_ptr<Component> comp = std::make_shared<T>(a...);
-    return comp;
-};
-
-// if a component is supplied as the first argument, it will be considered the intended parent
-template<typename T, typename... args>
-std::shared_ptr<Component> create(Component* parent, args... a){
-    std::shared_ptr<Component> comp = std::make_shared<T>(a...);
-    parent->addComponent(comp.get());
-    return comp;
-};
-
-// creating from a json, type will be inferred from json
-template<typename T, typename... args>
-std::shared_ptr<Component> create(json j){
-    COMPONENT_TYPE type = j.at("component_type");
-    std::shared_ptr<Component> comp = nullptr;
-
-    switch (type){
-        case BODY_TUBE:
-            comp = std::make_shared<BodyTube>();
-            break;
-        default:
-            comp = nullptr;
-            break;
-    }
-
-    if(comp.get() == nullptr){
-        // TODO: ERROR LOGGING
-        return nullptr;
-    }
-    comp->fromJson(j);
-
-    return comp;
-};
-*/
 }

@@ -5,14 +5,19 @@ using json = nlohmann::json;
 
 int main(int argc, char **argv){
     
-    auto toob = Rocket::BodyTube(10, 20, 2, true, "jeff", Eigen::Vector3d{1,2,3});
-    //auto toob3 = Rocket::BodyTube::create(json {});
-    auto toobJson = toob.toJson();
-    auto toob2 = Rocket::BodyTube::create(toobJson);
+    auto toob = std::make_shared<Rocket::BodyTube>(10, 20, 2, true, "jeff", Eigen::Vector3d{1,2,3});
+    auto toobJson = toob->toJson();
+    auto toob2 = Rocket::componentFromJson(toobJson);
 
-    std::cout << toob.toJson().dump(2) << std::endl;
+    toob->addComponent(toob2.get());
+
+    std::cout << toob->toJson().dump(2) << std::endl;
     std::cout << "---------------------------------" << std::endl;
     std::cout << toob2->toJson().dump(2) << std::endl;
+    std::cout << "---------------------------------" << std::endl;
+
+    auto toob3 = Rocket::componentFromJson(toob->toJson());
+    std::cout << toob3->toJson().dump(2) << std::endl;
 
     return 0;
 }

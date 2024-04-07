@@ -106,13 +106,17 @@ json Component::toJson(){
     return comp_json;
 }
 
-void Component::fromJson(json j){
+void Component::applyJson(json j){
     name = j.at("name");
     std::vector<double> jsonPos = j.at("position");
     setPosition( Eigen::Vector3d {jsonPos[0],jsonPos[1],jsonPos[2]} );
     jsonToProperties(j);
     // TODO component creation
-    
+    std::vector<json> jsonComps = j.at("components");
+    for(auto i = jsonComps.cbegin(); i != jsonComps.cend(); i++){
+        auto comp = componentFromJson(*i);
+        addComponent(comp.get());
+    }
 }
 
 }

@@ -2,11 +2,13 @@
 
 namespace Rocket{
 
-BodyTube::BodyTube(std::string name, Eigen::Vector3d position)
+BodyTube::BodyTube(std::string name, Eigen::Vector3d position):
+Component(name, position)
 {}
 
 
-BodyTube::BodyTube(double height, double diameter, double thickness, bool filled, std::string name, Eigen::Vector3d position)
+BodyTube::BodyTube(double height, double diameter, double thickness, bool filled, std::string name, Eigen::Vector3d position):
+Component(name, position)
 {
     _height = height;
     _diameter = diameter;
