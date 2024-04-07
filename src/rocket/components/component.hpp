@@ -2,6 +2,8 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <Eigen/Dense>
 #include <uuid_v4/uuid_v4.h>
@@ -20,6 +22,12 @@ enum COMPONENT_TYPE{
     FIN_SET,
     MOTOR
 };
+
+// THESE NAMES MUST BE UNIQUE
+// std::unordered_set<std::string> COMPONENT_TYPE_NAMES;
+
+// use hash define to create macro for registering components by name in a set
+// this define will check if the name is unique
 
 
 class Component : std::enable_shared_from_this<Component>{
@@ -53,6 +61,7 @@ class Component : std::enable_shared_from_this<Component>{
         // Component Typing
         // this method says what type of component this is in the central register and must be implemented for any non-virtual components
         virtual COMPONENT_TYPE type() = 0;
+        virtual std::string typeName() = 0;
         // this method dictates what types of component can be added as children, used in addComponent
         virtual std::vector<COMPONENT_TYPE> allowedComponents() = 0;
 
@@ -73,40 +82,35 @@ class Component : std::enable_shared_from_this<Component>{
         json toJson();
 };
 
-class BodyTube : public Component{
-    private:
-        double _height = 0;
-        double _diameter = 0;
-        double _thickness = 0;
-        bool _filled = false;
-    
+template<class T>
+class DerivedComponent : public Component{
     protected:
-        virtual json propertiesToJson() override;
-        // this will also go about creating sub-components
-        virtual void jsonToProperties(json j) override;
-    
+        DerivedComponent(std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero()):
+        Component(name, position) {};
     public:
-        BodyTube(std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero());
-        BodyTube(double height, double diameter, double thickness, bool filled = false, std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero());
 
-        double getHeight(){ return _height; };
-        void setheight(double height) { _height = std::max(0.0,height); };
-        double getDiameter(){ return _diameter; };
-        void setDiameter(double diameter) { _diameter = std::max(0.0,diameter); };
-        double getThickness(){ return _thickness; };
-        void setThickness(double thickness) { _thickness = std::max(0.0,thickness); };
-        bool getFilled(){ return _filled; };
-        void setFilled(bool filled) { filled = _filled; };
+        template<typename... args>
+        static std::shared_ptr<T> create(args... a){
+            return std::make_shared<T>(a...);
+        }
 
-        virtual COMPONENT_TYPE type() override { return COMPONENT_TYPE::BODY_TUBE; };
-        virtual std::vector<COMPONENT_TYPE> allowedComponents() override {
-            return std::vector<COMPONENT_TYPE>{
-                COMPONENT_TYPE::MOTOR,
-                COMPONENT_TYPE::FIN_SET
-            };
-        };
+        static std::shared_ptr<T> create(json a){
+            std::shared_ptr<T> comp = std::make_shared<T>();
+            comp->fromJson(a);
+            return comp;
+        }
 };
 
+#define REGISTER_COMPONENT(CLASS_NAME, NAME) \
+    static_assert( true ); \
+    class CLASS_NAME; \
+    class __ ## CLASS_NAME ## _INTERIM : public DerivedComponent<CLASS_NAME>{ \
+        public: \
+            virtual std::string typeName() override { return #NAME; }; \
+    }; \
+    class CLASS_NAME : public __ ## CLASS_NAME ## _INTERIM
+
+/*
 template<typename T, typename... args>
 std::shared_ptr<Component> create(args... a){
     std::shared_ptr<Component> comp = std::make_shared<T>(a...);
@@ -144,5 +148,5 @@ std::shared_ptr<Component> create(json j){
 
     return comp;
 };
-
+*/
 }

@@ -93,9 +93,13 @@ json Component::toJson(){
         );
     }
 
+    Eigen::Vector3d pos = getPosition();
+    std::vector posVec { pos.x(), pos.y(), pos.z() };
+
     json comp_json = {
         {"name", name},
         {"component_type", type()},
+        {"position", posVec},
         {"components", subcomp_jsons},
         {"properties", propertiesToJson()}
     };
@@ -104,10 +108,11 @@ json Component::toJson(){
 
 void Component::fromJson(json j){
     name = j.at("name");
+    std::vector<double> jsonPos = j.at("position");
+    setPosition( Eigen::Vector3d {jsonPos[0],jsonPos[1],jsonPos[2]} );
     jsonToProperties(j);
     // TODO component creation
+    
 }
-
-
 
 }
