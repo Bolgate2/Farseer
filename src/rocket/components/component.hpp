@@ -41,7 +41,7 @@ class Component : public std::enable_shared_from_this<Component>{
         // constructors
         // NO JSON CONSTRUCTOR AS THE JSON PROPERTIES METHOD IS VIRTUAL
         // NO CONSTRUCTOR WITH PARENT AS THE ADD CHILD METHOD RELIES ON VIRTUAL FUNCTIONS
-        // to construct using virtual methods, create an empty object, then apply stuff to it
+        // to "construct" using virtual methods, create an empty object, then apply stuff to it
         Component(std::string name = "", Eigen::Vector3d position = Eigen::Vector3d::Zero());
 
         std::string name;
@@ -74,6 +74,7 @@ class Component : public std::enable_shared_from_this<Component>{
         json toJson();
 };
 
+// definition for this function is in factory.cpp
 std::shared_ptr<Component> componentFromJson(json j);
 
 }
