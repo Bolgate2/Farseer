@@ -32,8 +32,7 @@ class BodyTube : public Component{
         virtual std::vector<std::string> allowedComponents() override {
             return std::vector<std::string>{
                 COMPONENT_NAMES::MOTOR,
-                COMPONENT_NAMES::FIN_SET,
-                COMPONENT_NAMES::BODY_TUBE // for testing
+                COMPONENT_NAMES::FIN_SET
             };
         };
 };
