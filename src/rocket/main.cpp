@@ -18,6 +18,10 @@ int main(int argc, char **argv){
 
     auto toob3 = Rocket::componentFromJson(toob->toJson());
     std::cout << toob3->toJson().dump(2) << std::endl;
+    std::cout << "---------------------------------" << std::endl;
+    toob->removeComponent(toob2.get());
+    std::cout << toob2->parent() << std::endl;
+    std::cout << toob->toJson().dump(2) << std::endl;
 
     return 0;
 }
