@@ -2,18 +2,21 @@
 
 namespace Rocket{
 
-BodyTube::BodyTube(std::string name, Eigen::Vector3d position):
+BodyTube::BodyTube(std::string name, Eigen::Vector3d position, std::unique_ptr<Material> material):
 Component(name, position)
-{}
+{
+    setMaterial(std::move(material));
+}
 
 
-BodyTube::BodyTube(double height, double diameter, double thickness, bool filled, std::string name, Eigen::Vector3d position):
+BodyTube::BodyTube(double height, double diameter, double thickness, bool filled, std::string name, Eigen::Vector3d position, std::unique_ptr<Material> material):
 Component(name, position)
 {
     _height = height;
     _diameter = diameter;
     _thickness = thickness;
     _filled = filled;
+    setMaterial(std::move(material));
 }
 
 
@@ -22,7 +25,8 @@ json BodyTube::propertiesToJson() {
         {"height", getHeight()},
         {"diameter", getDiameter()},
         {"thickness", getThickness()},
-        {"filled", getFilled()}
+        {"filled", getFilled()},
+        {"material", getMaterial()->toJson()}
     };
 }
 
@@ -33,10 +37,15 @@ void BodyTube::jsonToProperties(json j) {
     double desiredDiameter = properties.at("diameter");
     double desiredThickness = properties.at("thickness");
     bool desiredFilled = properties.at("filled");
+    json desiredMaterial = properties.at("material");
     setHeight(desiredHeight);
     setDiameter(desiredDiameter);
     setThickness(desiredThickness);
     setFilled(desiredFilled);
+    std::unique_ptr<Material> mat = std::move( Material::fromJson(desiredMaterial) );
+    setMaterial(std::move(
+        Material::fromJson(desiredMaterial)
+    ));
 }
 
 }

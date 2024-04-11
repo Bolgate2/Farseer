@@ -25,9 +25,11 @@ class Material{
             setDensity(density);
         }
 
-        static Material fromJson(json j){
+        static std::unique_ptr<Material> fromJson(json j){
             std::string nm = j.at("name");
             double dens = j.at("density");
-            return Material(nm, dens);
+            return std::move(
+                std::make_unique<Material>(nm, dens)
+            );
         }
 };
