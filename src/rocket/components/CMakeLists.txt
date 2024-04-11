@@ -4,4 +4,5 @@ target_sources(rocket
         component.cpp
         bodyTube.cpp
         factory.cpp
+        material.hpp
 )
