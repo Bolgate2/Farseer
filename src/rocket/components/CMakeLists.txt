@@ -5,4 +5,5 @@ target_sources(rocket
         bodyTube.cpp
         factory.cpp
         material.hpp
+        finish.hpp
 )
