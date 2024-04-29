@@ -7,3 +7,6 @@
 [submodule "include/uuid_v4"]
 	path = include/uuid_v4
 	url = https://github.com/crashoz/uuid_v4.git
+[submodule "include/fmt"]
+	path = include/fmt
+	url = https://github.com/fmtlib/fmt.git

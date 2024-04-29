@@ -21,9 +21,13 @@ endif ()
 
 # including eigen
 add_subdirectory(include/eigen)
+# including fmt
+add_subdirectory(include/fmt)
 
 # qt dir
 add_subdirectory(src/app)
+# simulation
+add_subdirectory(src/sim)
 # rocket
 add_subdirectory(src/rocket)
 # include test
