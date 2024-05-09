@@ -9,6 +9,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include "rocketInterface.hpp"
+
 
 namespace Rocket {
 
@@ -23,7 +25,7 @@ namespace COMPONENT_NAMES{
     constexpr char const * FIN_SET = "Fin Set";
 }
 
-class Component : public std::enable_shared_from_this<Component>{
+class Component : public std::enable_shared_from_this<Component>, public Sim::RocketInterface{
     private:
         static UUIDv4::UUIDGenerator<std::mt19937_64> _uuidGenerator;
         std::string _id;
@@ -72,6 +74,42 @@ class Component : public std::enable_shared_from_this<Component>{
         // applies the properties in a JSON to this component
         void applyJson(json j);
         json toJson();
+
+        // +---------------------+
+        // | INTERFACE FUNCTIONS |
+        // +---------------------+
+        // implement these utilizing template pattern
+        
+        virtual Eigen::Vector3d thisWayUp() override { return Eigen::Vector3d{-1,0,0}; }
+
+        virtual Eigen::Vector3d cm(double time) override { return getPosition(); }
+
+        virtual Eigen::Matrix3d inertia(double time) override { return Eigen::Matrix3d::Zero(); }
+
+        virtual double mass(double time) override { return 0; }
+
+        virtual Eigen::Vector3d thrust(double time) override { return Eigen::Vector3d::Zero(); }
+
+        virtual Eigen::Vector3d thrustPosition(double time) override { return Eigen::Vector3d::Zero(); }
+
+        virtual double referenceArea() override { return 0; }
+
+        virtual double referenceLength() override { return 0; }
+
+        virtual double c_n( double mach, double alpha, double gamma = 1.4 ) override { return 0; }
+
+        virtual double c_m( double mach, double alpha, double gamma = 1.4) override { return 0; }
+
+        virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4) override { return getPosition(); }
+
+        virtual double c_m_damp(double x, double omega, double v) override { return 0; }
+
+        virtual double Cdf(const double mach, const double reL, const double alpha) override { return 0; }
+
+        virtual double Cdp(const double mach, const double alpha) override { return 0; }
+
+        virtual double Cdb(const double mach, const double time, const double alpha) override { return 0; }
+        
 };
 
 // definition for this function is in factory.cpp

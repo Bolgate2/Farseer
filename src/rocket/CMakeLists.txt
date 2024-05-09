@@ -15,6 +15,10 @@ add_library(rocket "")
 add_dependencies(component_test rocket)
 target_link_libraries(component_test rocket)
 
+add_dependencies(rocket sim)
+target_link_libraries(rocket sim)
+target_include_directories(rocket PUBLIC "${PROJECT_SOURCE_DIR}/src/sim")
+
 add_subdirectory(components)
 target_link_libraries(rocket Eigen3::Eigen)
 target_link_libraries(rocket uuid_v4::uuid_v4)
