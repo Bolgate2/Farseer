@@ -10,7 +10,7 @@
 using json = nlohmann::json;
 
 #include "rocketInterface.hpp"
-
+using FlightState = Sim::FlightState;
 
 namespace Rocket {
 
@@ -114,33 +114,35 @@ class Component : public std::enable_shared_from_this<Component>, public Sim::Ro
         
         virtual Eigen::Vector3d thisWayUp() override { return Eigen::Vector3d{-1,0,0}; }
 
-        virtual Eigen::Vector3d cm(double time) override { return getPosition(); }
+        virtual Eigen::Vector3d cm(const FlightState& state) override { return getPosition(); }
 
-        virtual Eigen::Matrix3d inertia(double time) override { return Eigen::Matrix3d::Zero(); }
+        virtual Eigen::Matrix3d inertia(const FlightState& state) override { return Eigen::Matrix3d::Zero(); }
 
-        virtual double mass(double time) override { return 0; }
+        virtual double mass(const FlightState& state) override { return 0; }
 
-        virtual Eigen::Vector3d thrust(double time) override { return Eigen::Vector3d::Zero(); }
+        virtual Eigen::Vector3d thrust(const FlightState& state) override { return Eigen::Vector3d::Zero(); }
 
-        virtual Eigen::Vector3d thrustPosition(double time) override { return Eigen::Vector3d::Zero(); }
+        virtual Eigen::Vector3d thrustPosition(const FlightState& state) override { return Eigen::Vector3d::Zero(); }
 
-        virtual double referenceArea() override { return 0; }
+        virtual double referenceArea(const FlightState& state) override { return 0; }
 
-        virtual double referenceLength() override { return 0; }
+        virtual double referenceLength(const FlightState& state) override { return 0; }
 
-        virtual double c_n( double mach, double alpha, double gamma = 1.4 ) override { return 0; }
+        virtual double c_n(const FlightState& state) override { return 0; }
 
-        virtual double c_m( double mach, double alpha, double gamma = 1.4) override { return 0; }
+        virtual double c_m(const FlightState& state) override { return 0; }
 
-        virtual Eigen::Vector3d cp( double mach, double alpha, double gamma = 1.4) override { return getPosition(); }
+        virtual Eigen::Vector3d cp(const FlightState& state) override { return getPosition(); }
 
-        virtual double c_m_damp(double x, double omega, double v) override { return 0; }
+        virtual double c_m_damp_yaw(const FlightState& state) override { return 0; }
 
-        virtual double Cdf(const double mach, const double reL, const double alpha) override { return 0; }
+        virtual double c_m_damp_pitch(const FlightState& state) override { return 0; }
 
-        virtual double Cdp(const double mach, const double alpha) override { return 0; }
+        virtual double Cdf(const FlightState& state) override { return 0; }
 
-        virtual double Cdb(const double mach, const double time, const double alpha) override { return 0; }
+        virtual double Cdp(const FlightState& state) override { return 0; }
+
+        virtual double Cdb(const FlightState& state) override { return 0; }
         
 };
 

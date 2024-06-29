@@ -24,8 +24,6 @@ namespace Sim{
         _userStep = timeStep;
         _rocket = rocket;
         _rodLen = 0.1;
-        _aRef = _rocket->referenceArea();
-        _lRef = _rocket->referenceLength();
         _atmos = RealAtmos::RealAtmos::GetInstance();
         // https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
         auto thisUp = thisWayUp();
@@ -610,20 +608,24 @@ namespace Sim{
             time, mach, angleOfAttack, pitchVel, yawVel, reynL, gam
         );
 
+        // get rocket reference area and length
+        const double _aRef = _rocket->referenceArea(currState);
+        const double _lRef = _rocket->referenceLength(currState);
+
         /*
         --------------------------
         --- THRUST AND GRAVITY ---
         --------------------------
         */
-        auto m = _rocket->mass(time);
-        const Eigen::Matrix3d inertia = (_rotmat*_rocket->inertia(time)*(_rotmat.transpose()));
+        auto m = _rocket->mass(currState);
+        const Eigen::Matrix3d inertia = (_rotmat*_rocket->inertia(currState)*(_rotmat.transpose()));
         const double Ixx = inertia(0,0);
         const double Iyy = inertia(1,1);
         const double Izz = inertia(2,2);
 
 
         // adding thrust
-        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
+        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(currState));
         forces += th;
 
         // adding gravity
@@ -642,7 +644,7 @@ namespace Sim{
         ---------------------------
         */
 
-        auto cn = _rocket->c_n(mach, angleOfAttack);
+        auto cn = _rocket->c_n(currState);
         if(std::isnan(cn)){
             fmt::print("TIME {}, STATE AT FAILURE [{}]\n", time, toString(state.transpose()));
             fmt::print("CN IS NAN M={:.4f} AoA={:.4f}\n", mach, angleOfAttack);
@@ -659,7 +661,7 @@ namespace Sim{
             normForceDirection = (rocketOrientationVec.cross(rocketOrientationVec.cross(vdiff))).normalized();
         }
 
-        Eigen::Vector3d normForce = cn*referenceArea()*dynamicPressure*normForceDirection;
+        Eigen::Vector3d normForce = cn*_aRef*dynamicPressure*normForceDirection;
         forces += normForce;
         //fmt::print("TIME {}, NORM [{}]\n", time, toString(normForce.transpose()));
         assert(!normForce.hasNaN());
@@ -670,8 +672,8 @@ namespace Sim{
         
         //fmt::print("t={:<8.4f} norm force     [{}]\n", time, toString(normForce.transpose()));
 
-        Eigen::Vector3d rockCP = _rotmat*_rocket->cp(mach, angleOfAttack);
-        Eigen::Vector3d rockCM = _rotmat*_rocket->cm(time);
+        Eigen::Vector3d rockCP = _rotmat*_rocket->cp(currState);
+        Eigen::Vector3d rockCM = _rotmat*_rocket->cm(currState);
         Eigen::Vector3d globCP = rocketRotationMat*rockCP;
         Eigen::Vector3d globCM = rocketRotationMat*rockCM;
 
@@ -680,11 +682,11 @@ namespace Sim{
         assert(!normMoments.hasNaN());
 
         // adding damping
-        auto yawDampingCoeff = _rocket->c_m_damp((_rotmat.transpose()*rockCM).x(), angVelocity.x(), relativeSpeed);
-        auto pitchDampingCoeff = _rocket->c_m_damp((_rotmat.transpose()*rockCM).x(), angVelocity.y(), relativeSpeed);
+        auto yawDampingCoeff = _rocket->c_m_damp_yaw(currState);
+        auto pitchDampingCoeff = _rocket->c_m_damp_pitch(currState);
 
-        Eigen::Vector3d yawDampingMoment = { yawDampingCoeff*referenceArea()*referenceLength()*dynamicPressure, 0, 0 };
-        Eigen::Vector3d pitchDampingMoment = { 0, pitchDampingCoeff*referenceArea()*referenceLength()*dynamicPressure, 0 };
+        Eigen::Vector3d yawDampingMoment = { yawDampingCoeff*_aRef*_lRef*dynamicPressure, 0, 0 };
+        Eigen::Vector3d pitchDampingMoment = { 0, pitchDampingCoeff*_aRef*_lRef*dynamicPressure, 0 };
         assert(!yawDampingMoment.hasNaN());
         assert(!pitchDampingMoment.hasNaN());
         
@@ -709,11 +711,11 @@ namespace Sim{
 
         Eigen::Vector3d dragDir = -relativeVelocity.normalized(); // drag occurs in opposite direction to relative velocity
 
-        double cdf = _rocket->Cdf(mach, reynL, angleOfAttack);
-        double cdp = _rocket->Cdp(mach, angleOfAttack);
-        double cdb = _rocket->Cdb(mach, time, angleOfAttack);
+        double cdf = _rocket->Cdf(currState);
+        double cdp = _rocket->Cdp(currState);
+        double cdb = _rocket->Cdb(currState);
         double cd = cdf + cdp + cdb;
-        double dragMag = cd*referenceArea()*dynamicPressure;
+        double dragMag = cd*_aRef*dynamicPressure;
 
         assert(!std::isnan(cdf));
         assert(!std::isnan(cdp));

@@ -27,8 +27,6 @@ namespace Sim{
             double _rodLen;
             RocketInterface* _rocket;
             Eigen::Matrix3d _rotmat; // the rotation matrix from the designs coords to the rockets coords
-            double _aRef;
-            double _lRef;
 
             RealAtmos::RealAtmos* _atmos;
             Sim(RocketInterface* rocket, double timeStep, std::filesystem::path destination);
@@ -100,14 +98,6 @@ namespace Sim{
 
             inline void setOnRod( bool isOnRod ) {
                 _onRod = isOnRod;
-            }
-
-            inline const double referenceArea(){
-                return _aRef;
-            }
-
-            inline const double referenceLength(){
-                return _lRef;
             }
 
             // sim functions
