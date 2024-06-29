@@ -5,6 +5,41 @@
 #include <Eigen/Dense>
 
 namespace Sim{
+
+    /**
+     * This class acts as a data class for transferring all of the data required for calculating aerodynamic coefficients
+     * making this a dataclass means extending into more complex calculation is more easily maintainable
+     */
+    class FlightState{
+        private:
+            double _time;
+            double _mach;
+            double _alpha;
+            double _gamma = 1.4;
+            double _pitchVel;
+            double _yawVel;
+            double _reL;
+        public:
+            // getters, no setters as this is a data class
+            double time(){return _time;}
+            double mach(){return _mach;}
+            double alpha(){return _alpha;}
+            double gamma(){return _gamma;}
+            double pitchVel(){return _pitchVel;}
+            double yawVel(){return _yawVel;}
+            double reL(){return _reL;}
+            // constructor requires all fields except those with defaults
+            FlightState(double time, double mach, double alpha, double pitchVel, double yawVel, double reL, double gamma = 1.4) :
+            _time(time),
+            _mach(mach),
+            _alpha(alpha),
+            _pitchVel(pitchVel),
+            _yawVel(yawVel),
+            _reL(reL),
+            _gamma(gamma)
+            {}
+    };
+
     class RocketInterface{
         public:
             /**

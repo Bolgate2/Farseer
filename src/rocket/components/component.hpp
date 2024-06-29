@@ -39,6 +39,36 @@ class Component : public std::enable_shared_from_this<Component>, public Sim::Ro
         // this will also go about creating sub-components
         virtual void jsonToProperties(json j) = 0;
 
+        // +-------------------------+
+        // | INTERFACE SUB-FUNCTIONS |
+        // +-------------------------+
+        // mass
+
+        // cm
+        
+        // inertia
+
+        // thrust
+
+        // thrustPosition
+
+        // referenceArea
+
+        // referenceLength
+
+        // c_n
+
+        // c_m
+
+        // cp
+
+        // c_m_damp
+
+        // Cdf
+
+        // Cdp
+
+        // Cdb
     public:
         // constructors
         // NO JSON CONSTRUCTOR AS THE JSON PROPERTIES METHOD IS VIRTUAL
@@ -79,6 +109,8 @@ class Component : public std::enable_shared_from_this<Component>, public Sim::Ro
         // | INTERFACE FUNCTIONS |
         // +---------------------+
         // implement these utilizing template pattern
+        // this means that these are the top level functions which call sub-functions (except thisWayUp which is constant for this package)
+        // maybe redo these in the interface to take in a "flight state" data class as input?
         
         virtual Eigen::Vector3d thisWayUp() override { return Eigen::Vector3d{-1,0,0}; }
 

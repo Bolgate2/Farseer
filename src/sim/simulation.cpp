@@ -552,48 +552,21 @@ namespace Sim{
         Eigen::Vector3d moments = Eigen::Vector3d::Zero();
         Eigen::Vector3d angAcceleration = Eigen::Vector3d::Zero();
 
-        /*
-        --------------------------
-        --- THRUST AND GRAVITY ---
-        --------------------------
-        */
-        auto m = _rocket->mass(time);
+        // calculate info for flight state
+        // time is an input to this function
+        double gam = 1.4; // 1.4 gamma as flying through air is assumed
+
+        // getting mach and AoA
         Eigen::Matrix3d rocketRotationMat = Utils::eulerToRotmat(orientation.x(), orientation.y(), orientation.z());
         Eigen::Vector3d rocketOrientationVec = rocketRotationMat*thisWayUp(); // the rockets current "up" vector in global coords
-        const Eigen::Matrix3d inertia = (_rotmat*_rocket->inertia(time)*(_rotmat.transpose()));
-        const double Ixx = inertia(0,0);
-        const double Iyy = inertia(1,1);
-        const double Izz = inertia(2,2);
-
-
-        // adding thrust
-        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
-        forces += th;
-
-        // adding gravity
         // getting atmospheric properties
         const double alt = altitude(position);
         const auto g = _atmos->g(alt);
-        Eigen::Vector3d gravVec = centerOfEarthVector(position)*g;
-        acceleration += gravVec;
-
-
-        /*
-        ---------------------------
-        ------- AERO FORCES -------
-        ---------------------------
-        */
-        /*
-        ---------------------------
-        ------ NORMAL FORCES ------
-        ---------------------------
-        */
         const auto atmDens = _atmos->density(alt);
         const auto atmTemp = _atmos->temperature(alt);
         const auto cSound = _atmos->sound(alt);
         const auto pres = _atmos->pressure(alt);
         //fmt::print("TIME: {}, STATE [{}]\n", time, toString(state.transpose()));
-
         //fmt::print("ATM CONDS: pos = [{}] alt = {}, g = {}, cSound = {}, atmDens = {}, pres = {}\n", toString(position.transpose()), alt, g, atmDens, cSound, pres);
 
         // getting wind velocity
@@ -601,16 +574,14 @@ namespace Sim{
         const Eigen::Vector3d relativeVelocity = velocity - windVel; // velocity of the rocket relative to the wind, this is opposite freestream velocity (-v_0)
         const double relativeSpeed = relativeVelocity.norm();
 
-        // getting atmospheric probs dependent on velocity
         const double mach = velocity.norm()/cSound;
         if(std::isnan(mach)){
             fmt::print("TIME: {}, STATE AT FAILURE [{}]\n", time, toString(state.transpose()));
             fmt::print("MACH IS NAN vel.norm = [{}], csound = {}\n", velocity.norm(), cSound);
             assert(!std::isnan(mach));
         }
-        const double dynamicPressure = atmDens*std::pow(relativeSpeed,2)/2;
 
-        // getting rocket properties
+        const double dynamicPressure = atmDens*std::pow(relativeSpeed,2)/2;
         double angleOfAttack;
         if(onRod()){
             angleOfAttack = 0;
@@ -628,6 +599,48 @@ namespace Sim{
             relativeVelocity.dot(rocketOrientationVec)/( relativeVelocity.norm()*rocketOrientationVec.norm()));
             assert(!std::isnan(angleOfAttack));
         }
+        // getting reynolds number
+        const double kinVisc = _atmos->kinematic_viscosity(alt);
+        const double reynL = relativeVelocity.norm()/kinVisc;
+        // getting angular velocities for damping
+        const double pitchVel = angVelocity.x();
+        const double yawVel = angVelocity.y();
+
+        const FlightState currState = FlightState(
+            time, mach, angleOfAttack, pitchVel, yawVel, reynL, gam
+        );
+
+        /*
+        --------------------------
+        --- THRUST AND GRAVITY ---
+        --------------------------
+        */
+        auto m = _rocket->mass(time);
+        const Eigen::Matrix3d inertia = (_rotmat*_rocket->inertia(time)*(_rotmat.transpose()));
+        const double Ixx = inertia(0,0);
+        const double Iyy = inertia(1,1);
+        const double Izz = inertia(2,2);
+
+
+        // adding thrust
+        Eigen::Vector3d th = rocketRotationMat*_rotmat*(_rocket->thrust(time));
+        forces += th;
+
+        // adding gravity
+        Eigen::Vector3d gravVec = centerOfEarthVector(position)*g;
+        acceleration += gravVec;
+
+
+        /*
+        ---------------------------
+        ------- AERO FORCES -------
+        ---------------------------
+        */
+        /*
+        ---------------------------
+        ------ NORMAL FORCES ------
+        ---------------------------
+        */
 
         auto cn = _rocket->c_n(mach, angleOfAttack);
         if(std::isnan(cn)){
@@ -693,9 +706,6 @@ namespace Sim{
         ------- DRAG FORCES -------
         ---------------------------
         */
-        // calculate reynolds number of air
-        double kinVisc = _atmos->kinematic_viscosity(alt);
-        double reynL = relativeVelocity.norm()/kinVisc;
 
         Eigen::Vector3d dragDir = -relativeVelocity.normalized(); // drag occurs in opposite direction to relative velocity
 
