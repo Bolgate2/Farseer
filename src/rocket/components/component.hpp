@@ -3,11 +3,13 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <unordered_map>
 
 #include <Eigen/Dense>
 #include <uuid_v4/uuid_v4.h>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+#include <lrucache.hpp>
 
 #include "rocketInterface.hpp"
 using FlightState = Sim::FlightState;
@@ -42,33 +44,93 @@ class Component : public std::enable_shared_from_this<Component>, public Sim::Ro
         // +-------------------------+
         // | INTERFACE SUB-FUNCTIONS |
         // +-------------------------+
+        // first the cache is checked for a calculation at the given time, if not found, the calculation is done and added to the cache
+        // the caches store the values returned by cm_with_components
+        // openrocket makes even heavier use of caching
+        // thrust and thustPosition have default implementations as they only really apply to motors
+        static const size_t cache_size = 3;
         // mass
+        virtual double mass_this(const FlightState& state) = 0;
+        virtual double mass_with_componets(const FlightState& state);
+        cache::lru_cache<double, double> mass_cache = cache::lru_cache<double, double>(cache_size);
+        virtual double mass_with_cache(const FlightState& state);
 
         // cm
+        virtual Eigen::Vector3d cm_this(const FlightState& state) = 0;
+        virtual Eigen::Vector3d cm_with_components(const FlightState& state);
+        std::unordered_map<double, Eigen::Vector3d> cm_cache = {};
+        virtual Eigen::Vector3d cm_with_cache(const FlightState& state);
         
         // inertia
+        virtual Eigen::Matrix3d inertia_this(const FlightState& state) = 0;
+        virtual Eigen::Matrix3d inertia_with_components(const FlightState& state);
+        std::unordered_map<double, Eigen::Matrix3d> inertia_cache = {};
+        virtual Eigen::Matrix3d inertia_with_cache(const FlightState& state);
 
         // thrust
+        virtual Eigen::Vector3d thrust_this(const FlightState& state){ return Eigen::Vector3d::Zero(); }
+        virtual Eigen::Vector3d thrust_with_components(const FlightState& state);
+        std::unordered_map<double, Eigen::Vector3d> thrust_cache = {};
+        virtual Eigen::Vector3d thrust_with_cache(const FlightState& state);
 
         // thrustPosition
+        virtual Eigen::Vector3d thrustPosition_this(){ return Eigen::Vector3d::Zero(); }
+        virtual Eigen::Vector3d thrustPosition_with_components(const FlightState& state);
+        std::unordered_map<double, Eigen::Vector3d> thrustPosition_cache = {};
+        virtual Eigen::Vector3d thrustPosition_with_cache(const FlightState& state);
 
         // referenceArea
+        virtual double referenceArea_this(const FlightState& state) = 0;
+        virtual double referenceArea_with_components(const FlightState& state);
+        std::unordered_map<double, double> referenceArea_cache = {};
+        virtual double referenceArea_with_cache(const FlightState& state);
 
         // referenceLength
+        virtual double referenceLength_this(const FlightState& state) = 0;
+        virtual double referenceLength_with_components(const FlightState& state);
+        std::unordered_map<double, double> referenceLength_cache = {};
+        virtual double referenceLength_with_cache(const FlightState& state);
 
         // c_n
+        virtual double c_n_this(const FlightState& state) = 0;
+        virtual double c_n_with_components(const FlightState& state);
+        virtual double c_n_with_cache(const FlightState& state);
 
         // c_m
+        virtual double c_m_this(const FlightState& state) = 0;
+        virtual double c_m_with_components(const FlightState& state);
+        virtual double c_m_with_cache(const FlightState& state);
 
         // cp
+        virtual Eigen::Vector3d cp_this(const FlightState& state) = 0;
+        virtual Eigen::Vector3d cp_with_components(const FlightState& state);
+        virtual Eigen::Vector3d cp_with_cache(const FlightState& state);
 
-        // c_m_damp
+        // c_m_damp_pitch
+        virtual double c_m_damp_pitch_this(const FlightState& state) = 0;
+        virtual double c_m_damp_pitch_with_components(const FlightState& state);
+        virtual double c_m_damp_pitch_with_cache(const FlightState& state);
+
+        // c_m_damp_yaw
+        virtual double c_m_damp_yaw_this(const FlightState& state) = 0;
+        virtual double c_m_damp_yaw_with_components(const FlightState& state);
+        virtual double c_m_damp_yaw_with_cache(const FlightState& state);
 
         // Cdf
+        virtual double Cdf_this(const FlightState& state) = 0;
+        virtual double Cdf_with_components(const FlightState& state);
+        virtual double Cdf_with_cache(const FlightState& state);
 
         // Cdp
+        virtual double Cdp_this(const FlightState& state) = 0;
+        virtual double Cdp_with_components(const FlightState& state);
+        virtual double Cdp_with_cache(const FlightState& state);
 
         // Cdb
+        virtual double Cdb_this(const FlightState& state) = 0;
+        virtual double Cdb_with_components(const FlightState& state);
+        virtual double Cdb_with_cache(const FlightState& state);
+
     public:
         // constructors
         // NO JSON CONSTRUCTOR AS THE JSON PROPERTIES METHOD IS VIRTUAL

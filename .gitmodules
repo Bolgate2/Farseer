@@ -10,3 +10,6 @@
 [submodule "include/fmt"]
 	path = include/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "include/cpp-lru-cache"]
+	path = include/cpp-lru-cache
+	url = https://github.com/lamerman/cpp-lru-cache.git

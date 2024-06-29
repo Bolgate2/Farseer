@@ -23,6 +23,8 @@ endif ()
 add_subdirectory(include/eigen)
 # including fmt
 add_subdirectory(include/fmt)
+# including lru cache header directly in the rocket package
+
 
 # qt dir
 add_subdirectory(src/app)
