@@ -119,4 +119,174 @@ void Component::applyJson(json j){
     }
 }
 
+/*************************
+ *                       *
+ * CALCULATION FUNCTIONS *
+ *                       *
+ *************************/
+// mass
+double Component::mass_with_componets(const FlightState& state){
+    return 0;
+}
+double Component::mass_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::mass(const FlightState& state){
+    return 0;
+}
+
+// cm
+Eigen::Vector3d Component::cm_with_components(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+Eigen::Vector3d Component::cm_with_cache(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+Eigen::Vector3d Component::cm(const FlightState& state){
+    return getPosition();
+}
+
+// inertia
+Eigen::Matrix3d Component::inertia_with_components(const FlightState& state){
+    return Eigen::Matrix3d::Zero();
+}
+Eigen::Matrix3d Component::inertia_with_cache(const FlightState& state){
+    return Eigen::Matrix3d::Zero();
+}
+Eigen::Matrix3d Component::inertia(const FlightState& state){
+    return Eigen::Matrix3d::Zero();
+}
+
+// thrust
+Eigen::Vector3d Component::thrust_with_components(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+Eigen::Vector3d Component::thrust_with_cache(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+Eigen::Vector3d Component::thrust(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+
+// thrustPosition
+Eigen::Vector3d Component::thrustPosition_with_components(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+Eigen::Vector3d Component::thrustPosition_with_cache(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+Eigen::Vector3d Component::thrustPosition(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+
+// referenceArea
+double Component::referenceArea_with_components(const FlightState& state){
+    return 0;
+}
+double Component::referenceArea_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::referenceArea(const FlightState& state){
+    return 0;
+}
+
+// referenceLength
+double Component::referenceLength_with_components(const FlightState& state){
+    return 0;
+}
+double Component::referenceLength_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::referenceLength(const FlightState& state){
+    return 0;
+}
+
+// c_n
+double Component::c_n_with_components(const FlightState& state){
+    return 0;
+}
+double Component::c_n_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::c_n(const FlightState& state){
+    return 0;
+}
+
+// c_m
+double Component::c_m_with_components(const FlightState& state){
+    return 0;
+}
+double Component::c_m_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::c_m(const FlightState& state){
+    return 0;
+}
+
+// cp
+Eigen::Vector3d Component::cp_with_components(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+Eigen::Vector3d Component::cp_with_cache(const FlightState& state){
+    return Eigen::Vector3d::Zero();
+}
+Eigen::Vector3d Component::cp(const FlightState& state){
+    return getPosition();
+}
+
+// c_m_damp_pitch
+double Component::c_m_damp_pitch_with_components(const FlightState& state){
+    return 0;
+}
+double Component::c_m_damp_pitch_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::c_m_damp_pitch(const FlightState& state){
+    return 0;
+}
+
+// c_m_damp_yaw
+double Component::c_m_damp_yaw_with_components(const FlightState& state){
+    return 0;
+}
+double Component::c_m_damp_yaw_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::c_m_damp_yaw(const FlightState& state){
+    return 0;
+}
+
+// Cdf
+double Component::Cdf_with_components(const FlightState& state){
+    return 0;
+}
+double Component::Cdf_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::Cdf(const FlightState& state){
+    return 0;
+}
+
+// Cdp
+double Component::Cdp_with_components(const FlightState& state){
+    return 0;
+}
+double Component::Cdp_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::Cdp(const FlightState& state){
+    return 0;
+}
+
+// Cdb
+double Component::Cdb_with_components(const FlightState& state){
+    return 0;
+}
+double Component::Cdb_with_cache(const FlightState& state){
+    return 0;
+}
+double Component::Cdb(const FlightState& state){
+    return 0;
+}
+
 }
