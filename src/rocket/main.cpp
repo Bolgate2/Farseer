@@ -4,7 +4,7 @@
 using json = nlohmann::json;
 
 int main(int argc, char **argv){
-    /*
+    
     auto toob = std::make_shared<Rocket::BodyTube>(10, 20, 2, true, "jeff", Eigen::Vector3d{1,2,3});
     auto toobJson = toob->toJson();
     auto toob2 = Rocket::componentFromJson(toobJson);
@@ -21,6 +21,6 @@ int main(int argc, char **argv){
     std::cout << "---------------------------------" << std::endl;
     toob->removeComponent(toob2.get());
     std::cout << toob->toJson().dump(2) << std::endl;
-    */
+    
     return 0;
 }

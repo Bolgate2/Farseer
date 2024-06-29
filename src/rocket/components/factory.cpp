@@ -9,7 +9,7 @@ std::shared_ptr<Component> componentFromJson(json j){
 
     // strings dont work with switch statements???
     if( type == COMPONENT_NAMES::BODY_TUBE ){
-        //comp = std::make_shared<BodyTube>();
+        comp = std::make_shared<BodyTube>();
     }
     else if( type == COMPONENT_NAMES::NOSECONE ){
 
