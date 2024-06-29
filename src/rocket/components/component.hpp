@@ -58,77 +58,85 @@ class Component : public std::enable_shared_from_this<Component>, public Sim::Ro
         // cm
         virtual Eigen::Vector3d cm_this(const FlightState& state) = 0;
         virtual Eigen::Vector3d cm_with_components(const FlightState& state);
-        std::unordered_map<double, Eigen::Vector3d> cm_cache = {};
+        cache::lru_cache<double, Eigen::Vector3d> cm_cache = cache::lru_cache<double, Eigen::Vector3d>(cache_size);
         virtual Eigen::Vector3d cm_with_cache(const FlightState& state);
         
         // inertia
         virtual Eigen::Matrix3d inertia_this(const FlightState& state) = 0;
         virtual Eigen::Matrix3d inertia_with_components(const FlightState& state);
-        std::unordered_map<double, Eigen::Matrix3d> inertia_cache = {};
+        cache::lru_cache<double, Eigen::Matrix3d> inertia_cache = cache::lru_cache<double, Eigen::Matrix3d>(cache_size);
         virtual Eigen::Matrix3d inertia_with_cache(const FlightState& state);
 
         // thrust
         virtual Eigen::Vector3d thrust_this(const FlightState& state){ return Eigen::Vector3d::Zero(); }
         virtual Eigen::Vector3d thrust_with_components(const FlightState& state);
-        std::unordered_map<double, Eigen::Vector3d> thrust_cache = {};
+        cache::lru_cache<double, Eigen::Vector3d> thrust_cache = cache::lru_cache<double, Eigen::Vector3d>(cache_size);
         virtual Eigen::Vector3d thrust_with_cache(const FlightState& state);
 
         // thrustPosition
         virtual Eigen::Vector3d thrustPosition_this(){ return Eigen::Vector3d::Zero(); }
         virtual Eigen::Vector3d thrustPosition_with_components(const FlightState& state);
-        std::unordered_map<double, Eigen::Vector3d> thrustPosition_cache = {};
+        cache::lru_cache<double, Eigen::Vector3d> thrustPosition_cache = cache::lru_cache<double, Eigen::Vector3d>(cache_size);
         virtual Eigen::Vector3d thrustPosition_with_cache(const FlightState& state);
 
         // referenceArea
         virtual double referenceArea_this(const FlightState& state) = 0;
         virtual double referenceArea_with_components(const FlightState& state);
-        std::unordered_map<double, double> referenceArea_cache = {};
+        cache::lru_cache<double, double> referenceArea_cache = cache::lru_cache<double, double>(cache_size);
         virtual double referenceArea_with_cache(const FlightState& state);
 
         // referenceLength
         virtual double referenceLength_this(const FlightState& state) = 0;
         virtual double referenceLength_with_components(const FlightState& state);
-        std::unordered_map<double, double> referenceLength_cache = {};
+        cache::lru_cache<double, double> referenceLength_cache = cache::lru_cache<double, double>(cache_size);
         virtual double referenceLength_with_cache(const FlightState& state);
 
         // c_n
         virtual double c_n_this(const FlightState& state) = 0;
         virtual double c_n_with_components(const FlightState& state);
+        cache::lru_cache<double, double> c_n_cache = cache::lru_cache<double, double>(cache_size);
         virtual double c_n_with_cache(const FlightState& state);
 
         // c_m
         virtual double c_m_this(const FlightState& state) = 0;
         virtual double c_m_with_components(const FlightState& state);
+        cache::lru_cache<double, double> c_m_cache = cache::lru_cache<double, double>(cache_size);
         virtual double c_m_with_cache(const FlightState& state);
 
         // cp
         virtual Eigen::Vector3d cp_this(const FlightState& state) = 0;
         virtual Eigen::Vector3d cp_with_components(const FlightState& state);
+        cache::lru_cache<double, Eigen::Vector3d> cp_cache = cache::lru_cache<double, Eigen::Vector3d>(cache_size);
         virtual Eigen::Vector3d cp_with_cache(const FlightState& state);
 
         // c_m_damp_pitch
         virtual double c_m_damp_pitch_this(const FlightState& state) = 0;
         virtual double c_m_damp_pitch_with_components(const FlightState& state);
+        cache::lru_cache<double, double> c_m_damp_pitch_cache = cache::lru_cache<double, double>(cache_size);
         virtual double c_m_damp_pitch_with_cache(const FlightState& state);
 
         // c_m_damp_yaw
         virtual double c_m_damp_yaw_this(const FlightState& state) = 0;
         virtual double c_m_damp_yaw_with_components(const FlightState& state);
+        cache::lru_cache<double, double> c_m_damp_yaw_cache = cache::lru_cache<double, double>(cache_size);
         virtual double c_m_damp_yaw_with_cache(const FlightState& state);
 
         // Cdf
         virtual double Cdf_this(const FlightState& state) = 0;
         virtual double Cdf_with_components(const FlightState& state);
+        cache::lru_cache<double, double> Cdf_cache = cache::lru_cache<double, double>(cache_size);
         virtual double Cdf_with_cache(const FlightState& state);
 
         // Cdp
         virtual double Cdp_this(const FlightState& state) = 0;
         virtual double Cdp_with_components(const FlightState& state);
+        cache::lru_cache<double, double> Cdp_cache = cache::lru_cache<double, double>(cache_size);
         virtual double Cdp_with_cache(const FlightState& state);
 
         // Cdb
         virtual double Cdb_this(const FlightState& state) = 0;
         virtual double Cdb_with_components(const FlightState& state);
+        cache::lru_cache<double, double> Cdb_cache = cache::lru_cache<double, double>(cache_size);
         virtual double Cdb_with_cache(const FlightState& state);
 
     public:
